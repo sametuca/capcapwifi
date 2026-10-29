@@ -104,9 +104,34 @@ if [ $? -ne 4 ]; then
 fi
 
 # =============== < Working Directory Check > ================ #
-if ! mkdir -p "$FLUXIONWorkspacePath" &> /dev/null; then
+# The workspace holds the AP and DHCP configs, the captured credentials and
+# the lighttpd document root, and FLUXION runs as root. A fixed path under
+# /tmp is predictable: any local user can create it (or plant a symlink in
+# its place) before FLUXION starts and end up controlling where root writes.
+# Refuse symlinks, refuse a directory owned by somebody else, and force
+# owner-only permissions.
+if [ -L "$FLUXIONWorkspacePath" ]; then
+  echo "\\033[31mAborted, workspace path is a symbolic link: $FLUXIONWorkspacePath\\033[0m"; exit 6
+fi
+
+if ! mkdir -p -m 0700 "$FLUXIONWorkspacePath" &> /dev/null; then
   echo "\\033[31mAborted, can't generate a workspace directory.\\033[0m"; exit 6
 fi
+
+if [ ! -d "$FLUXIONWorkspacePath" ] || [ -L "$FLUXIONWorkspacePath" ]; then
+  echo "\\033[31mAborted, workspace path is not a plain directory: $FLUXIONWorkspacePath\\033[0m"; exit 6
+fi
+
+__fluxionWorkspaceOwner="$(stat -c '%u' -- "$FLUXIONWorkspacePath" 2>/dev/null || true)"
+if [ "$__fluxionWorkspaceOwner" ] && [ "$__fluxionWorkspaceOwner" != "$EUID" ]; then
+  echo "\\033[31mAborted, workspace directory is owned by uid $__fluxionWorkspaceOwner, not $EUID.\\033[0m"
+  echo "Remove it and rerun: rm -rf -- '$FLUXIONWorkspacePath'"
+  exit 7
+fi
+unset __fluxionWorkspaceOwner
+
+# A directory left behind by an earlier run may carry looser permissions.
+chmod 0700 -- "$FLUXIONWorkspacePath" &> /dev/null
 
 # Once sanity check is passed, we can start to load everything.
 
@@ -126,7 +151,7 @@ source "$FLUXIONLibPath/WindowUtils.sh"
 # NOTE: These are configured after arguments are loaded (later).
 
 # Write a clean timestamped status line for machine consumption (LLM, CI).
-# In auto mode: appends to /tmp/fluxspace/fluxion.status and writes to fd 3
+# In auto mode: appends to $FLUXIONWorkspacePath/fluxion.status and writes to fd 3
 # (the original stdout preserved before the script(1) PTY wrapper).
 # In interactive mode: no-op.
 fluxion_status() {

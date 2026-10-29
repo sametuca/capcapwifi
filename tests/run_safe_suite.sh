@@ -12,6 +12,7 @@ tests=(
   "$SCRIPT_DIR/test_target_completeness.sh"
   "$SCRIPT_DIR/test_mac_brand_lookup.sh"
   "$SCRIPT_DIR/test_ap_channel.sh"
+  "$SCRIPT_DIR/test_sandbox_utils.sh"
 )
 
 failures=0

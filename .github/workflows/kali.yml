@@ -33,7 +33,9 @@ jobs:
       - name: Run tests
         run: bash tests/run_safe_suite.sh
 
-      - name: Run ShellCheck
-        run: |
-          find tests -type f -name '*.sh' -print0 |
-            xargs -0 shellcheck --severity=error
+      # The gate lints every script, not just tests/, and compares against the
+      # committed baseline so the existing backlog is frozen while new code
+      # cannot add findings. Run scripts/run_shellcheck.sh --update-baseline to
+      # accept a finding deliberately.
+      - name: Run ShellCheck against baseline
+        run: bash scripts/run_shellcheck.sh

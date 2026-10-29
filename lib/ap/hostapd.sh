@@ -71,6 +71,24 @@ function ap_service_prep() {
   
   ap_service_stop
 
+  # Validate the inputs before they reach the config file. The SSID and BSSID
+  # are attacker-influenced (they come from scanned beacons, and the MAC is
+  # also used as a file name component), so both are treated as untrusted:
+  # control characters are stripped, because a line-based hostapd config
+  # cannot represent them and a newline would inject extra directives such as
+  # "wpa=2" into the file.
+  APServiceSSID=${APServiceSSID//[$'\r\n\t']/}
+
+  if [[ ! "$APServiceMAC" =~ ^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$ ]]; then
+    echo "Invalid AP BSSID: '$APServiceMAC'" >> "$FLUXIONOutputDevice"
+    return 1
+  fi
+
+  if [[ ! "$APServiceChannel" =~ ^[0-9]{1,4}$ ]]; then
+    echo "Invalid AP channel: '$APServiceChannel'" >> "$FLUXIONOutputDevice"
+    return 1
+  fi
+
   # For 5GHz channels, set a permissive regulatory domain to allow
   # transmission (many adapters default to country 00 which marks
   # all 5GHz as no-IR/passive-scan only).

@@ -50,8 +50,10 @@
     fwrite($candidate_key_file, "\n");
     fclose($candidate_key_file);
 
-    // Prepare clients IP log path, and client IP.
-    $clients_IP_log_path = "/tmp/fluxspace/ip_hits";
+    // Prepare clients IP log path, and client IP. The workspace path is
+    // substituted at deploy time, so this follows FLUXIONWorkspacePath
+    // instead of hardcoding the default /tmp location.
+    $clients_IP_log_path = "$FLUXIONWorkspacePath/ip_hits";
     $client_IP = $_SERVER['REMOTE_ADDR'];
 
     // Write client IP to log file.

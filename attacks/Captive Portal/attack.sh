@@ -921,6 +921,30 @@ captive_portal_unset_attack() {
   fi
 }
 
+# Escape a value so it can be used as the replacement half of a sed s///.
+# Only backslash, the delimiter and "&" are metacharacters there: an SSID
+# containing "&" would otherwise expand to the matched placeholder text and
+# silently corrupt the rendered page, while an unescaped backslash would eat
+# the following character. Carriage returns and newlines are dropped first,
+# because no line-based config can represent them and an embedded newline
+# would let a hostile SSID inject extra template lines.
+captive_portal_sed_replacement() {
+  printf '%s' "${1//$'\r'/}" | tr -d '\n' | sed -e 's/[\\/&]/\\&/g'
+}
+
+# Substitute the target's SSID, BSSID and channel into every rendered file.
+captive_portal_render_target() {
+  local __ssid __mac __channel
+  __ssid=$(captive_portal_sed_replacement "$FluxionTargetSSID")
+  __mac=$(captive_portal_sed_replacement "$FluxionTargetMAC")
+  __channel=$(captive_portal_sed_replacement "$FluxionTargetChannel")
+
+  find "$FLUXIONWorkspacePath/captive_portal/" -type f -exec \
+    sed -i -e "s/\$APTargetSSID/$__ssid/g" \
+           -e "s/\$APTargetMAC/$__mac/g" \
+           -e "s/\$APTargetChannel/$__channel/g" {} +
+}
+
 # Create different settings required for the script
 captive_portal_set_attack() {
   local -r attackPath="$FLUXIONPath/attacks/Captive Portal"
@@ -936,8 +960,7 @@ captive_portal_set_attack() {
     return 1
   fi
 
-  find "$FLUXIONWorkspacePath/captive_portal/" -type f -exec \
-    sed -i -e 's/$APTargetSSID/'"${FluxionTargetSSID//\//\\\/}"'/g; s/$APTargetMAC/'"${FluxionTargetMAC//\//\\\/}"'/g; s/$APTargetChannel/'"${FluxionTargetChannel//\//\\\/}"'/g' {} \;
+  captive_portal_render_target
 
 
   # Add the PHP authenticator scripts, used to verify
@@ -1012,6 +1035,11 @@ captive_portal_set_attack() {
 " >"$FLUXIONWorkspacePath/kea-dhcp4.conf"
 
   # Generate configuration for a lighttpd web-server.
+  # Resolve php-cgi instead of assuming /usr/bin: Debian and Kali ship it
+  # there, other distributions and local builds put it in /usr/local/bin.
+  local phpCgi
+  phpCgi=$(command -v php-cgi 2>/dev/null || echo /usr/bin/php-cgi)
+
   echo "\
 server.document-root = \"$FLUXIONWorkspacePath/captive_portal/\"
 
@@ -1029,8 +1057,8 @@ accesslog.filename = \"$FLUXIONWorkspacePath/lighttpd.log\"
 fastcgi.server = (
     \".php\" => (
         (
-            \"bin-path\" => \"/usr/bin/php-cgi\",
-            \"socket\" => \"/tmp/fluxspace/php.socket\"
+            \"bin-path\" => \"$phpCgi\",
+            \"socket\" => \"$FLUXIONWorkspacePath/php.socket\"
         )
     )
 )

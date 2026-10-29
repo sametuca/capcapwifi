@@ -1,0 +1,197 @@
+attacks/Captive Portal/attack.sh:SC1087
+attacks/Captive Portal/attack.sh:SC1090
+attacks/Captive Portal/attack.sh:SC2027
+attacks/Captive Portal/attack.sh:SC2034
+attacks/Captive Portal/attack.sh:SC2046
+attacks/Captive Portal/attack.sh:SC2060
+attacks/Captive Portal/attack.sh:SC2152
+attacks/Captive Portal/attack.sh:SC2154
+attacks/Captive Portal/attack.sh:SC2155
+attacks/Captive Portal/attack.sh:SC2166
+attacks/Captive Portal/attack.sh:SC2188
+attacks/Captive Portal/language/ar.sh:SC2034
+attacks/Captive Portal/language/ar.sh:SC2154
+attacks/Captive Portal/language/cs.sh:SC2034
+attacks/Captive Portal/language/cs.sh:SC2154
+attacks/Captive Portal/language/de.sh:SC2034
+attacks/Captive Portal/language/de.sh:SC2154
+attacks/Captive Portal/language/el.sh:SC2034
+attacks/Captive Portal/language/el.sh:SC2154
+attacks/Captive Portal/language/en.sh:SC2034
+attacks/Captive Portal/language/en.sh:SC2154
+attacks/Captive Portal/language/es.sh:SC2034
+attacks/Captive Portal/language/es.sh:SC2154
+attacks/Captive Portal/language/fr.sh:SC2034
+attacks/Captive Portal/language/fr.sh:SC2154
+attacks/Captive Portal/language/hu.sh:SC2034
+attacks/Captive Portal/language/hu.sh:SC2154
+attacks/Captive Portal/language/id.sh:SC2034
+attacks/Captive Portal/language/id.sh:SC2154
+attacks/Captive Portal/language/it.sh:SC2034
+attacks/Captive Portal/language/it.sh:SC2154
+attacks/Captive Portal/language/nl.sh:SC2034
+attacks/Captive Portal/language/nl.sh:SC2154
+attacks/Captive Portal/language/pl.sh:SC2034
+attacks/Captive Portal/language/pl.sh:SC2154
+attacks/Captive Portal/language/pt-br.sh:SC2034
+attacks/Captive Portal/language/pt-br.sh:SC2154
+attacks/Captive Portal/language/ro.sh:SC2034
+attacks/Captive Portal/language/ro.sh:SC2154
+attacks/Captive Portal/language/ru.sh:SC2034
+attacks/Captive Portal/language/ru.sh:SC2154
+attacks/Captive Portal/language/sk.sh:SC2034
+attacks/Captive Portal/language/sk.sh:SC2154
+attacks/Captive Portal/language/sl.sh:SC2034
+attacks/Captive Portal/language/sl.sh:SC2154
+attacks/Captive Portal/language/tur.sh:SC2034
+attacks/Captive Portal/language/tur.sh:SC2154
+attacks/Captive Portal/language/zh.sh:SC2034
+attacks/Captive Portal/language/zh.sh:SC2154
+attacks/Handshake Snooper/attack.sh:SC2034
+attacks/Handshake Snooper/attack.sh:SC2154
+attacks/Handshake Snooper/attack.sh:SC2155
+attacks/Handshake Snooper/attack.sh:SC2166
+attacks/Handshake Snooper/attack.sh:SC2188
+attacks/Handshake Snooper/language/ar.sh:SC2034
+attacks/Handshake Snooper/language/ar.sh:SC2154
+attacks/Handshake Snooper/language/cs.sh:SC2034
+attacks/Handshake Snooper/language/cs.sh:SC2154
+attacks/Handshake Snooper/language/de.sh:SC2034
+attacks/Handshake Snooper/language/de.sh:SC2154
+attacks/Handshake Snooper/language/el.sh:SC2034
+attacks/Handshake Snooper/language/el.sh:SC2154
+attacks/Handshake Snooper/language/en.sh:SC2034
+attacks/Handshake Snooper/language/en.sh:SC2154
+attacks/Handshake Snooper/language/es.sh:SC2034
+attacks/Handshake Snooper/language/es.sh:SC2154
+attacks/Handshake Snooper/language/fr.sh:SC2034
+attacks/Handshake Snooper/language/fr.sh:SC2154
+attacks/Handshake Snooper/language/hu.sh:SC2034
+attacks/Handshake Snooper/language/hu.sh:SC2154
+attacks/Handshake Snooper/language/id.sh:SC2034
+attacks/Handshake Snooper/language/id.sh:SC2154
+attacks/Handshake Snooper/language/it.sh:SC2034
+attacks/Handshake Snooper/language/it.sh:SC2154
+attacks/Handshake Snooper/language/nl.sh:SC2034
+attacks/Handshake Snooper/language/nl.sh:SC2154
+attacks/Handshake Snooper/language/pl.sh:SC2034
+attacks/Handshake Snooper/language/pl.sh:SC2154
+attacks/Handshake Snooper/language/pt-br.sh:SC2034
+attacks/Handshake Snooper/language/pt-br.sh:SC2154
+attacks/Handshake Snooper/language/ro.sh:SC2034
+attacks/Handshake Snooper/language/ro.sh:SC2154
+attacks/Handshake Snooper/language/ru.sh:SC2034
+attacks/Handshake Snooper/language/ru.sh:SC2154
+attacks/Handshake Snooper/language/sk.sh:SC2034
+attacks/Handshake Snooper/language/sk.sh:SC2154
+attacks/Handshake Snooper/language/sl.sh:SC2034
+attacks/Handshake Snooper/language/sl.sh:SC2154
+attacks/Handshake Snooper/language/tur.sh:SC2034
+attacks/Handshake Snooper/language/tur.sh:SC2154
+attacks/Handshake Snooper/language/zh.sh:SC2034
+attacks/Handshake Snooper/language/zh.sh:SC2154
+fluxion.sh:SC1087
+fluxion.sh:SC1090
+fluxion.sh:SC2027
+fluxion.sh:SC2034
+fluxion.sh:SC2046
+fluxion.sh:SC2090
+fluxion.sh:SC2128
+fluxion.sh:SC2145
+fluxion.sh:SC2152
+fluxion.sh:SC2154
+fluxion.sh:SC2155
+fluxion.sh:SC2166
+fluxion.sh:SC2174
+fluxion.sh:SC2178
+fluxion.sh:SC2184
+fluxion.sh:SC2294
+language/ar.sh:SC2034
+language/ar.sh:SC2154
+language/cs.sh:SC2034
+language/cs.sh:SC2154
+language/de.sh:SC2034
+language/de.sh:SC2154
+language/el.sh:SC2034
+language/el.sh:SC2154
+language/en.sh:SC2034
+language/en.sh:SC2154
+language/es.sh:SC2034
+language/es.sh:SC2154
+language/fr.sh:SC2034
+language/fr.sh:SC2154
+language/hu.sh:SC2034
+language/hu.sh:SC2154
+language/id.sh:SC2034
+language/id.sh:SC2154
+language/it.sh:SC2034
+language/it.sh:SC2154
+language/nl.sh:SC2034
+language/nl.sh:SC2154
+language/pl.sh:SC2034
+language/pl.sh:SC2154
+language/pt-br.sh:SC2034
+language/pt-br.sh:SC2154
+language/ro.sh:SC2034
+language/ro.sh:SC2154
+language/ru.sh:SC2034
+language/ru.sh:SC2154
+language/sk.sh:SC2034
+language/sk.sh:SC2154
+language/sl.sh:SC2034
+language/sl.sh:SC2154
+language/tur.sh:SC2034
+language/tur.sh:SC2154
+language/zh.sh:SC2034
+language/zh.sh:SC2154
+lib/ColorUtils.sh:SC2034
+lib/FormatUtils.sh:SC2034
+lib/FormatUtils.sh:SC2155
+lib/FormatUtils.sh:SC2166
+lib/FormatUtils.sh:SC2207
+lib/HashUtils.sh:SC2034
+lib/HashUtils.sh:SC2155
+lib/HashUtils.sh:SC2166
+lib/IOUtils.sh:SC1087
+lib/IOUtils.sh:SC2027
+lib/IOUtils.sh:SC2034
+lib/IOUtils.sh:SC2068
+lib/IOUtils.sh:SC2145
+lib/IOUtils.sh:SC2154
+lib/IOUtils.sh:SC2155
+lib/IOUtils.sh:SC2207
+lib/IOUtils.sh:SC2294
+lib/InterfaceUtils.sh:SC2034
+lib/InterfaceUtils.sh:SC2046
+lib/InterfaceUtils.sh:SC2166
+lib/WindowUtils.sh:SC2154
+lib/ap/airbase-ng.sh:SC2034
+lib/ap/airbase-ng.sh:SC2154
+lib/ap/airbase-ng.sh:SC2155
+lib/ap/hostapd.sh:SC2034
+lib/ap/hostapd.sh:SC2154
+lib/ap/hostapd.sh:SC2155
+lib/installer/InstallerUtils.sh:SC1090
+lib/installer/InstallerUtils.sh:SC2034
+lib/installer/InstallerUtils.sh:SC2091
+lib/installer/InstallerUtils.sh:SC2154
+lib/installer/InstallerUtils.sh:SC2155
+lib/installer/InstallerUtils.sh:SC2164
+lib/installer/InstallerUtils.sh:SC2166
+lib/installer/managers/apt.sh:SC2034
+lib/installer/managers/apt.sh:SC2154
+lib/installer/managers/dnf.sh:SC2034
+lib/installer/managers/emerge.sh:SC2034
+lib/installer/managers/pacman.sh:SC2034
+lib/installer/managers/zypp.sh:SC2034
+scripts/cleanup.sh:SC2046
+tests/lib/testlib.sh:SC2034
+tests/test_cli_smoke.sh:SC2034
+tests/test_library_sourcing.sh:SC1090
+tests/test_library_sourcing.sh:SC2034
+tests/test_locales.sh:SC1090
+tests/test_target_completeness.sh:SC2034
+uninstall.sh:SC1090
+uninstall.sh:SC2154
+uninstall.sh:SC2155
+uninstall.sh:SC2188
