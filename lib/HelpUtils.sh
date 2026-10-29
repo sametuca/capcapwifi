@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 
 fluxion_help(){
-  echo " FLUXION(1)                       User Manuals                       FLUXION(1)
+  echo " CAPCAPWIFI(1)                       User Manuals                       CAPCAPWIFI(1)
 
 
 
   NAME
-         fluxion  -  Fluxion  is  a  security  auditing  and  social-engineering
+         capcapwifi  -  CapCapWifi  is  a  security  auditing  and  social-engineering
          research tool
 
   SYNOPSIS
-         fluxion [-debug] [-l language ] [-m] [--auto] [--scan-time N] attack ...
+         capcapwifi [-debug] [-l language ] [-m] [--auto] [--scan-time N] attack ...
 
   DESCRIPTION
-         fluxion is a security auditing and  social-engineering  research  tool.
+         capcapwifi is a security auditing and  social-engineering  research  tool.
          It  is  a remake of linset by vk496 with (hopefully) less bugs and more
          functionality. The script attempts to retrieve the WPA/WPA2 key from  a
          target  access point by means of a social engineering (phising) attack.
-         It's compatible with the latest release of  Kali  (rolling).  Fluxion's
+         It's compatible with the latest release of  Kali  (rolling).  CapCapWifi's
          attacks'  setup  is  mostly  manual, but experimental auto-mode handles
          some of the attacks' setup parameters.
 
@@ -28,13 +28,13 @@ fluxion_help(){
 
          -m     Use tmux multiplexer instead of xterm. Enables headless
                 operation without an X11/graphical session. If not already
-                inside a tmux session, fluxion will re-exec itself inside
+                inside a tmux session, capcapwifi will re-exec itself inside
                 one. All sub-windows are opened as tmux windows instead of
                 xterm terminals.
 
-         --auto Run fluxion in fully non-interactive auto mode. Every
+         --auto Run capcapwifi in fully non-interactive auto mode. Every
                 interactive prompt auto-selects a sensible default. Implies
-                --killer (-k). In auto mode, fluxion runs one attack cycle
+                --killer (-k). In auto mode, capcapwifi runs one attack cycle
                 and exits (no looping). Best combined with -m for headless
                 operation.
 
@@ -102,7 +102,7 @@ fluxion_help(){
                 Comma-separated list of process names to spare when killer
                 mode (-k / --auto) terminates interfering processes. Useful
                 in lab setups where you run your own hostapd/wpa_supplicant
-                target alongside fluxion and don't want it killed.
+                target alongside capcapwifi and don't want it killed.
 
          --reg-domain <CC>
                 Override the wireless regulatory domain used when bringing
@@ -111,14 +111,14 @@ fluxion_help(){
 
          --timeout <minutes>
                 Maximum duration in minutes for the attack in auto mode.
-                After this time the attack is stopped and fluxion exits.
+                After this time the attack is stopped and capcapwifi exits.
                 Default is no timeout (runs indefinitely until the attack
                 succeeds or is interrupted).
 
          -k     Kill interfering wireless processes (NetworkManager, etc.)
                 before allocating interfaces. Implied by --auto.
 
-         -d     Run fluxion in debug mode.
+         -d     Run capcapwifi in debug mode.
 
          -r     Reload driver.
 
@@ -158,19 +158,19 @@ fluxion_help(){
 
   EXAMPLES
          # List all nearby WPA networks (60-second scan):
-         sudo ./fluxion.sh -m --scan-only --scan-time 60
+         sudo ./capcapwifi.sh -m --scan-only --scan-time 60
 
          # List networks on channel 6 only:
-         sudo ./fluxion.sh -m --scan-only --scan-time 30 -c 6
+         sudo ./capcapwifi.sh -m --scan-only --scan-time 30 -c 6
 
          # Scan both 2.4 GHz and 5 GHz bands:
-         sudo ./fluxion.sh --scan-only --scan-time 30 --band abg
+         sudo ./capcapwifi.sh --scan-only --scan-time 30 --band abg
 
          # Headless, non-interactive, 15-second scan:
-         sudo ./fluxion.sh -m --auto -l en --scan-time 15
+         sudo ./capcapwifi.sh -m --auto -l en --scan-time 15
 
          # Headless with specific target:
-         sudo ./fluxion.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
+         sudo ./capcapwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
 
   FILES
          /tmp/fluxspace/
@@ -180,10 +180,10 @@ fluxion_help(){
 
   ENVIRONMENT
          FLUXIONAuto
-                Automatically run fluxion in auto mode if exported.
+                Automatically run capcapwifi in auto mode if exported.
 
          FLUXIONDebug
-                Automatically run fluxion in debug mode if exported.
+                Automatically run capcapwifi in debug mode if exported.
 
          FLUXIONWIKillProcesses
                 Automatically kill any interfering process(es).
@@ -192,7 +192,7 @@ fluxion_help(){
          Please checkout the other log files or use the debug mode.
 
   BUGS
-         Please  report  any  bugs  at:  https://github.com/FluxionNetwork/flux-
+         Please  report  any  bugs  at:  https://github.com/CapCapWifiNetwork/flux-
          ion/issues
 
   AUTHOR
@@ -202,7 +202,7 @@ fluxion_help(){
          aircrack-ng(8),
 
 
-  Linux                             MARCH 2018                        FLUXION(1)"
+  Linux                             MARCH 2018                        CAPCAPWIFI(1)"
 
 }
 

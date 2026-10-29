@@ -4,7 +4,7 @@ source "$(dirname "$(readlink -f "$0")")/lib/testlib.sh"
 
 tests_init "$(basename "$0")"
 
-# Extract the target-completeness conditions straight out of fluxion.sh's
+# Extract the target-completeness conditions straight out of capcapwifi.sh's
 # fluxion_target_set() so this test tracks the real implementation instead
 # of a hand-copied stand-in.
 extract_complete_condition() {
@@ -13,7 +13,7 @@ extract_complete_condition() {
     infunc && /^  if \[\[ \\$/ { capture=1; sub(/^  if /, ""); print; next }
     capture { print }
     capture && /\]\]; then$/ { exit }
-  ' "$REPO_DIR/fluxion.sh" | sed 's/; then$//'
+  ' "$REPO_DIR/capcapwifi.sh" | sed 's/; then$//'
 }
 
 extract_partial_condition() {
@@ -22,14 +22,14 @@ extract_partial_condition() {
     infunc && /^  elif \[\[ \\$/ { capture=1; sub(/^  elif /, ""); print; next }
     capture { print }
     capture && /\]\]; then$/ { exit }
-  ' "$REPO_DIR/fluxion.sh" | sed 's/; then$//'
+  ' "$REPO_DIR/capcapwifi.sh" | sed 's/; then$//'
 }
 
 COMPLETE_CONDITION=$(extract_complete_condition)
 PARTIAL_CONDITION=$(extract_partial_condition)
 
 if [ -z "$COMPLETE_CONDITION" ] || [ -z "$PARTIAL_CONDITION" ]; then
-  fail "Could not locate the target-completeness checks in fluxion.sh"
+  fail "Could not locate the target-completeness checks in capcapwifi.sh"
   finish_tests
   exit $?
 fi

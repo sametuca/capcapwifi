@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 
 # ============================================================ #
-# ================== < FLUXION Parameters > ================== #
+# ================== < CAPCAPWIFI Parameters > ================== #
 # ============================================================ #
-# Path to the FLUXION executable script itself, and the directory containing it.
+# Path to the CAPCAPWIFI executable script itself, and the directory containing it.
 # Resolved once, up front, so it stays valid after the cd below and after any
 # re-exec that relies on invoking this same script again.
 readonly FLUXIONSelf=$(readlink -f "$0")
 readonly FLUXIONPath=$(dirname "$FLUXIONSelf")
 
-# Always run from the FLUXION directory; relative lookups (e.g. `ls language`) depend on it.
+# Always run from the CAPCAPWIFI directory; relative lookups (e.g. `ls language`) depend on it.
 cd "$FLUXIONPath" || exit 1
 
-# Path to directory containing the FLUXION library (scripts).
+# Path to directory containing the CAPCAPWIFI library (scripts).
 readonly FLUXIONLibPath="$FLUXIONPath/lib"
 
-# Path to the temp. directory available to FLUXION & subscripts.
+# Path to the temp. directory available to CAPCAPWIFI & subscripts.
 readonly FLUXIONWorkspacePath="${FLUXIONWorkspacePath:-/tmp/fluxspace}"
 readonly FLUXIONIPTablesBackup="$FLUXIONPath/iptables-rules"
 
@@ -59,6 +59,16 @@ done
 
 if [ $EUID -ne 0 ] && [ ! "$FLUXIONPreParseHelp" ] && [ ! "$FLUXIONPreParseListIfaces" ]; then
   echo -e "\\033[31mAborted, please execute the script as root.\\033[0m"; exit 1
+fi
+
+# ===================== < Platform Check > ===================== #
+# The attack engine drives Linux-only tooling (hostapd, iptables, kea-dhcp4,
+# dnsspoof, aircrack-ng). Failing here beats a confusing error from a missing
+# package or from the BSD userland further down.
+if [ "$(uname -s)" != "Linux" ]; then
+  echo -e "\\033[31mAborted, capcapwifi requires Linux (Kali rolling is supported).\\033[0m"
+  echo "Run it on a Linux host, or in a Kali VM/container."
+  exit 1
 fi
 
 # Save original args for tmux re-exec.
@@ -105,9 +115,9 @@ fi
 
 # =============== < Working Directory Check > ================ #
 # The workspace holds the AP and DHCP configs, the captured credentials and
-# the lighttpd document root, and FLUXION runs as root. A fixed path under
+# the lighttpd document root, and CAPCAPWIFI runs as root. A fixed path under
 # /tmp is predictable: any local user can create it (or plant a symlink in
-# its place) before FLUXION starts and end up controlling where root writes.
+# its place) before CAPCAPWIFI starts and end up controlling where root writes.
 # Refuse symlinks, refuse a directory owned by somebody else, and force
 # owner-only permissions.
 if [ -L "$FLUXIONWorkspacePath" ]; then
@@ -170,7 +180,7 @@ fluxion_status() {
 if ! FLUXIONCLIArguments=$(
     getopt --options="vdkrinmthb:e:c:l:a:r" \
       --longoptions="debug,debug-log:,version,killer,installer,reloader,help,airmon-ng,multiplexer,target,test,auto,bssid:,essid:,channel:,language:,attack:,ratio,skip-dependencies,scan-time:,scan-only,list-interfaces,interface:,jammer-interface:,ap-interface:,ap-channel:,tracker-interface:,ap-service:,deauth-method:,kill-exclude:,timeout:,reg-domain:,band:" \
-      --name="FLUXION V$FLUXIONVersion.$FLUXIONRevision" -- "$@"
+      --name="CAPCAPWIFI V$FLUXIONVersion.$FLUXIONRevision" -- "$@"
   ); then
   echo -e "${CRed}Aborted$CClr, parameter error detected..."; exit 5
 fi
@@ -192,7 +202,7 @@ eval set -- "$FLUXIONCLIArguments" # Set environment parameters.
 #[ "$1" != "--" ] && readonly FLUXIONAuto=1 # Auto-mode if using CLI.
 while [ "$1" != "" ] && [ "$1" != "--" ]; do
   case "$1" in
-    -v|--version) echo "FLUXION V$FLUXIONVersion.$FLUXIONRevision"; exit;;
+    -v|--version) echo "CAPCAPWIFI V$FLUXIONVersion.$FLUXIONRevision"; exit;;
     -h|--help) fluxion_help; exit;;
     -d|--debug) readonly FLUXIONDebug=1;;
     --debug-log) FLUXIONDebugLog="$2"; shift;;
@@ -412,7 +422,7 @@ fluxion_startup() {
   echo -e "$FormatCenterLiterals"
 
   sleep 0.1
-  local -r versionInfo="${CSRed}FLUXION $FLUXIONVersion$CClr"
+  local -r versionInfo="${CSRed}CAPCAPWIFI $FLUXIONVersion$CClr"
   local -r revisionInfo="(rev. $CSBlu$FLUXIONRevision$CClr)"
   local -r credits="by$CCyn FluxionNetwork$CClr"
   format_center_literals "$versionInfo $revisionInfo $credits"
@@ -421,14 +431,14 @@ fluxion_startup() {
   sleep 0.1
   if [ ! "$FLUXIONAuto" ]; then
     local -r fluxionDomain="raw.githubusercontent.com"
-    local -r fluxionPath="FluxionNetwork/fluxion/master/fluxion.sh"
+    local -r fluxionPath="FluxionNetwork/fluxion/master/capcapwifi.sh"
     local -r updateDomain="github.com"
     local -r updatePath="FluxionNetwork/fluxion/archive/master.zip"
     if installer_utils_check_update "https://$fluxionDomain/$fluxionPath" \
       "FLUXIONVersion=" "FLUXIONRevision=" \
       $FLUXIONVersion $FLUXIONRevision; then
       if installer_utils_run_update "https://$updateDomain/$updatePath" \
-        "FLUXION-V$FLUXIONVersion.$FLUXIONRevision" "$FLUXIONPath"; then
+        "CAPCAPWIFI-V$FLUXIONVersion.$FLUXIONRevision" "$FLUXIONPath"; then
         fluxion_shutdown
       fi
     fi
@@ -474,7 +484,7 @@ fluxion_startup() {
     done
     if [ $FLUXIONMissingDependencies -eq 1 ]  && [ $FLUXIONSkipDependencies -eq 1 ];then
         echo -e "\n\n"
-        format_center_literals "[ ${CSRed}Missing dependencies: try to install using ./fluxion.sh -i${CClr} ]"
+        format_center_literals "[ ${CSRed}Missing dependencies: try to install using ./capcapwifi.sh -i${CClr} ]"
         echo -e "$FormatCenterLiterals"; sleep 3
 
         exit 7
@@ -1018,7 +1028,7 @@ fluxion_header() {
   format_apply_autosize "[%*s]\n"
   local verticalBorder=$FormatApplyAutosize
 
-  format_apply_autosize "[%*s${CSRed}FLUXION $FLUXIONVersion${CSWht}.${CSBlu}$FLUXIONRevision$CSRed    <$CIRed F${CIYel}luxion$CIRed I${CIYel}s$CIRed T${CIYel}he$CIRed F${CIYel}uture$CClr$CSYel >%*s$CSBlu]\n"
+  format_apply_autosize "[%*s${CSRed}CAPCAPWIFI $FLUXIONVersion${CSWht}.${CSBlu}$FLUXIONRevision$CSRed    <$CIRed C${CIYel}apture$CIRed T${CIYel}he$CIRed W${CIYel}iFi$CClr$CSYel >%*s$CSBlu]\n"
   local headerTextFormat="$FormatApplyAutosize"
 
   fluxion_conditional_clear
@@ -3317,7 +3327,7 @@ fluxion_scan_only() {
 }
 
 # ============================================================ #
-# ===================== < FLUXION Loop > ===================== #
+# ===================== < CAPCAPWIFI Loop > ===================== #
 # ============================================================ #
 fluxion_main() {
   # If scan-only mode, run the scan and exit.

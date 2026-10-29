@@ -1,8 +1,8 @@
-.TH FLUXION 1 "MARCH 2026" Linux "User Manuals"
+.TH CAPCAPWIFI 1 "MARCH 2026" Linux "User Manuals"
 .SH NAME
-fluxion \- Fluxion is a security auditing and social-engineering research tool
+capcapwifi \- wireless auditing and captive-portal research toolkit
 .SH SYNOPSIS
-.B fluxion [-m] [--auto] [--scan-time
+.B capcapwifi [-m] [--auto] [--scan-time
 .I N
 .B ] [-l
 .I language
@@ -17,13 +17,13 @@ fluxion \- Fluxion is a security auditing and social-engineering research tool
 .B ]
 .I ...
 .SH DESCRIPTION
-.B fluxion
+.B capcapwifi
 is a security auditing and social-engineering research tool.
 It is a remake of linset by vk496 with less bugs and more
 functionality. The script attempts to retrieve the WPA/WPA2
 key from a target access point by means of a social engineering
 (phishing) attack. It's compatible with the latest release of Kali
-(rolling). Fluxion's attacks' setup is mostly manual,
+(rolling). CapCapWifi's attacks' setup is mostly manual,
 but auto-mode handles some of the attacks'
 setup parameters.
 .SH OPTIONS
@@ -34,13 +34,13 @@ Print help page and exit with 0.
 .IP "-m"
 Use tmux multiplexer instead of xterm. Enables headless
 operation without an X11/graphical session. If not already
-inside a tmux session, fluxion will re-exec itself inside
+inside a tmux session, capcapwifi will re-exec itself inside
 one. All sub-windows are opened as tmux windows instead of
 xterm terminals.
 .IP "--auto"
-Run fluxion in fully non-interactive auto mode. Every
+Run capcapwifi in fully non-interactive auto mode. Every
 interactive prompt auto-selects a sensible default. Implies
---killer (-k). In auto mode, fluxion runs one attack cycle
+--killer (-k). In auto mode, capcapwifi runs one attack cycle
 and exits (no looping). Best combined with -m for headless
 operation.
 .IP "--scan-time <seconds>"
@@ -91,14 +91,14 @@ up the rogue AP on 5 GHz channels (e.g. US, DE, JP).
 Default is US. The original domain is restored on exit.
 .IP "--timeout <minutes>"
 Maximum duration in minutes for the attack in auto mode.
-After this time the attack is stopped and fluxion exits.
+After this time the attack is stopped and capcapwifi exits.
 Default is no timeout (runs indefinitely until the attack
 succeeds or is interrupted).
 .IP "-k"
 Kill interfering wireless processes (NetworkManager, etc.)
 before allocating interfaces. Implied by --auto.
 .IP "-d"
-Run fluxion in debug mode.
+Run capcapwifi in debug mode.
 .IP "-r"
 Reload driver.
 .IP "-l <language>"
@@ -126,15 +126,15 @@ In auto mode, used to filter scan results.
 Define a certain jamming interface.
 .SH EXAMPLES
 .IP "List all nearby WPA networks (60-second scan):"
-sudo ./fluxion.sh -m --scan-only --scan-time 60
+sudo ./capcapwifi.sh -m --scan-only --scan-time 60
 .IP "List networks on channel 6 only:"
-sudo ./fluxion.sh -m --scan-only --scan-time 30 -c 6
+sudo ./capcapwifi.sh -m --scan-only --scan-time 30 -c 6
 .IP "Scan both 2.4 GHz and 5 GHz bands:"
-sudo ./fluxion.sh --scan-only --scan-time 30 --band abg
+sudo ./capcapwifi.sh --scan-only --scan-time 30 --band abg
 .IP "Headless, non-interactive, 15-second scan:"
-sudo ./fluxion.sh -m --auto -l en --scan-time 15
+sudo ./capcapwifi.sh -m --auto -l en --scan-time 15
 .IP "Headless with specific target:"
-sudo ./fluxion.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
+sudo ./capcapwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
 .SH FILES
 .I /tmp/fluxspace/
 .RS
@@ -146,16 +146,15 @@ Folder where handshakes and passwords are stored in.
 .RE
 .SH ENVIRONMENT
 .IP FLUXIONAuto
-Automatically run fluxion in auto mode if exported.
+Automatically run capcapwifi in auto mode if exported.
 .IP FLUXIONDebug
-Automatically run fluxion in debug mode if exported.
+Automatically run capcapwifi in debug mode if exported.
 .IP FLUXIONWIKillProcesses
 Automatically kill any interfering process(es).
 .SH DIAGNOSTICS
 Please checkout the other log files or use the debug mode.
 .SH BUGS
-Please report any bugs at:
-https://github.com/FluxionNetwork/fluxion/issues
+Please report bugs through the issue tracker of the repository you cloned.
 .SH AUTHOR
 Cyberfee, l3op, dlinkproto, vk496, MPX4132
 .SH "SEE ALSO"

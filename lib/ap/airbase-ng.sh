@@ -89,7 +89,7 @@ function ap_service_start() {
   ap_service_stop
 
   fluxion_window_open APServiceXtermPID \
-    "FLUXION AP Service [airbase-ng]" "$TOP" "#000000" "#FFFFFF" \
+    "CAPCAPWIFI AP Service [airbase-ng]" "$TOP" "#000000" "#FFFFFF" \
     "airbase-ng -P -e $APServiceSSID -c $APServiceChannel -a $APServiceMAC $APServiceInterface"
 
   # Wait till airbase-ng starts and creates the extra virtual interface.

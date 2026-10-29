@@ -34,20 +34,20 @@ echo "\$*" >> "$KILLALL_LOG"
 EOF
 chmod +x "$FAKEBIN_DIR/killall"
 
-# Extract the conflicting-process cleanup loop straight out of fluxion.sh so
+# Extract the conflicting-process cleanup loop straight out of capcapwifi.sh so
 # this test tracks the real implementation instead of a hand-copied stand-in.
 extract_cleanup_loop() {
   awk '
     /while IFS= read -r program; do/ { capture=1 }
     capture { print }
     capture && /done < <\(timeout 5 airmon-ng check/ { exit }
-  ' "$REPO_DIR/fluxion.sh"
+  ' "$REPO_DIR/capcapwifi.sh"
 }
 
 CLEANUP_LOOP=$(extract_cleanup_loop)
 
 if [ -z "$CLEANUP_LOOP" ]; then
-  fail "Could not locate the conflicting-process cleanup loop in fluxion.sh"
+  fail "Could not locate the conflicting-process cleanup loop in capcapwifi.sh"
   finish_tests
   exit $?
 fi

@@ -15,7 +15,7 @@ Note: All issues will instant closed if the issue template is not complete. Plea
 <!-- Provide a summary desciribing the problem you are experiencing. -->
 
 ##### What is the current behaviour?
-<!--fluxion crashes-->
+<!--capcapwifi crashes-->
 
 #### How to reproduce
 

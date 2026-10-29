@@ -32,7 +32,7 @@ FLUXIONTargettingAccessPointAboveNotice="A fluxus a fenti hozzáférési pontot 
 FLUXIONContinueWithTargetQuery="Folytatod ezzel a célpontal?"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONStartingScannerNotice="A szkennelés elindítása, kérlek várj... "
-FLUXIONStartingScannerTip="5 másodperccel a CÉLPONT megjelenése után zárd be a Fluxion szkenner ablakát (Ctrl + C)."
+FLUXIONStartingScannerTip="5 másodperccel a CÉLPONT megjelenése után zárd be a CapCapWifi szkenner ablakát (Ctrl + C)."
 FLUXIONPreparingScannerResultsNotice="Szkennelési eredmények feldolgozása, kérlek várj..."
 FLUXIONScannerFailedNotice="Vezeték nélküli kártyád lehet, hogy nem támogatott. Egyetlen WiFi adót sem találtam."
 FLUXIONScannerDetectedNothingNotice="Nem érzékeltem egyetlen WiFi adótállomást sem. Visszalépés..."
@@ -52,8 +52,8 @@ FLUXIONScannerChannelOptionSpecific="Specifikus csatorn(ák)"
 FLUXIONScannerChannelSingleTip="Egy csatorna"
 FLUXIONScannerChannelMiltipleTip="Tobb csatorna"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-FLUXIONScannerHeader="FLUXION szkenner"
-FLUXIONClientScannerHeader="FLUXION Client Scanner"
+FLUXIONScannerHeader="CAPCAPWIFI szkenner"
+FLUXIONClientScannerHeader="CAPCAPWIFI Client Scanner"
 FLUXIONTargetClientsListNotice="Clients associated with the target access point:"
 FLUXIONTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 FLUXIONTargetClientsAllOption="All observed clients (directed)"
@@ -100,7 +100,7 @@ FLUXIONRestoringTputNotice="Visszaállítás ${CGry}tput"
 FLUXIONDeletingFilesNotice="Fájlok ${CGry} trölése"
 FLUXIONRestartingNetworkManagerNotice="${CGry}Network-Manager helyreállítása"
 FLUXIONCleanupSuccessNotice="Takarítási folyamat sikeresen befejeződött!"
-FLUXIONThanksSupportersNotice="Köszönom, hogy használtad a FLUXION programot!"
+FLUXIONThanksSupportersNotice="Köszönom, hogy használtad a CAPCAPWIFI programot!"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # FLUXSCRIPT END

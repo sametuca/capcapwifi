@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Fluxion Diagnostics Script
+# capcapwifi diagnostics script
 # Collects system, tool, and wireless adapter information for troubleshooting.
 # Usage: sudo bash scripts/diagnostics.sh [wireless_interface]
 # If no interface is given, all wireless interfaces are diagnosed.
@@ -31,12 +31,12 @@ cmd_version() {
 
 # Resolve fluxion root directory.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/../fluxion.sh" ]; then
+if [ -f "$SCRIPT_DIR/../capcapwifi.sh" ]; then
 	FLUXION_ROOT="$SCRIPT_DIR/.."
-elif [ -f "./fluxion.sh" ]; then
+elif [ -f "./capcapwifi.sh" ]; then
 	FLUXION_ROOT="."
 else
-	echo "Error: cannot find fluxion.sh. Run from the fluxion directory or scripts/." >&2
+	echo "Error: cannot find capcapwifi.sh. Run from the fluxion directory or scripts/." >&2
 	exit 1
 fi
 
@@ -46,10 +46,10 @@ if source "$FLUXION_ROOT/lib/InterfaceUtils.sh" 2>/dev/null; then
 	HAS_IFACE_UTILS=1
 fi
 
-# ── Fluxion ──────────────────────────────────────────────────────────────────
-section "Fluxion"
-fluxion_version=$(grep -oP 'FLUXIONVersion=\K[0-9]+' "$FLUXION_ROOT/fluxion.sh" 2>/dev/null)
-fluxion_revision=$(grep -oP 'FLUXIONRevision=\K[0-9]+' "$FLUXION_ROOT/fluxion.sh" 2>/dev/null)
+# ── CapCapWifi ──────────────────────────────────────────────────────────────────
+section "CapCapWifi"
+fluxion_version=$(grep -oP 'FLUXIONVersion=\K[0-9]+' "$FLUXION_ROOT/capcapwifi.sh" 2>/dev/null)
+fluxion_revision=$(grep -oP 'FLUXIONRevision=\K[0-9]+' "$FLUXION_ROOT/capcapwifi.sh" 2>/dev/null)
 item "Version" "${fluxion_version:-?}.${fluxion_revision:-?}"
 item "Path" "$(cd "$FLUXION_ROOT" && pwd)"
 if command -v git &>/dev/null && [ -d "$FLUXION_ROOT/.git" ]; then

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fluxion cleanup script — kills any lingering state from a forced termination.
+# capcapwifi cleanup script — kills any lingering state from a forced termination.
 # Run as root from anywhere: sudo bash /path/to/fluxion/scripts/cleanup.sh
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -8,16 +8,16 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 echo "[*] Killing fluxion processes..."
-pkill -SIGINT -f "fluxion.sh" 2>/dev/null
+pkill -SIGINT -f "capcapwifi.sh" 2>/dev/null
 sleep 2
-pkill -9 -f "fluxion.sh" 2>/dev/null
+pkill -9 -f "capcapwifi.sh" 2>/dev/null
 
 echo "[*] Killing attack service processes..."
 for proc in hostapd dnsmasq lighttpd kea-dhcp4 php-cgi airodump-ng aireplay-ng mdk4 airbase-ng; do
 	pkill -9 "$proc" 2>/dev/null && echo "    killed $proc"
 done
 
-echo "[*] Killing FLUXION tmux sessions..."
+echo "[*] Killing CAPCAPWIFI tmux sessions..."
 for session in $(tmux ls 2>/dev/null | grep -oE '^FLUXION[^:]*'); do
 	tmux kill-session -t "$session" 2>/dev/null && echo "    killed tmux session $session"
 done
@@ -60,7 +60,7 @@ echo "[*] Cleaning up workspace..."
 rm -rf /tmp/fluxspace/ 2>/dev/null && echo "    /tmp/fluxspace/ removed"
 
 echo "[*] Restoring iptables..."
-# Fluxion saves iptables backup at <fluxion_dir>/iptables-rules
+# capcapwifi saves iptables backup at <fluxion_dir>/iptables-rules
 _script_dir="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 _iptables_bak="$_script_dir/iptables-rules"
 if [ -f "$_iptables_bak" ]; then

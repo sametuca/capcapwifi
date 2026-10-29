@@ -3,7 +3,7 @@
 if [ "$SandboxUtilsVersion" ]; then return 0; fi
 readonly SandboxUtilsVersion="1.0"
 
-# Respect values already provided by the caller (fluxion.sh assigns the real
+# Respect values already provided by the caller (capcapwifi.sh assigns the real
 # workspace path right after sourcing this file, and tests point both of these
 # at a scratch directory).
 SandboxWorkspacePath="${SandboxWorkspacePath:-/tmp/sandbox}"

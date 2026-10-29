@@ -90,22 +90,22 @@ attacks/Handshake Snooper/language/tur.sh:SC2034
 attacks/Handshake Snooper/language/tur.sh:SC2154
 attacks/Handshake Snooper/language/zh.sh:SC2034
 attacks/Handshake Snooper/language/zh.sh:SC2154
-fluxion.sh:SC1087
-fluxion.sh:SC1090
-fluxion.sh:SC2027
-fluxion.sh:SC2034
-fluxion.sh:SC2046
-fluxion.sh:SC2090
-fluxion.sh:SC2128
-fluxion.sh:SC2145
-fluxion.sh:SC2152
-fluxion.sh:SC2154
-fluxion.sh:SC2155
-fluxion.sh:SC2166
-fluxion.sh:SC2174
-fluxion.sh:SC2178
-fluxion.sh:SC2184
-fluxion.sh:SC2294
+capcapwifi.sh:SC1087
+capcapwifi.sh:SC1090
+capcapwifi.sh:SC2027
+capcapwifi.sh:SC2034
+capcapwifi.sh:SC2046
+capcapwifi.sh:SC2090
+capcapwifi.sh:SC2128
+capcapwifi.sh:SC2145
+capcapwifi.sh:SC2152
+capcapwifi.sh:SC2154
+capcapwifi.sh:SC2155
+capcapwifi.sh:SC2166
+capcapwifi.sh:SC2174
+capcapwifi.sh:SC2178
+capcapwifi.sh:SC2184
+capcapwifi.sh:SC2294
 language/ar.sh:SC2034
 language/ar.sh:SC2154
 language/cs.sh:SC2034

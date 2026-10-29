@@ -25,7 +25,7 @@ run_fluxion() {
       FLUXIONWorkspacePath="$TEST_RUNTIME_DIR/fluxspace" \
       FLUXIONPreferencesFile="$TEST_RUNTIME_DIR/preferences.conf" \
       InstallerUtilsInstalledPackagesFile="$TEST_RUNTIME_DIR/installed_packages.list" \
-      bash "$REPO_DIR/fluxion.sh" "$@"
+      bash "$REPO_DIR/capcapwifi.sh" "$@"
 
   FLUXION_STDOUT=$stdout_value
   FLUXION_STDERR=$stderr_value
@@ -36,8 +36,8 @@ EXPECTED_VERSION=$(
   awk -F= '
     /^readonly FLUXIONVersion=/ { version=$2 }
     /^readonly FLUXIONRevision=/ { revision=$2 }
-    END { print "FLUXION V" version "." revision }
-  ' "$REPO_DIR/fluxion.sh"
+    END { print "CAPCAPWIFI V" version "." revision }
+  ' "$REPO_DIR/capcapwifi.sh"
 )
 
 FAKEBIN_DIR="$TEST_RUNTIME_DIR/fakebin"

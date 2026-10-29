@@ -28,11 +28,11 @@ FLUXIONTargetTrackerInterfaceQueryTip="${CSYel}Ayrı bir kablosuz arabirimi seç
 FLUXIONTargetTrackerInterfaceQueryTip2="${CBRed}Eğer emin değilseniz, \"${CBYel}Atla${CBRed}\" seçin!$CClr"
 FLUXIONTargetTrackerInterfaceUnsupportedError="The target tracker interface can't see the target's band (5GHz). Pass --tracker-interface with a 5GHz-capable card, or omit it to skip tracking."
 FLUXIONIncompleteTargettingInfoNotice="ESSID, BSSID veya kanal bilgisi kayıp!"
-FLUXIONTargettingAccessPointAboveNotice="Fluxion yukarıdaki access point'i hedefliyor."
+FLUXIONTargettingAccessPointAboveNotice="CapCapWifi yukarıdaki access point'i hedefliyor."
 FLUXIONContinueWithTargetQuery="Bu hedefle devam edilsin mi?"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONStartingScannerNotice="Tarayıcı başlatılıyor, lütfen bekleyiniz..."
-FLUXIONStartingScannerTip="Hedef access point'i gördükten 5 saniye sonra Fluxion Tarayıcısını kapatınız (ctrl+c)."
+FLUXIONStartingScannerTip="Hedef access point'i gördükten 5 saniye sonra CapCapWifi Tarayıcısını kapatınız (ctrl+c)."
 FLUXIONPreparingScannerResultsNotice="Tarama sonuçları sentezleniyor, lütfen bekleyiniz..."
 FLUXIONScannerFailedNotice="Kullandığınız kablosuz cihaz desteklenmiyor olabilir(Hiçbir access point bulunamadı)."
 FLUXIONScannerDetectedNothingNotice="Hiç access point bulunamadı, geri dönülüyor..."
@@ -52,8 +52,8 @@ FLUXIONScannerChannelOptionSpecific="Spesifik kanalda ara"
 FLUXIONScannerChannelSingleTip="Tek Kanal"
 FLUXIONScannerChannelMiltipleTip="Birden fazla kanal"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-FLUXIONScannerHeader="FLUXION Tarayıcısı"
-FLUXIONClientScannerHeader="FLUXION Client Scanner"
+FLUXIONScannerHeader="CAPCAPWIFI Tarayıcısı"
+FLUXIONClientScannerHeader="CAPCAPWIFI Client Scanner"
 FLUXIONTargetClientsListNotice="Clients associated with the target access point:"
 FLUXIONTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 FLUXIONTargetClientsAllOption="All observed clients (directed)"
@@ -100,7 +100,7 @@ FLUXIONRestoringTputNotice="${CGry}tput$CClr restore ediliyor"
 FLUXIONDeletingFilesNotice="Gereksiz ${CGry}dosyalar$CClr siliniyor"
 FLUXIONRestartingNetworkManagerNotice="${CGry}Network-Manager$CClr tekrar başlatılıyor"
 FLUXIONCleanupSuccessNotice="Temizlik başarıyla tamamlandı"
-FLUXIONThanksSupportersNotice="Fluxion'ı tercih ettiğiniz için teşekkürler!"
+FLUXIONThanksSupportersNotice="CapCapWifi'ı tercih ettiğiniz için teşekkürler!"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # FLUXSCRIPT END

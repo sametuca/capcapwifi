@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Uninstall packages that Fluxion installed, without touching pre-existing ones.
+# Uninstall packages that CapCapWifi installed, without touching pre-existing ones.
 set -euo pipefail
 
 readonly FLUXIONPath=$(dirname "$(readlink -f "$0")")
@@ -12,7 +12,7 @@ if [ $EUID -ne 0 ]; then
 fi
 
 if [ ! -s "$InstallerUtilsInstalledPackagesFile" ]; then
-  echo "No recorded Fluxion-installed packages to uninstall." >&2
+  echo "No recorded CapCapWifi-installed packages to uninstall." >&2
   exit 0
 fi
 
@@ -48,7 +48,7 @@ while IFS= read -r entry; do
   fi
 
   if installer_utils_package_installed "$pkg"; then
-    echo "Removing $pkg (installed by Fluxion)" >&2
+    echo "Removing $pkg (installed by CapCapWifi)" >&2
     $PackageManagerCLT $PackageManagerCLTRemoveOptions "$pkg" || true
   fi
 
@@ -57,6 +57,6 @@ done < "$InstallerUtilsInstalledPackagesFile"
 # Cleanup record so repeated runs don't keep trying the same packages.
 > "$InstallerUtilsInstalledPackagesFile"
 
-echo "Fluxion uninstall process finished." >&2
+echo "CapCapWifi uninstall process finished." >&2
 
 # FLUXSCRIPT END

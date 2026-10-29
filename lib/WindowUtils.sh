@@ -33,8 +33,8 @@ fluxion_window_init() {
 		export LC_ALL=C.UTF-8
 
 		# If already inside tmux (either we just re-execed or user ran inside tmux),
-		# rename the session to FLUXION for consistency.
-		tmux rename-session FLUXION 2>/dev/null
+		# rename the session to CAPCAPWIFI for consistency.
+		tmux rename-session CAPCAPWIFI 2>/dev/null
 
 		# Enable mouse support (scrolling, pane selection).
 		tmux set-option -g mouse on 2>/dev/null
@@ -167,10 +167,10 @@ fluxion_window_close() {
 }
 
 # fluxion_window_cleanup
-# Kills the entire FLUXION tmux session at shutdown.
+# Kills the entire CAPCAPWIFI tmux session at shutdown.
 fluxion_window_cleanup() {
 	if [ "$FLUXIONDisplayMode" = "tmux" ]; then
-		# Kill all windows in the FLUXION session except the current one
+		# Kill all windows in the CAPCAPWIFI session except the current one
 		local currentWindow
 		currentWindow=$(tmux display-message -p '#{window_id}' 2>/dev/null)
 

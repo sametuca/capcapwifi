@@ -53,7 +53,7 @@ FLUXIONScannerChannelSingleTip="قناة واحدة"
 FLUXIONScannerChannelMiltipleTip="قنوات متعددة"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONScannerHeader="ماسح فلاكسيون"
-FLUXIONClientScannerHeader="FLUXION Client Scanner"
+FLUXIONClientScannerHeader="CAPCAPWIFI Client Scanner"
 FLUXIONTargetClientsListNotice="Clients associated with the target access point:"
 FLUXIONTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 FLUXIONTargetClientsAllOption="All observed clients (directed)"

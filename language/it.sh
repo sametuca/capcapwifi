@@ -28,11 +28,11 @@ FLUXIONTargetTrackerInterfaceQueryTip="${CSYel}Dovresti scegliere un interfaccia
 FLUXIONTargetTrackerInterfaceQueryTip2="${CBRed}Se non sei sicuro di quello che stai facendo (o non necessiti di questa funzionalita'), seleziona \"${CBYel}Skip${CBRed}\"!$CClr"
 FLUXIONTargetTrackerInterfaceUnsupportedError="The target tracker interface can't see the target's band (5GHz). Pass --tracker-interface with a 5GHz-capable card, or omit it to skip tracking."
 FLUXIONIncompleteTargettingInfoNotice="Missing ESSID, BSSID, or channel information!"
-FLUXIONTargettingAccessPointAboveNotice="Fluxion is targetting the access point above."
+FLUXIONTargettingAccessPointAboveNotice="CapCapWifi is targetting the access point above."
 FLUXIONContinueWithTargetQuery="Vuoi continuare con questo target?"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONStartingScannerNotice="Avvio Scanner, attendi..."
-FLUXIONStartingScannerTip="Five seconds after the target AP appears, close the FLUXION Scanner (ctrl+c)."
+FLUXIONStartingScannerTip="Five seconds after the target AP appears, close the CAPCAPWIFI Scanner (ctrl+c)."
 FLUXIONPreparingScannerResultsNotice="Sintetizzo i risultati dello scan, attendi..."
 FLUXIONScannerFailedNotice="La scheda Wireless non è supportata (nessun APs trovato)"
 FLUXIONScannerDetectedNothingNotice="Nessun Access Point e' stato trovato, ritorno..."
@@ -53,7 +53,7 @@ FLUXIONScannerChannelSingleTip="Canale Singolo"
 FLUXIONScannerChannelMiltipleTip="Canali Multipli"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONScannerHeader="WIFI Monitor"
-FLUXIONClientScannerHeader="FLUXION Client Scanner"
+FLUXIONClientScannerHeader="CAPCAPWIFI Client Scanner"
 FLUXIONTargetClientsListNotice="Clients associated with the target access point:"
 FLUXIONTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 FLUXIONTargetClientsAllOption="All observed clients (directed)"
@@ -100,7 +100,7 @@ FLUXIONRestoringTputNotice="Ripristino ${CGry}tput"
 FLUXIONDeletingFilesNotice="Cancello ${CGry}files"
 FLUXIONRestartingNetworkManagerNotice="Riavvio il ${CGry}Network-Manager"
 FLUXIONCleanupSuccessNotice="Pulizia avvenuta con successo!"
-FLUXIONThanksSupportersNotice="Grazie per aver utilizzato Fluxion"
+FLUXIONThanksSupportersNotice="Grazie per aver utilizzato CapCapWifi"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # FLUXSCRIPT END

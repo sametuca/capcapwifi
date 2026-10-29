@@ -1,6 +1,6 @@
 ---
 name: Improvement
-about: You have some improvement to make Fluxion better?
+about: You have some improvement to make capcapwifi better?
 ---
 
 ### Improvement
