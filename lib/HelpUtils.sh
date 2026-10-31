@@ -159,7 +159,7 @@ capcap_help(){
          -j <jamming interface>
                 Define a certain jamming interface.
 
-         -a <access point interface>
+         --ap-interface <access point interface>
                 Define a certain access point interface.
 
   EXAMPLES
