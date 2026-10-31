@@ -42,12 +42,9 @@ FLUXIONTargetListEmptyFiltered="Every network on this channel already has a hand
 FLUXIONTargetListEmptyFilteredHint="Scan another channel, or delete the saved handshakes first."
 FLUXIONTargetListEmptyNone="No networks were found on this channel."
 
-FLUXIONDeauthMethodQuery="Select a method of deauthentication"
-FLUXIONDeauthMethodMdk4="Faster: knocks every connected device off at once."
-FLUXIONDeauthMethodAireplay="Classic aircrack-ng tool: drops devices one at a time, slower but more predictable."
-FLUXIONDeauthMethodRecommended="recommended"
-FLUXIONDeauthMethodInvalid="Please type 1 or 2."
-FLUXIONDeauthMethodAutoSelected="Auto-selected deauthentication method: %s"
+FLUXIONDeauthMethodUsing="Deauthentication method: %s"
+FLUXIONDeauthMethodOverrideTip="Want the other one? Start with --deauth-method %s."
+FLUXIONDeauthMethodUnknown="Unknown --deauth-method '%s', using aireplay-ng."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONStartingScannerNotice="Starting scanner, please wait..."
 FLUXIONStartingScannerTip="Five seconds after the target AP appears, close the CAPCAPWIFI Scanner (ctrl+c)."

@@ -79,12 +79,9 @@ check_required_variables \
   FLUXIONTargetListFilteredNotice \
   FLUXIONTargetListEmptyFiltered \
   FLUXIONTargetListEmptyNone \
-  FLUXIONDeauthMethodQuery \
-  FLUXIONDeauthMethodMdk4 \
-  FLUXIONDeauthMethodAireplay \
-  FLUXIONDeauthMethodRecommended \
-  FLUXIONDeauthMethodInvalid \
-  FLUXIONDeauthMethodAutoSelected
+  FLUXIONDeauthMethodUsing \
+  FLUXIONDeauthMethodOverrideTip \
+  FLUXIONDeauthMethodUnknown
 
 finish_tests
 

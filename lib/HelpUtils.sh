@@ -90,13 +90,12 @@ fluxion_help(){
                 radar/CAC support that USB adapters lack.
 
          --deauth-method <mdk4|aireplay-ng>
-                Override the deauthentication method used by auto mode
-                (Captive Portal and Handshake Snooper attacks). Default is
-                aireplay-ng. Note mdk4's \"d\" mode only sends deauth packets
-                once it observes live data traffic from a client, and stays
-                silent until then; pass mdk4 once that upstream issue is
-                fixed, or if you specifically want its traffic-triggered
-                behavior.
+                Pick the deauthentication method (Captive Portal and
+                Handshake Snooper attacks). Default is aireplay-ng, which is
+                chosen without asking. Note mdk4's \"d\" mode only sends deauth
+                packets once it observes live data traffic from a client, and
+                stays silent until then; use it when you specifically want its
+                traffic-triggered behavior.
 
          --kill-exclude <name[,name...]>
                 Comma-separated list of process names to spare when killer

@@ -42,12 +42,9 @@ FLUXIONTargetListEmptyFiltered="Bu kanaldaki tüm ağların handshake'i zaten va
 FLUXIONTargetListEmptyFilteredHint="Başka bir kanal tara ya da kayıtlı handshake'leri sil."
 FLUXIONTargetListEmptyNone="Bu kanalda hiç ağ bulunamadı."
 
-FLUXIONDeauthMethodQuery="Deauth (bağlantı kesme) yöntemi seç"
-FLUXIONDeauthMethodMdk4="Daha hızlı: hedefe bağlı tüm cihazları aynı anda düşürür."
-FLUXIONDeauthMethodAireplay="Klasik aircrack-ng aracı: cihazları tek tek düşürür, yavaş ama daha öngörülebilir."
-FLUXIONDeauthMethodRecommended="önerilen"
-FLUXIONDeauthMethodInvalid="Lütfen 1 veya 2 yaz."
-FLUXIONDeauthMethodAutoSelected="Deauth yöntemi otomatik seçildi: %s"
+FLUXIONDeauthMethodUsing="Deauth yöntemi: %s"
+FLUXIONDeauthMethodOverrideTip="Diğerini istersen: --deauth-method %s ile başlat."
+FLUXIONDeauthMethodUnknown="Bilinmeyen --deauth-method değeri '%s', aireplay-ng kullanılıyor."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONStartingScannerNotice="Tarayıcı başlatılıyor, lütfen bekleyiniz..."
 FLUXIONStartingScannerTip="Hedef access point'i gördükten 5 saniye sonra CapCapWifi Tarayıcısını kapatınız (ctrl+c)."

@@ -379,40 +379,36 @@ function captive_portal_set_deauth_method() {
 
   captive_portal_unset_deauth_method
 
-  if [ "$FLUXIONAuto" ]; then
-    if [ "$FLUXIONDeauthMethod" = "mdk4" ]; then
+  # There is a right answer here, so there is no question. mdk4 stays silent
+  # until it sees live client traffic and some adapters never let it get that
+  # far; aireplay-ng works on everything. Choosing it for the operator removes
+  # a screen, and removes the chance of an empty answer leaving the attack
+  # running with no deauthentication at all.
+  local methodName="aireplay-ng"
+  case "${FLUXIONDeauthMethod:-}" in
+    mdk4)
       option_deauth=1
-    else
-      option_deauth=2  # Default to aireplay-ng in auto mode until mdk4's traffic-wait issue is fixed upstream.
-    fi
-    # shellcheck disable=SC2059
-    echo -e "$FLUXIONVLine $(printf "${FLUXIONDeauthMethodAutoSelected:-Auto-selected deauthentication method: %s}" \
-      "$([ "$option_deauth" = 1 ] && echo mdk4 || echo aireplay-ng)")"
-  else
-    fluxion_header
+      methodName="mdk4"
+      ;;
+    "" | aireplay | aireplay-ng)
+      option_deauth=2
+      ;;
+    *)
+      # shellcheck disable=SC2059
+      echo -e "$FLUXIONVLine $(printf "${FLUXIONDeauthMethodUnknown:-Unknown --deauth-method '%s', using aireplay-ng.}" \
+        "$FLUXIONDeauthMethod")" >&2
+      option_deauth=2
+      ;;
+  esac
 
-    echo -e "$FLUXIONVLine ${CClr}${FLUXIONDeauthMethodQuery:-Select a method of deauthentication}${CClr}\n"
-    echo -e "${CSRed}[${CSYel}1${CSRed}]${CClr} mdk4${CClr}"
-    echo -e "    ${FLUXIONDeauthMethodMdk4:-Faster: knocks every connected device off at once.}"
-    echo
-    echo -e "${CSRed}[${CSYel}2${CSRed}]${CClr} aireplay-ng ${CGrn}(${FLUXIONDeauthMethodRecommended:-recommended})${CClr}"
-    echo -e "    ${FLUXIONDeauthMethodAireplay:-Classic aircrack-ng tool: drops devices one at a time, slower but more predictable.}"
-    echo
-
-    local __deauthPrompt
-    __deauthPrompt=$'\e[0;31m[\e[1;34mcapcapwifi\e[1;33m@\e[1;37m'"$HOSTNAME"$'\e[0;31m]\e[0;31m-\e[0;31m[\e[1;33m~\e[0;31m] \e[0m'
-
-    while :; do
-      read -p "$__deauthPrompt" option_deauth
-      case "$option_deauth" in
-        1 | 2) break ;;
-        # Enter alone takes the recommended method instead of ending the
-        # attack on an empty answer.
-        "") option_deauth=2; break ;;
-        *) echo -e "${CRed}${FLUXIONDeauthMethodInvalid:-Please type 1 or 2.}${CClr}" ;;
-      esac
-    done
-  fi
+  echo
+  # shellcheck disable=SC2059
+  echo -e "$FLUXIONVLine $(printf "${FLUXIONDeauthMethodUsing:-Deauthentication method: %s}" "$methodName")"
+  local otherMethod="aireplay-ng"
+  [ "$option_deauth" = 2 ] && otherMethod="mdk4"
+  # shellcheck disable=SC2059
+  echo -e "$FLUXIONVLine ${CClr}$(printf "${FLUXIONDeauthMethodOverrideTip:-Want the other one? Start with --deauth-method %s.}" \
+    "$otherMethod")${CClr}"
 
   CaptivePortalJammerType="$option_deauth"
 }

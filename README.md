@@ -83,8 +83,11 @@ The banner appears, then the first prompt:
 | **Wireless interface** | The adapter in monitor mode, usually `wlan0`. `--list-interfaces` shows the names. |
 | **Attack** | `Handshake Snooper` to capture a WPA handshake, `Captive Portal` to serve a login page. |
 | **Target AP** | A scan list appears. Green rows have at least one device connected — those are the useful ones. Type the number and press Enter. |
-| **Deauthentication method** | `aireplay-ng` (recommended) or `mdk4`; the screen explains the difference. Enter alone picks the recommended one. |
 | **Captive Portal: portal site** | The language/design pair, e.g. `Instagram_tur`. |
+
+The deauthentication method is not a question any more: `aireplay-ng` is used,
+because it behaves the same on every adapter. If your setup works better with
+`mdk4`, start with `--deauth-method mdk4` and the tool uses that instead.
 
 **5. Watch the result.** Both modules write into `/tmp/fluxspace`, which is
 wiped on exit:
