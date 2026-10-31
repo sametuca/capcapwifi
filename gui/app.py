@@ -37,6 +37,8 @@ except Exception:
 
 # Local modules
 import i18n
+import updater
+from tkinter import messagebox
 from i18n import t
 from controller import CapCapWifiController
 from models import (
@@ -558,6 +560,8 @@ class CapCapWifiApp(ctk.CTk):
         self.after(150, self._maximize)
         self.after(200, lambda: self._ctrl.check_environment())
         self.after(500, self._refresh_handshake_archive)
+        self._upd_status = None
+        self.after(900, lambda: self._check_updates(manual=False))
 
     # ── Pencere yerleşimi / efektler ────────────────────────────
 
@@ -644,8 +648,11 @@ class CapCapWifiApp(ctk.CTk):
         self._lang_switch.pack(side="right", padx=(0, 6), pady=12)
         self._lang_switch.set("TR" if i18n.get_language() == "tr" else "EN")
 
-        ctk.CTkFrame(self, fg_color=ACCENT, height=2,
-                     corner_radius=0).pack(fill="x")
+        accent_line = ctk.CTkFrame(self, fg_color=ACCENT, height=2,
+                                   corner_radius=0)
+        accent_line.pack(fill="x")
+        self._accent_line = accent_line
+        self._build_update_bar()
 
         steps = tuple(t(f"step.{key}") for key in
                       ("adapter", "scan", "target", "attack", "result"))
@@ -771,6 +778,12 @@ class CapCapWifiApp(ctk.CTk):
                       border_width=1, text_color=TEXT_SEC,
                       hover_color=CARD_HOVER,
                       font=FONT_UI).pack(side="right")
+        ctk.CTkButton(head, text="⬆", width=30, height=26,
+                      command=lambda: self._check_updates(manual=True),
+                      fg_color="transparent", border_color=ACCENT2,
+                      border_width=1, text_color=ACCENT2,
+                      hover_color=ACCENT2_DIM,
+                      font=FONT_UI).pack(side="right", padx=(0, 6))
         self._btn_install = ctk.CTkButton(
             head, text=f"📦 {t('app.health.install')}", width=118, height=26,
             command=self._start_install, fg_color="transparent",
@@ -860,6 +873,10 @@ class CapCapWifiApp(ctk.CTk):
             self._next_step_guide.set_handshake(guide_hf)
             self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
 
+        if self._upd_status is not None and getattr(self._upd_status, "behind", 0) > 0:
+            self._update_bar_label.configure(
+                text="⬆  " + t("update.available", count=self._upd_status.behind))
+            self._show_update_bar()
         self._set_step(self._step)
         self._update_status(self._state)
 
@@ -1101,6 +1118,104 @@ class CapCapWifiApp(ctk.CTk):
         self._config_panel.clear_target()
         self._set_step(1 if self._ctrl.candidates else 0)
         self._refresh_hint()
+
+    # ── Güncelleme (git) ─────────────────────────────────────────
+
+    def _build_update_bar(self) -> None:
+        """Üstteki güncelleme bildirim şeridi — yalnızca güncelleme varken görünür."""
+        self._update_bar = ctk.CTkFrame(self, fg_color=ACCENT2_DIM,
+                                        corner_radius=0)
+        inner = ctk.CTkFrame(self._update_bar, fg_color="transparent")
+        inner.pack(fill="x", padx=16, pady=7)
+        self._update_bar_label = ctk.CTkLabel(
+            inner, text="", font=FONT_UI_B, text_color=ACCENT2, anchor="w")
+        self._update_bar_label.pack(side="left")
+        ctk.CTkButton(
+            inner, text=t("update.btn_later"), width=76, height=26,
+            command=self._hide_update_bar, fg_color="transparent",
+            hover_color=CARD_HOVER, border_width=1, border_color=BORDER,
+            text_color=TEXT_SEC, corner_radius=8,
+            font=FONT_UI_SB).pack(side="right")
+        ctk.CTkButton(
+            inner, text=t("update.btn_now"), width=130, height=26,
+            command=self._do_update, fg_color=ACCENT, text_color=DARK_BG,
+            hover_color=ACCENT_DK, corner_radius=8,
+            font=FONT_UI_B).pack(side="right", padx=(0, 8))
+        # başlangıçta gizli; _apply_update_status/_show_update_bar gösterir
+
+    def _show_update_bar(self) -> None:
+        try:
+            self._update_bar.pack(fill="x", after=self._accent_line)
+        except Exception:
+            self._update_bar.pack(fill="x")
+
+    def _hide_update_bar(self) -> None:
+        try:
+            self._update_bar.pack_forget()
+        except Exception:
+            pass
+
+    def _check_updates(self, manual: bool = True) -> None:
+        if manual:
+            self._log_panel.append(t("update.checking"), "info")
+
+        def _work():
+            status = updater.check_for_update()
+            self.after(0, self._apply_update_status, status, manual)
+
+        threading.Thread(target=_work, daemon=True).start()
+
+    def _apply_update_status(self, status, manual: bool = False) -> None:
+        self._upd_status = status
+        if not getattr(self, "_ui_ready", False):
+            return
+        if not status.is_repo:
+            if manual:
+                self._log_panel.append(t("update.not_repo"), "warn")
+            return
+        if not status.ok:
+            if manual:
+                self._log_panel.append(t("update.error", msg=status.message), "warn")
+            return
+        if status.behind > 0:
+            self._update_bar_label.configure(
+                text="⬆  " + t("update.available", count=status.behind))
+            self._show_update_bar()
+            self._log_panel.append(t("update.available", count=status.behind), "info")
+        else:
+            self._hide_update_bar()
+            if manual:
+                self._log_panel.append(t("update.uptodate"), "success")
+
+    def _do_update(self) -> None:
+        if self._ctrl.is_busy:
+            return
+        if not messagebox.askyesno(t("update.confirm.title"),
+                                   t("update.confirm.body")):
+            return
+        self._hide_update_bar()
+        self._log_panel.append(t("update.doing"), "info")
+
+        def _work():
+            result = updater.apply_update()
+            self.after(0, self._after_update, result)
+
+        threading.Thread(target=_work, daemon=True).start()
+
+    def _after_update(self, result) -> None:
+        if result.ok:
+            self._log_panel.append(t("update.done"), "success")
+            try:
+                messagebox.showinfo(t("update.confirm.title"), t("update.done"))
+            except Exception:
+                pass
+        else:
+            self._log_panel.append(t("update.failed", msg=result.message), "error")
+            try:
+                messagebox.showerror(t("update.confirm.title"),
+                                     t("update.failed", msg=result.message))
+            except Exception:
+                pass
 
     # ── State / hint sync ───────────────────────────────────────
 

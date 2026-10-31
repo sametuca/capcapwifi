@@ -753,6 +753,36 @@ döndürüldü. Arka planda çalışan bir işlem yok.
 
 TRANSLATIONS: Dict[str, Dict[str, str]] = {"en": EN, "tr": TR}
 
+# ── updater (git tabanlı güncelleme) metinleri ──────────────────────
+EN.update({
+    "update.available": "Update available – {count} new commit(s) on GitHub",
+    "update.btn_now": "Update now",
+    "update.btn_later": "Later",
+    "update.checking": "Checking for updates…",
+    "update.uptodate": "You're on the latest version.",
+    "update.not_repo": "Auto-update needs a git clone; this folder isn't a git repo.",
+    "update.error": "Update check failed: {msg}",
+    "update.doing": "Updating from GitHub…",
+    "update.done": "Updated to the latest version. Please restart the app.",
+    "update.failed": "Update failed: {msg}",
+    "update.confirm.title": "Update",
+    "update.confirm.body": "This resets the app to the latest GitHub version and discards any local changes in this folder. Continue?",
+})
+TR.update({
+    "update.available": "Güncelleme mevcut – GitHub'da {count} yeni commit",
+    "update.btn_now": "Şimdi güncelle",
+    "update.btn_later": "Sonra",
+    "update.checking": "Güncellemeler kontrol ediliyor…",
+    "update.uptodate": "En güncel sürümdesin.",
+    "update.not_repo": "Otomatik güncelleme için git klonu gerekir; bu klasör bir git deposu değil.",
+    "update.error": "Güncelleme kontrolü başarısız: {msg}",
+    "update.doing": "GitHub'dan güncelleniyor…",
+    "update.done": "En son sürüme güncellendi. Lütfen uygulamayı yeniden başlat.",
+    "update.failed": "Güncelleme başarısız: {msg}",
+    "update.confirm.title": "Güncelle",
+    "update.confirm.body": "Bu işlem uygulamayı GitHub'daki en son sürüme sıfırlar ve bu klasördeki yerel değişiklikleri siler. Devam edilsin mi?",
+})
+
 _current: str = DEFAULT_LANGUAGE
 
 
