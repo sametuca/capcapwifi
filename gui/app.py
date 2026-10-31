@@ -53,18 +53,24 @@ from models import (
     WirelessInterface,
 )
 from widgets import (
-    ACCENT, ACCENT_DK, ACCENT_DIM, ACCENT2, ACCENT2_DIM, CARD_BG, CARD_HOVER,
-    DANGER, DANGER_DIM, DARK_BG, FONT_MONO_S, FONT_TITLE, FONT_UI,
-    FONT_UI_B, FONT_UI_S, FONT_UI_SB, MUTED, PANEL_BG, TEXT_PRI, TEXT_SEC,
-    WARN, WARN_DIM, BORDER,
     Checklist, CredentialsPanel, GuideBar, LogPanel, NetworkTable,
-    SectionCard, StatusBadge, auto_wrap,
+    NotificationHost, SectionCard, StatusBadge, auto_wrap, form_combo,
+    form_entry, form_label, hairline, pill, progress_bar, segmented,
 )
 
-# Üst/alt çubuk gibi "çerçeve" yüzeyleri için uygulama zemininden bir tık
-# daha koyu ton; pencereye çerçeve hissi verir.
-CHROME_BG = "#06080B"
-FOOTER_FG = "#333A45"
+from effects import (
+    ActivityBar, Spinner, icon_button, make_button,
+)
+from theme import (
+    ACCENT, ACCENT2, ACCENT2_DIM, ACCENT_DIM, ACCENT_DK, ACCENT_ON,
+    BORDER, BORDER_SOFT, CARD_BG, CARD_HOVER, CHROME_BG, CONSOLE_FG, DANGER,
+    DARK_BG, ELEV_BG, FONT_BRAND, FONT_MONO_S, FONT_TITLE, FONT_UI,
+    FONT_UI_B, FONT_UI_S, FONT_UI_SB, MUTED, OFF_TEXT, PANEL_BG, TEXT_FAINT,
+    TEXT_PRI, TEXT_SEC, WARN, mix_colour,
+)
+
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("green")
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -87,13 +93,25 @@ def attack_labels() -> Dict[str, AttackType]:
 
 # ─────────────────────── Left configuration panel ───────────────────
 
+ROW_PAD = 3   # form satırları arası dikey boşluk
+
 
 class AttackConfigPanel(ctk.CTkScrollableFrame):
-    """Sol sütun: adaptör, tarama, hedef ve saldırı ayarları."""
+    """Sol sütun: adaptör, tarama, hedef ve saldırı ayarları.
+
+    Form satırları iki sütunlu bir ızgarada durur: etiket solda sabit
+    genişlikte, kontrol sağda kalan alanı doldurur. Böylece uzun alan adları
+    (ör. "Birincil (tarama):") kesilmez ve kontrol genişlikleri birbirine
+    hizalı kalır.
+    """
 
     def __init__(self, master, ctrl: CapCapWifiController,
                  on_change=None, **kw):
-        super().__init__(master, fg_color=PANEL_BG, **kw)
+        super().__init__(
+            master, fg_color=PANEL_BG,
+            scrollbar_button_color=ELEV_BG,
+            scrollbar_button_hover_color=mix_colour(ELEV_BG, ACCENT2, 0.5),
+            **kw)
         self._ctrl = ctrl
         self._on_change = on_change
         self._ifaces: List[WirelessInterface] = []
@@ -115,10 +133,11 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
     def _build_interfaces(self) -> None:
         sec = SectionCard(
             self, t("config.adapter.title"),
-            t("config.adapter.desc"),
+            t("config.adapter.desc"), accent=ACCENT2,
         )
         sec.pack(fill="x", padx=4, pady=(4, 4))
         body = sec.body()
+        body.columnconfigure(1, weight=1)
 
         self._iface_var = self._combo_row(body, 0, t("config.adapter.primary"))
         self._jammer_var = self._combo_row(body, 1, t("config.adapter.jammer"))
@@ -129,175 +148,146 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             text=t("config.adapter.note"),
             font=FONT_UI_S, text_color=MUTED, anchor="w",
             justify="left", wraplength=250,
-        ).grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ).grid(row=3, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
-        ctk.CTkButton(body, text=f"🔄 {t('config.adapter.refresh')}",
-                      command=self._refresh_ifaces,
-                      fg_color=DARK_BG, border_color=ACCENT, border_width=1,
-                      text_color=ACCENT, hover_color=ACCENT_DIM, font=FONT_UI,
-                      height=26).grid(row=4, column=0, columnspan=2,
-                                      sticky="ew", pady=(6, 0))
+        self._refresh_btn = make_button(
+            body, f"🔄  {t('config.adapter.refresh')}", "outline-info",
+            command=self._refresh_ifaces, height=28, font=FONT_UI_S)
+        self._refresh_btn.grid(row=4, column=0, columnspan=2, sticky="ew",
+                               pady=(8, 0))
 
     def _build_scan(self) -> None:
         sec = SectionCard(
             self, t("config.scan.title"),
-            t("config.scan.desc"),
+            t("config.scan.desc"), accent=ACCENT2,
         )
         sec.pack(fill="x", padx=4, pady=4)
         body = sec.body()
+        body.columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(body, text=t("config.scan.time"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=0, column=0, sticky="w", pady=2)
-        self._scan_time = ctk.CTkEntry(body, width=80, fg_color=DARK_BG,
-                                       border_color=BORDER, text_color=TEXT_PRI,
-                                       font=FONT_UI)
+        form_label(body, t("config.scan.time")).grid(
+            row=0, column=0, sticky="w", pady=ROW_PAD)
+        self._scan_time = form_entry(body, width=88)
         self._scan_time.insert(0, "30")
-        self._scan_time.grid(row=0, column=1, padx=(8, 0), pady=2, sticky="w")
+        self._scan_time.grid(row=0, column=1, sticky="w", pady=ROW_PAD)
 
-        ctk.CTkLabel(body, text=t("config.scan.band"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=1, column=0, sticky="w", pady=2)
+        form_label(body, t("config.scan.band")).grid(
+            row=1, column=0, sticky="w", pady=ROW_PAD)
         self._band_var = ctk.StringVar(value=t("band.bg"))
-        ctk.CTkComboBox(body, variable=self._band_var, width=160,
-                        values=list(self._band_labels),
-                        fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
-                        text_color=TEXT_PRI, font=FONT_UI).grid(
-            row=1, column=1, padx=(8, 0), pady=2)
+        form_combo(body, list(self._band_labels), self._band_var,
+                   width=150).grid(row=1, column=1, sticky="w", pady=ROW_PAD)
 
-        ctk.CTkLabel(body, text=t("config.scan.channel"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=2, column=0, sticky="w", pady=2)
-        self._channel_e = ctk.CTkEntry(body, placeholder_text=t("config.scan.channel_ph"),
-                                       width=80, fg_color=DARK_BG, border_color=BORDER,
-                                       text_color=TEXT_PRI, font=FONT_UI)
-        self._channel_e.grid(row=2, column=1, padx=(8, 0), pady=2, sticky="w")
+        form_label(body, t("config.scan.channel")).grid(
+            row=2, column=0, sticky="w", pady=ROW_PAD)
+        self._channel_e = form_entry(body, t("config.scan.channel_ph"),
+                                     width=88)
+        self._channel_e.grid(row=2, column=1, sticky="w", pady=ROW_PAD)
 
     def _build_target(self) -> None:
         sec = SectionCard(
             self, t("config.target.title"),
-            t("config.target.desc"),
+            t("config.target.desc"), accent=ACCENT,
         )
         sec.pack(fill="x", padx=4, pady=4)
         body = sec.body()
+        body.columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(body, text=t("config.target.ssid"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=0, column=0, sticky="w", pady=2)
-        self._essid_e = ctk.CTkEntry(body, placeholder_text=t("config.target.ssid_ph"),
-                                     width=200, fg_color=DARK_BG, border_color=BORDER,
-                                     text_color=TEXT_PRI, font=FONT_UI)
-        self._essid_e.grid(row=0, column=1, padx=(8, 0), pady=2)
+        form_label(body, t("config.target.ssid")).grid(
+            row=0, column=0, sticky="w", pady=ROW_PAD)
+        self._essid_e = form_entry(body, t("config.target.ssid_ph"))
+        self._essid_e.grid(row=0, column=1, sticky="ew", pady=ROW_PAD)
 
-        ctk.CTkLabel(body, text=t("config.target.bssid"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=1, column=0, sticky="w", pady=2)
-        self._bssid_e = ctk.CTkEntry(body, placeholder_text="AA:BB:CC:DD:EE:FF",
-                                     width=200, fg_color=DARK_BG,
-                                     border_color=BORDER, text_color=TEXT_PRI,
-                                     font=FONT_UI)
-        self._bssid_e.grid(row=1, column=1, padx=(8, 0), pady=2)
+        form_label(body, t("config.target.bssid")).grid(
+            row=1, column=0, sticky="w", pady=ROW_PAD)
+        self._bssid_e = form_entry(body, "AA:BB:CC:DD:EE:FF")
+        self._bssid_e.grid(row=1, column=1, sticky="ew", pady=ROW_PAD)
 
-        ctk.CTkLabel(body, text=t("config.target.channel"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=2, column=0, sticky="w", pady=2)
-        self._target_ch_e = ctk.CTkEntry(body, placeholder_text="6", width=80,
-                                         fg_color=DARK_BG, border_color=BORDER,
-                                         text_color=TEXT_PRI, font=FONT_UI)
-        self._target_ch_e.grid(row=2, column=1, padx=(8, 0), pady=2, sticky="w")
+        form_label(body, t("config.target.channel")).grid(
+            row=2, column=0, sticky="w", pady=ROW_PAD)
+        self._target_ch_e = form_entry(body, "6", width=88)
+        self._target_ch_e.grid(row=2, column=1, sticky="w", pady=ROW_PAD)
 
         self._target_note = ctk.CTkLabel(
             body, text=t("config.target.none"), font=FONT_UI_S,
             text_color=MUTED, anchor="w", justify="left", wraplength=250,
         )
         self._target_note.grid(row=3, column=0, columnspan=2, sticky="w",
-                               pady=(6, 0))
+                               pady=(8, 0))
 
     def _build_attack(self) -> None:
         sec = SectionCard(
             self, t("config.attack.title"),
-            t("config.attack.desc"),
+            t("config.attack.desc"), accent=WARN,
         )
         sec.pack(fill="x", padx=4, pady=(4, 10))
         body = sec.body()
+        body.columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(body, text=t("config.attack.type"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=0, column=0, sticky="w", pady=2)
+        form_label(body, t("config.attack.type")).grid(
+            row=0, column=0, sticky="w", pady=ROW_PAD)
         self._attack_var = ctk.StringVar(value=list(self._attack_labels)[0])
-        ctk.CTkComboBox(body, variable=self._attack_var, width=220,
-                        values=list(self._attack_labels),
-                        fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
-                        text_color=TEXT_PRI, font=FONT_UI,
-                        command=self._on_attack_change).grid(
-            row=0, column=1, padx=(8, 0), pady=2)
+        form_combo(body, list(self._attack_labels), self._attack_var,
+                   command=self._on_attack_change).grid(
+            row=0, column=1, sticky="ew", pady=ROW_PAD)
 
         self._attack_desc = ctk.CTkLabel(
             body, text="", font=FONT_UI_S, text_color=TEXT_SEC, anchor="w",
             justify="left", wraplength=250,
         )
         self._attack_desc.grid(row=1, column=0, columnspan=2, sticky="w",
-                               pady=(4, 6))
+                               pady=(6, 8))
 
-        ctk.CTkLabel(body, text=t("config.attack.portal"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=2, column=0, sticky="w", pady=2)
+        form_label(body, t("config.attack.portal")).grid(
+            row=2, column=0, sticky="w", pady=ROW_PAD)
         self._portal_var = ctk.StringVar(value=t("config.attack.portal_loading"))
-        self._portal_cb = ctk.CTkComboBox(
-            body, variable=self._portal_var, width=220,
-            fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
-            text_color=TEXT_PRI, font=FONT_UI, command=self._on_portal_change)
-        self._portal_cb.grid(row=2, column=1, padx=(8, 0), pady=2)
+        self._portal_cb = form_combo(
+            body, [t("config.attack.portal_loading")], self._portal_var,
+            command=self._on_portal_change)
+        self._portal_cb.grid(row=2, column=1, sticky="ew", pady=ROW_PAD)
 
         self._portal_desc = ctk.CTkLabel(
             body, text="", font=FONT_UI_S, text_color=MUTED, anchor="w",
             justify="left", wraplength=250,
         )
         self._portal_desc.grid(row=3, column=0, columnspan=2, sticky="w",
-                               pady=(2, 6))
+                               pady=(4, 6))
 
-        ctk.CTkLabel(body, text=t("config.attack.ap_service"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=4, column=0, sticky="w", pady=2)
+        form_label(body, t("config.attack.ap_service")).grid(
+            row=4, column=0, sticky="w", pady=ROW_PAD)
         self._ap_svc_var = ctk.StringVar(value="hostapd")
-        self._ap_svc_cb = ctk.CTkComboBox(
-            body, variable=self._ap_svc_var, width=160,
-            values=["hostapd", "airbase-ng"],
-            fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
-            text_color=TEXT_PRI, font=FONT_UI)
-        self._ap_svc_cb.grid(row=4, column=1, padx=(8, 0), pady=2)
+        self._ap_svc_cb = form_combo(body, ["hostapd", "airbase-ng"],
+                                     self._ap_svc_var, width=150)
+        self._ap_svc_cb.grid(row=4, column=1, sticky="w", pady=ROW_PAD)
 
-        ctk.CTkLabel(body, text=t("config.attack.deauth"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=5, column=0, sticky="w", pady=2)
+        form_label(body, t("config.attack.deauth")).grid(
+            row=5, column=0, sticky="w", pady=ROW_PAD)
         self._deauth_var = ctk.StringVar(value="aireplay-ng")
-        ctk.CTkComboBox(body, variable=self._deauth_var, width=160,
-                        values=["aireplay-ng", "mdk4"],
-                        fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
-                        text_color=TEXT_PRI, font=FONT_UI).grid(
-            row=5, column=1, padx=(8, 0), pady=2)
+        form_combo(body, ["aireplay-ng", "mdk4"], self._deauth_var,
+                   width=150).grid(row=5, column=1, sticky="w", pady=ROW_PAD)
 
-        ctk.CTkLabel(body, text=t("config.attack.lang"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=6, column=0, sticky="w", pady=2)
+        form_label(body, t("config.attack.lang")).grid(
+            row=6, column=0, sticky="w", pady=ROW_PAD)
         clipped_default = "tur" if i18n.get_language() == "tr" else "en"
         self._lang_var = ctk.StringVar(value=clipped_default)
-        ctk.CTkComboBox(body, variable=self._lang_var, width=100,
-                        values=self._get_languages(),
-                        fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
-                        text_color=TEXT_PRI, font=FONT_UI).grid(
-            row=6, column=1, padx=(8, 0), pady=2, sticky="w")
+        form_combo(body, self._get_languages(), self._lang_var,
+                   width=100).grid(row=6, column=1, sticky="w", pady=ROW_PAD)
 
-        ctk.CTkLabel(body, text=t("config.attack.timeout"), font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=7, column=0, sticky="w", pady=2)
-        self._timeout_e = ctk.CTkEntry(body, placeholder_text=t("config.attack.timeout_ph"),
-                                       width=80, fg_color=DARK_BG, border_color=BORDER,
-                                       text_color=TEXT_PRI, font=FONT_UI)
-        self._timeout_e.grid(row=7, column=1, padx=(8, 0), pady=2, sticky="w")
+        form_label(body, t("config.attack.timeout")).grid(
+            row=7, column=0, sticky="w", pady=ROW_PAD)
+        self._timeout_e = form_entry(body, t("config.attack.timeout_ph"),
+                                     width=100)
+        self._timeout_e.grid(row=7, column=1, sticky="w", pady=ROW_PAD)
 
         self._on_attack_change(self._attack_var.get())
 
     # ── helpers ─────────────────────────────────────────────────
 
     def _combo_row(self, body, row: int, label: str) -> ctk.StringVar:
-        ctk.CTkLabel(body, text=label, font=FONT_UI,
-                     text_color=TEXT_SEC).grid(row=row, column=0,
-                                               sticky="w", pady=2)
+        form_label(body, label).grid(row=row, column=0, sticky="w",
+                                     pady=ROW_PAD)
         var = ctk.StringVar(value=t("config.auto"))
-        ctk.CTkComboBox(body, variable=var, width=200,
-                        values=[t("config.auto")],
-                        fg_color=DARK_BG, border_color=BORDER,
-                        button_color=ACCENT, text_color=TEXT_PRI,
-                        font=FONT_UI).grid(row=row, column=1, padx=(8, 0), pady=2)
+        combo = form_combo(body, [t("config.auto")], var)
+        combo.grid(row=row, column=1, sticky="ew", pady=ROW_PAD)
         var.trace_add("write", lambda *_: self._notify())
         return var
 
@@ -636,58 +626,16 @@ class CapCapWifiApp(ctk.CTk):
     def _build_ui(self) -> None:
         self._ui_ready = False
         self.title(t("app.title"))
+        self.configure(fg_color=DARK_BG)
 
-        top = ctk.CTkFrame(self, fg_color=CHROME_BG, height=64,
-                           corner_radius=0)
-        top.pack(fill="x")
-        top.pack_propagate(False)
-
-        # Logo: yuvarlak köşeli yeşil rozet içinde şimşek — markaya kimlik.
-        logo = ctk.CTkLabel(top, text="⚡", font=("Inter", 18),
-                            text_color=DARK_BG, fg_color=ACCENT,
-                            corner_radius=9, width=32, height=32)
-        logo.pack(side="left", padx=(18, 10), pady=16)
-        ctk.CTkLabel(top, text="CapCapWifi", font=("Inter", 18, "bold"),
-                     text_color=TEXT_PRI).pack(side="left", pady=8)
-        ctk.CTkLabel(top, text=f"  {t('app.subtitle')}",
-                     font=FONT_UI, text_color=MUTED).pack(side="left", pady=8)
-
-        self._status_badge = StatusBadge(top)
-        self._status_badge.pack(side="right", padx=(8, 18), pady=12)
-
-        # Dil değiştirici: EN / TR, anında yeniden çizer.
-        self._lang_switch = ctk.CTkSegmentedButton(
-            top, values=["EN", "TR"], command=self._on_language_selected,
-            font=FONT_UI_B, height=28, corner_radius=8,
-            fg_color=CARD_BG, selected_color=ACCENT_DIM,
-            selected_hover_color=ACCENT_DIM, unselected_color=CARD_BG,
-            unselected_hover_color=CARD_HOVER, text_color=TEXT_PRI,
-        )
-        self._lang_switch.pack(side="right", padx=(0, 6), pady=12)
-        self._lang_switch.set("TR" if i18n.get_language() == "tr" else "EN")
-
-        # Basit / Detay geçişi: detay modu tüm ayar panellerini açar.
-        self._mode_switch = ctk.CTkSegmentedButton(
-            top, values=[t("mode.basic"), t("mode.detail")],
-            command=self._on_mode_selected, font=FONT_UI_B, height=28,
-            corner_radius=8, fg_color=CARD_BG, selected_color=ACCENT_DIM,
-            selected_hover_color=ACCENT_DIM, unselected_color=CARD_BG,
-            unselected_hover_color=CARD_HOVER, text_color=TEXT_PRI,
-        )
-        self._mode_switch.pack(side="right", padx=(0, 10), pady=12)
-        self._mode_switch.set(t("mode.basic") if self._mode == "basic"
-                              else t("mode.detail"))
-
-        accent_line = ctk.CTkFrame(self, fg_color=ACCENT, height=2,
-                                   corner_radius=0)
-        accent_line.pack(fill="x")
-        self._accent_line = accent_line
+        self._build_topbar()
+        self._build_activity_strip()
         self._build_update_bar()
 
         steps = tuple(t(f"step.{key}") for key in
                       ("adapter", "scan", "target", "attack", "result"))
         self._guide = GuideBar(self, steps)
-        self._guide.pack(fill="x", padx=12, pady=(8, 0))
+        self._guide.pack(fill="x", padx=12, pady=(10, 2))
         self._guide.set_active(self._step)
 
         basic = self._mode == "basic"
@@ -701,22 +649,108 @@ class CapCapWifiApp(ctk.CTk):
             body.columnconfigure(1, weight=1, minsize=420)
             body.columnconfigure(2, weight=0, minsize=0)
         else:
-            body.columnconfigure(0, weight=0, minsize=280)
+            body.columnconfigure(0, weight=0, minsize=286)
             body.columnconfigure(1, weight=5, minsize=380)
-            body.columnconfigure(2, weight=0, minsize=270)
+            body.columnconfigure(2, weight=0, minsize=288)
         body.rowconfigure(0, weight=1)
 
-        # Left: configuration
         self._config_panel = AttackConfigPanel(
             body, self._ctrl, on_change=self._refresh_hint)
         if not basic:
             self._config_panel.grid(row=0, column=0, sticky="nsew",
-                                    padx=(12, 5), pady=10)
+                                    padx=(12, 5), pady=(6, 10))
 
-        # Centre: tabs
+        self._build_centre(body, basic)
+        self._build_right_column(body, basic)
+
+        if basic:
+            # Alt şerit: kullanıcı ne olduğunu görsün ama pencereyi doldurmasın.
+            strip = ctk.CTkFrame(self, fg_color="transparent", height=168)
+            strip.pack(fill="x", padx=12, pady=(2, 8))
+            strip.pack_propagate(False)
+            self._log_panel = LogPanel(strip)
+            self._log_panel.pack(fill="both", expand=True)
+
+        self._build_footer()
+
+        # Bildirim şeridi: adım çubuğunun hemen altında, yerleşimi iterek
+        # açılır. Yüzen bir katman olsaydı altındaki düğmeleri örterdi
+        # (ilk denemede "Temizle" düğmesinin üstüne biniyordu).
+        self._notify_host = NotificationHost(self, after_widget=self._guide)
+        self._toast_host = self._notify_host
+
+        self._tabs.set(self._tab_names[self._active_tab])
+        self._ui_ready = True
+        self._refresh_hint()
+        self._sync_action_buttons()
+
+    # ── üst çubuk ───────────────────────────────────────────────
+
+    def _build_topbar(self) -> None:
+        """Marka, mod/dil geçişleri ve durum rozeti."""
+        top = ctk.CTkFrame(self, fg_color=CHROME_BG, height=64,
+                           corner_radius=0)
+        top.pack(fill="x")
+        top.pack_propagate(False)
+
+        # Logo: yuvarlak köşeli yeşil rozet içinde şimşek — markaya kimlik.
+        ctk.CTkLabel(top, text="⚡", font=("Inter", 18),
+                     text_color=ACCENT_ON, fg_color=ACCENT,
+                     corner_radius=9, width=32, height=32).pack(
+            side="left", padx=(18, 10), pady=16)
+        ctk.CTkLabel(top, text="CapCapWifi", font=FONT_BRAND,
+                     text_color=TEXT_PRI).pack(side="left", pady=8)
+        ctk.CTkLabel(top, text=f"  {t('app.subtitle')}",
+                     font=FONT_UI, text_color=MUTED).pack(side="left", pady=9)
+
+        self._status_badge = StatusBadge(top)
+        self._status_badge.pack(side="right", padx=(8, 18), pady=13)
+
+        # Dil değiştirici: EN / TR, anında yeniden çizer.
+        self._lang_switch = segmented(
+            top, ["EN", "TR"], command=self._on_language_selected)
+        self._lang_switch.pack(side="right", padx=(0, 8), pady=13)
+        self._lang_switch.set("TR" if i18n.get_language() == "tr" else "EN")
+
+        # Basit / Detay geçişi: detay modu tüm ayar panellerini açar.
+        self._mode_switch = segmented(
+            top, [t("mode.basic"), t("mode.detail")],
+            command=self._on_mode_selected)
+        self._mode_switch.pack(side="right", padx=(0, 4), pady=13)
+        self._mode_switch.set(t("mode.basic") if self._mode == "basic"
+                              else t("mode.detail"))
+
+    def _build_activity_strip(self) -> None:
+        """Vurgu çizgisi + meşguliyet şeridi.
+
+        Boştayken yalnızca ince yeşil çizgi görünür (marka vurgusu). Bir iş
+        başladığında aynı yerden süpüren bir ışık geçer; pencereye nereden
+        bakılırsa bakılsın "çalışıyor" bilgisi görünür olur.
+        """
+        self._accent_line = ctk.CTkFrame(self, fg_color=ACCENT, height=2,
+                                         corner_radius=0)
+        self._accent_line.pack(fill="x")
+        self._activity = ActivityBar(self, height=3, bg=CHROME_BG)
+        self._activity_visible = False
+
+    def _set_activity(self, busy: bool) -> None:
+        """Meşguliyet şeridini aç/kapat – tekrarlı çağrılara dayanıklı."""
+        if busy == self._activity_visible:
+            return
+        self._activity_visible = busy
+        if busy:
+            self._activity.pack(fill="x", after=self._accent_line)
+            self._activity.start()
+        else:
+            self._activity.stop()
+            self._activity.pack_forget()
+
+    # ── orta / sol / sağ sütunlar ───────────────────────────────
+
+    def _build_centre(self, body, basic: bool) -> None:
         centre = ctk.CTkFrame(body, fg_color="transparent")
         centre.grid(row=0, column=1, sticky="nsew",
-                    padx=(12, 12) if basic else 5, pady=10)
+                    padx=(12, 12) if basic else 5, pady=(6, 10))
         centre.rowconfigure(1, weight=1)
         centre.columnconfigure(0, weight=1)
 
@@ -724,7 +758,8 @@ class CapCapWifiApp(ctk.CTk):
             centre, fg_color=PANEL_BG,
             segmented_button_fg_color=CARD_BG,
             segmented_button_selected_color=ACCENT_DIM,
-            segmented_button_selected_hover_color=ACCENT_DIM,
+            segmented_button_selected_hover_color=mix_colour(ACCENT_DIM,
+                                                             ACCENT, 0.22),
             segmented_button_unselected_color=CARD_BG,
             segmented_button_unselected_hover_color=CARD_HOVER,
             text_color=TEXT_PRI,
@@ -746,17 +781,17 @@ class CapCapWifiApp(ctk.CTk):
             # Basit modda okunacak tek bir yönlendirme olsun: tara → ağ seç.
             bar = ctk.CTkFrame(tab_nets, fg_color="transparent")
             bar.pack(fill="x", padx=4, pady=(4, 6))
-            ctk.CTkButton(
-                bar, text=f"🔍  {t('app.btn.scan')}", command=self._do_scan,
-                fg_color=ACCENT, text_color=DARK_BG, hover_color=ACCENT_DK,
-                font=FONT_UI_B, height=38, width=170, corner_radius=10,
-            ).pack(side="left")
+            self._btn_scan_inline = make_button(
+                bar, f"🔍  {t('app.btn.scan')}", "primary",
+                command=self._do_scan, height=38, width=170)
+            self._btn_scan_inline.pack(side="left")
             auto_wrap(ctk.CTkLabel(
                 bar, text=t("basic.learning"), font=FONT_UI_S,
                 text_color=MUTED, anchor="w", justify="left",
             )).pack(side="left", fill="x", expand=True, padx=(12, 0))
 
-        self._net_table = NetworkTable(tab_nets, on_select=self._on_target_select,
+        self._net_table = NetworkTable(tab_nets,
+                                       on_select=self._on_target_select,
                                        compact=basic)
         self._net_table.pack(fill="both", expand=True)
 
@@ -776,126 +811,122 @@ class CapCapWifiApp(ctk.CTk):
         help_text = ctk.CTkTextbox(help_box, fg_color=DARK_BG,
                                    text_color=TEXT_PRI, font=FONT_MONO_S,
                                    wrap="word", corner_radius=10,
-                                   border_width=1, border_color=BORDER)
+                                   border_width=1, border_color=BORDER,
+                                   scrollbar_button_color=ELEV_BG,
+                                   scrollbar_button_hover_color=mix_colour(
+                                       ELEV_BG, ACCENT2, 0.5))
         help_text.pack(fill="both", expand=True, padx=6, pady=6)
         help_text.insert("1.0", t("help.text"))
         help_text.configure(state="disabled")
 
-        # Action buttons
+        self._build_action_bar(centre)
+
+    def _build_action_bar(self, centre) -> None:
+        """Dört ana eylem: tara, başlat, durdur, temizle.
+
+        Her düğmenin kendi rengi var (yeşil / amber / kırmızı kontur / gri
+        kontur) ve pasif halleri o rengin soluk tintidir. Basılamayan bir
+        düğme böylece "hangi düğme" olduğunu korurken sönük durur. Metin hiç
+        bir türde beyaz değil: açık vurgu dolgularının üzerinde beyaz okunmaz.
+        """
         btn_row = ctk.CTkFrame(centre, fg_color="transparent")
         btn_row.grid(row=2, column=0, sticky="ew", pady=(10, 0))
         for column in range(4):
             btn_row.columnconfigure(column, weight=1)
 
-        self._btn_scan = ctk.CTkButton(
-            btn_row, text=f"🔍  {t('app.btn.scan')}", command=self._do_scan,
-            fg_color=ACCENT, text_color="#052012", hover_color=ACCENT_DK,
-            font=FONT_UI_B, height=42, width=1, corner_radius=12)
+        self._btn_scan = make_button(
+            btn_row, f"🔍  {t('app.btn.scan')}", "primary",
+            command=self._do_scan, height=42, corner_radius=12, width=1)
         self._btn_scan.grid(row=0, column=0, padx=(0, 5), sticky="ew")
 
-        self._btn_attack = ctk.CTkButton(
-            btn_row, text=f"⚡  {t('app.btn.attack')}", command=self._do_attack,
-            fg_color=WARN, text_color="#201500", hover_color="#FFC44D",
-            font=FONT_UI_B, height=42, width=1, corner_radius=12)
+        self._btn_attack = make_button(
+            btn_row, f"⚡  {t('app.btn.attack')}", "warn",
+            command=self._do_attack, height=42, corner_radius=12, width=1)
         self._btn_attack.grid(row=0, column=1, padx=5, sticky="ew")
 
-        self._btn_stop = ctk.CTkButton(
-            btn_row, text=f"⏹  {t('app.btn.stop')}", command=self._do_stop,
-            fg_color="transparent", text_color=DANGER, hover_color=DANGER_DIM,
-            border_width=1, border_color=DANGER, font=FONT_UI_B,
-            height=42, width=1, corner_radius=12, state="disabled")
+        self._btn_stop = make_button(
+            btn_row, f"⏹  {t('app.btn.stop')}", "outline-danger",
+            command=self._do_stop, height=42, corner_radius=12, width=1,
+            state="disabled")
         self._btn_stop.grid(row=0, column=2, padx=5, sticky="ew")
 
-        self._btn_clear = ctk.CTkButton(
-            btn_row, text=f"🗑  {t('app.btn.clear')}", command=self._do_clear,
-            fg_color="transparent", text_color=TEXT_SEC, hover_color=CARD_HOVER,
-            font=FONT_UI_B, height=42, width=1, border_color=BORDER,
-            border_width=1, corner_radius=12)
+        self._btn_clear = make_button(
+            btn_row, f"🗑  {t('app.btn.clear')}", "outline-muted",
+            command=self._do_clear, height=42, corner_radius=12, width=1)
         self._btn_clear.grid(row=0, column=3, padx=(5, 0), sticky="ew")
 
-        # Right column: health card above log
+    def _build_right_column(self, body, basic: bool) -> None:
         right = ctk.CTkFrame(body, fg_color="transparent")
         if not basic:
-            right.grid(row=0, column=2, sticky="nsew", padx=(5, 12), pady=10)
+            right.grid(row=0, column=2, sticky="nsew", padx=(5, 12),
+                       pady=(6, 10))
         right.rowconfigure(1, weight=1)
         right.columnconfigure(0, weight=1)
 
         health = ctk.CTkFrame(right, fg_color=CARD_BG, corner_radius=12,
                               border_width=1, border_color=BORDER)
         health.grid(row=0, column=0, sticky="ew")
+
         head = ctk.CTkFrame(health, fg_color="transparent")
         head.pack(fill="x", padx=14, pady=(12, 2))
-        ctk.CTkLabel(head, text=f"🩺  {t('app.health.title')}", font=FONT_TITLE,
-                     text_color=TEXT_PRI).pack(side="left")
-        ctk.CTkButton(head, text="🔄", width=30, height=26,
-                      command=lambda: self._ctrl.check_environment(),
-                      fg_color="transparent", border_color=BORDER,
-                      border_width=1, text_color=TEXT_SEC,
-                      hover_color=CARD_HOVER,
-                      font=FONT_UI).pack(side="right")
-        ctk.CTkButton(head, text="⬆", width=30, height=26,
-                      command=lambda: self._check_updates(manual=True),
-                      fg_color="transparent", border_color=ACCENT2,
-                      border_width=1, text_color=ACCENT2,
-                      hover_color=ACCENT2_DIM,
-                      font=FONT_UI).pack(side="right", padx=(0, 6))
-        self._btn_install = ctk.CTkButton(
-            head, text=f"📦 {t('app.health.install')}", width=118, height=26,
-            command=self._start_install, fg_color="transparent",
-            border_color=WARN, border_width=1, text_color=WARN,
-            hover_color=WARN_DIM, font=FONT_UI_S, corner_radius=10)
+        ctk.CTkLabel(head, text=f"🩺  {t('app.health.title')}",
+                     font=FONT_TITLE, text_color=TEXT_PRI).pack(side="left")
+
+        self._btn_health_refresh = icon_button(
+            head, "🔄", "outline-muted",
+            command=self._recheck_environment)
+        self._btn_health_refresh.pack(side="right")
+        self._btn_update = icon_button(
+            head, "⬆", "outline-info",
+            command=lambda: self._check_updates(manual=True))
+        self._btn_update.pack(side="right", padx=(0, 6))
+        self._btn_install = make_button(
+            head, f"📦 {t('app.health.install')}", "outline-warn",
+            command=self._start_install, height=26, width=118,
+            font=FONT_UI_S, corner_radius=8)
         self._btn_install.pack(side="right", padx=(0, 6))
 
         ctk.CTkLabel(
-            health,
-            text=t("app.health.desc"),
-            font=FONT_UI_S, text_color=MUTED, anchor="w",
-        ).pack(fill="x", padx=12, pady=(0, 4))
+            health, text=t("app.health.desc"), font=FONT_UI_S,
+            text_color=MUTED, anchor="w", justify="left", wraplength=250,
+        ).pack(fill="x", padx=14, pady=(0, 6))
 
-        self._install_bar = ctk.CTkProgressBar(health, height=6,
-                                               progress_color=ACCENT2,
-                                               fg_color=BORDER)
+        self._install_bar = progress_bar(health, ACCENT2, height=5)
         self._install_label = ctk.CTkLabel(
             health, text="", font=FONT_UI_S, text_color=ACCENT2, anchor="w")
 
         self._health_scroll = ctk.CTkScrollableFrame(
-            health, fg_color="transparent", height=230)
-        self._health_scroll.pack(fill="x", padx=8, pady=(0, 8))
+            health, fg_color="transparent", height=228,
+            scrollbar_button_color=ELEV_BG,
+            scrollbar_button_hover_color=mix_colour(ELEV_BG, ACCENT2, 0.5))
+        self._health_scroll.pack(fill="x", padx=8, pady=(0, 10))
         self._checklist = Checklist(self._health_scroll)
         self._checklist.pack(fill="x")
-        self._checklist.show([EnvironmentCheck(
-            name=t("app.health.checking.name"), ok=False,
-            detail=t("app.health.checking.detail"), hint="")])
+        self._checklist.show_loading(t("app.health.checking.detail"))
 
-        if basic:
-            # Alt şerit: kullanıcı ne olduğunu görsün ama pencereyi doldurmasın.
-            strip = ctk.CTkFrame(self, fg_color="transparent", height=160)
-            strip.pack(fill="x", padx=12, pady=(0, 8))
-            strip.pack_propagate(False)
-            self._log_panel = LogPanel(strip)
-            self._log_panel.pack(fill="both", expand=True)
-        else:
+        if not basic:
             self._log_panel = LogPanel(right)
             self._log_panel.grid(row=1, column=0, sticky="nsew", pady=(8, 0))
 
-        # Bottom hint bar
-        ctk.CTkFrame(self, fg_color=BORDER, height=1,
-                     corner_radius=0).pack(fill="x")
-        bar = ctk.CTkFrame(self, fg_color=CHROME_BG, height=34,
+    def _build_footer(self) -> None:
+        hairline(self).pack(fill="x")
+        bar = ctk.CTkFrame(self, fg_color=CHROME_BG, height=36,
                            corner_radius=0)
         bar.pack(fill="x")
         bar.pack_propagate(False)
+
+        # Yönlendirme satırı: kullanıcıya sıradaki tek adımı söyler. Meşgul
+        # durumda soldaki spinner döner, böylece statik metin "takıldı mı"
+        # sorusunu doğurmaz.
+        self._bar_spinner = Spinner(bar, size=13, bg=CHROME_BG,
+                                    colour=ACCENT2, thickness=2)
         self._bar_label = ctk.CTkLabel(
             bar, text="", font=FONT_UI_S, text_color=TEXT_SEC,
             anchor="w", justify="left")
-        self._bar_label.pack(side="left", padx=16)
+        self._bar_label.pack(side="left", padx=(16, 10))
         ctk.CTkLabel(bar, text="github.com/sametuca/capcapwifi",
                      font=FONT_MONO_S,
-                     text_color=FOOTER_FG).pack(side="right", padx=16)
-
-        self._tabs.set(self._tab_names[self._active_tab])
-        self._ui_ready = True
-        self._refresh_hint()
+                     text_color=TEXT_FAINT).pack(side="right", padx=16)
 
     # ── Language switching ──────────────────────────────────────
 
@@ -966,11 +997,19 @@ class CapCapWifiApp(ctk.CTk):
         ctk.CTkLabel(head, text=t("console.title"), font=FONT_UI_B,
                      text_color=TEXT_PRI).pack(side="left")
 
+        # Yeni pencere geldiğinde başlıkta kısa bir parıltı: sekme açıkken
+        # bile "yeni bir konsol bağlandı" bilgisi görünür.
+        self._console_spinner = Spinner(head, size=14, bg=PANEL_BG,
+                                        colour=ACCENT2, thickness=2)
         self._console_picker = ctk.CTkOptionMenu(
             head, values=[t("console.waiting")],
-            command=self._on_console_pick, width=240, font=FONT_UI_S,
-            fg_color=CARD_BG, button_color=ACCENT, button_hover_color=ACCENT_DK,
-            text_color=TEXT_PRI,
+            command=self._on_console_pick, width=240, height=30,
+            font=FONT_UI_S, corner_radius=8,
+            fg_color=CARD_BG, button_color=mix_colour(CARD_BG, ACCENT2, 0.4),
+            button_hover_color=mix_colour(CARD_BG, ACCENT2, 0.6),
+            dropdown_fg_color=ELEV_BG, dropdown_hover_color=CARD_HOVER,
+            dropdown_text_color=TEXT_PRI,
+            text_color=TEXT_PRI, text_color_disabled=OFF_TEXT,
         )
         self._console_picker.pack(side="right")
 
@@ -980,8 +1019,11 @@ class CapCapWifiApp(ctk.CTk):
         )).pack(fill="x", padx=10, pady=(0, 6))
 
         self._console_text = ctk.CTkTextbox(
-            tab, fg_color=DARK_BG, text_color="#C9F7D9", font=FONT_MONO_S,
-            wrap="none", corner_radius=10, border_width=1, border_color=BORDER,
+            tab, fg_color=DARK_BG, text_color=CONSOLE_FG, font=FONT_MONO_S,
+            wrap="none", corner_radius=10, border_width=1,
+            border_color=BORDER_SOFT,
+            scrollbar_button_color=ELEV_BG,
+            scrollbar_button_hover_color=mix_colour(ELEV_BG, ACCENT2, 0.5),
         )
         self._console_text.pack(fill="both", expand=True, padx=8, pady=(0, 8))
         self._render_console("")
@@ -1107,6 +1149,10 @@ class CapCapWifiApp(ctk.CTk):
             self._show_tab("credentials")
             self._set_step(4)
             self._refresh_hint()
+            self._notify(t("toast.credential", ssid=cred.ssid or "-"),
+                         "success", 6000)
+            for button in self._scan_buttons():
+                button.flash(ACCENT)
             try:
                 self.bell()
             except Exception:
@@ -1117,12 +1163,21 @@ class CapCapWifiApp(ctk.CTk):
         def _apply():
             self._env_checks = list(checks)
             self._checklist.show(self._env_checks)
+            button = getattr(self, "_btn_health_refresh", None)
+            if button is not None:
+                button.set_loading(False, "🔄")
             missing = [c for c in self._env_checks if not c.ok and c.required]
             for check in self._env_checks:
                 if not check.ok:
                     self._log_panel.append(
                         t("log.env_line", name=check.name,
                           detail=check.detail, hint=check.hint), "warn")
+
+            if missing:
+                self._notify(t("toast.env_missing", count=len(missing)),
+                             "warn", 5200)
+            else:
+                self._notify(t("checklist.ready"), "success", 3600)
 
             # İlk açılışta zorunlu bir paket eksikse kendiliğinden kur.
             if missing and not self._install_attempted and not self._ctrl.is_busy:
@@ -1153,6 +1208,9 @@ class CapCapWifiApp(ctk.CTk):
               bssid=target.bssid, channel=target.channel), "info")
         self._set_step(3)
         self._refresh_hint()
+        # Seçim yapıldığını göz kaçırmasın: "Başlat" kısa süre parlar.
+        if hasattr(self, "_btn_attack") and self._btn_attack.cget("state") == "normal":
+            self._btn_attack.flash(WARN)
 
         if target.has_handshake:
             self._log_panel.append(t("log.target_has_handshake"), "info")
@@ -1172,6 +1230,8 @@ class CapCapWifiApp(ctk.CTk):
             self._log_panel.append(t("log.handshake_next"), "info")
             self._set_step(4)
             self._refresh_hint()
+            self._notify(t("toast.handshake", ssid=hf.ssid or "-"),
+                         "success", 6500)
             if self._mode == "basic" and self._basic_chain:
                 self._log_panel.append(t("basic.phase.portal"), "success")
                 self._start_portal_after_handshake(hf)
@@ -1360,18 +1420,27 @@ class CapCapWifiApp(ctk.CTk):
         self._ctrl.install_dependencies(language=self._config_panel.language)
 
     def _set_install_busy(self, visible: bool, text: str = "") -> None:
+        """Kurulum ilerlemesini göster/gizle.
+
+        Çubuk belirsiz (indeterminate) modda dönerken yanındaki etiket de
+        nefes alır; kullanıcı işin gerçekten sürdüğünü renkten okur.
+        """
         if visible and not self._install_visible:
             self._install_label.configure(text=text)
-            self._install_label.pack(fill="x", padx=12, pady=(0, 2))
-            self._install_bar.pack(fill="x", padx=12, pady=(0, 8))
+            self._install_label.pack(fill="x", padx=14, pady=(0, 4))
+            self._install_bar.pack(fill="x", padx=14, pady=(0, 10))
             self._install_bar.configure(mode="indeterminate")
             self._install_bar.start()
             self._install_visible = True
+            if hasattr(self, "_btn_install"):
+                self._btn_install.set_loading(True, t("app.health.installing_short"))
         elif not visible and self._install_visible:
             self._install_bar.stop()
             self._install_bar.pack_forget()
             self._install_label.pack_forget()
             self._install_visible = False
+            if hasattr(self, "_btn_install"):
+                self._btn_install.set_loading(False, f"📦 {t('app.health.install')}")
 
     def _do_clear(self) -> None:
         self._log_panel.clear()
@@ -1481,16 +1550,52 @@ class CapCapWifiApp(ctk.CTk):
 
     # ── State / hint sync ───────────────────────────────────────
 
+    def _sync_action_buttons(self) -> None:
+        """Eylet düğmelerinin durumunu tek yerden yönetir.
+
+        Kural: meşgulken yalnızca "Durdur" basılabilir; boştayken "Tara" ve
+        "Başlat" aktif. Bu ayrım hem düğme durumuna hem de pasif tint
+        görünümüne yansır (FxButton pasifikte kendi rengini soluklaştırır).
+        """
+        if not getattr(self, "_ui_ready", False):
+            return
+        busy = self._state in (AttackState.INSTALLING, AttackState.SCANNING,
+                               AttackState.STARTING, AttackState.RUNNING)
+        idle_state = "disabled" if busy else "normal"
+        for button in self._scan_buttons():
+            button.configure(state=idle_state)
+        self._btn_attack.configure(state=idle_state)
+        self._btn_stop.configure(state="normal" if busy else "disabled")
+        self._btn_install.configure(state=idle_state)
+
+        activity = self._state in (AttackState.INSTALLING,
+                                   AttackState.SCANNING,
+                                   AttackState.STARTING,
+                                   AttackState.RUNNING,
+                                   AttackState.CREDENTIALS_FOUND)
+        self._set_activity(activity)
+        self._sync_scan_loading()
+
+    def _scan_buttons(self) -> List:
+        buttons = [self._btn_scan]
+        inline = getattr(self, "_btn_scan_inline", None)
+        if inline is not None:
+            buttons.append(inline)
+        return buttons
+
+    def _sync_scan_loading(self) -> None:
+        """Tarama sürerken düğme "aranıyor" görünsün, boştayken normale dönsün."""
+        scanning = self._state is AttackState.SCANNING
+        for button in self._scan_buttons():
+            button.set_loading(scanning)
+        if hasattr(self, "_net_table"):
+            self._net_table.set_busy(
+                scanning, t("hint.scanning") if scanning else "")
+
     def _update_status(self, state: AttackState) -> None:
         self._state = state
         self._status_badge.update_state(state.value)
-
-        busy = state in (AttackState.INSTALLING, AttackState.SCANNING,
-                         AttackState.STARTING, AttackState.RUNNING)
-        self._btn_scan.configure(state="disabled" if busy else "normal")
-        self._btn_attack.configure(state="disabled" if busy else "normal")
-        self._btn_stop.configure(state="normal" if busy else "disabled")
-        self._btn_install.configure(state="disabled" if busy else "normal")
+        self._sync_action_buttons()
 
         if state is AttackState.INSTALLING:
             self._set_install_busy(True, t("app.health.installing"))
@@ -1502,7 +1607,8 @@ class CapCapWifiApp(ctk.CTk):
             self._set_step(3)
         elif state in (AttackState.HANDSHAKE_CAPTURED, AttackState.CREDENTIALS_FOUND):
             self._set_step(4)
-        if busy:
+        if state in (AttackState.INSTALLING, AttackState.SCANNING,
+                     AttackState.STARTING, AttackState.RUNNING):
             self._start_console_poll()
         if state is AttackState.RUNNING and not self._console_autoswitched:
             self._console_autoswitched = True
@@ -1567,7 +1673,54 @@ class CapCapWifiApp(ctk.CTk):
                 if target is not None and target.uses_pmf:
                     text, colour = t("hint.pmf_target"), WARN
 
-        self._bar_label.configure(text="▶  " + text, text_color=colour)
+        # Meşgul durumlarda öne eklenen ▶ yerine spinner çalışsın: durağan oku
+        # "takıldı mı" diye okunur.
+        busy = state in (AttackState.INSTALLING, AttackState.SCANNING,
+                         AttackState.STARTING, AttackState.RUNNING)
+        self._set_hint(text, colour, busy)
+
+    def _set_hint(self, text: str, colour: str, busy: bool = False) -> None:
+        """Alt satırdaki yönlendirmeyi ve soldaki meşguliyet noktasını ayarlar."""
+        if not hasattr(self, "_bar_label"):
+            return
+        self._bar_label.configure(text=text, text_color=colour)
+        spinner = getattr(self, "_bar_spinner", None)
+        if spinner is None:
+            return
+        if busy:
+            spinner.set_colours(colour=colour, bg=CHROME_BG)
+            if not spinner.winfo_ismapped():
+                spinner.pack(side="left", padx=(16, 8))
+            spinner.start()
+        else:
+            spinner.stop()
+            if spinner.winfo_ismapped():
+                spinner.pack_forget()
+
+    # ── yardımcı eylemler ───────────────────────────────────────
+
+    def _notify(self, text: str, kind: str = "info",
+                timeout: int = 4500) -> None:
+        """Üst şeritte kısa bir bildirim göster (log panelini bölmeden)."""
+        host = getattr(self, "_notify_host", None)
+        if host is None:
+            return
+        try:
+            host.show(text, kind, timeout)
+        except Exception:
+            pass
+
+    def _recheck_environment(self) -> None:
+        """Ortam kontrolünü yeniden başlat; düğme meşgul görünümüne geçsin."""
+        button = getattr(self, "_btn_health_refresh", None)
+        if button is not None:
+            if button.loading:
+                return
+            button.set_loading(True, "…")
+            self.after(6000, lambda: button.set_loading(False, "🔄"))
+        self._checklist.show_loading(t("app.health.checking.detail"))
+        self._ctrl.check_environment()
+        self._notify(t("app.health.checking.detail"), "info", 2200)
 
 
 # ─────────────────────────── Entry point ────────────────────────────

@@ -18,6 +18,7 @@ tests=(
   "$SCRIPT_DIR/test_install_deps.sh"
   "$SCRIPT_DIR/test_gui_i18n.sh"
   "$SCRIPT_DIR/test_gui_status.sh"
+  "$SCRIPT_DIR/test_gui_theme.sh"
   "$SCRIPT_DIR/test_target_pmf.sh"
 )
 
