@@ -1,7 +1,7 @@
 """
-CapCapWifi – Python GUI Ana Penceresi
+CapWifi – Python GUI Ana Penceresi
 
-CustomTkinter tabanlı, karanlık temalı, hibrit denetleyici (capcapwifi.sh → --auto).
+CustomTkinter tabanlı, karanlık temalı, hibrit denetleyici (capwifi.sh → --auto).
 
 Arayüzün amacı tek bir soruya cevap vermek: "şu anda neredeyim, sırada ne var?"
 Bu yüzden her ekranda kısa bir açıklama, üstte adım çubuğu ve altta dinamik
@@ -40,7 +40,7 @@ import i18n
 import updater
 from tkinter import messagebox
 from i18n import t
-from controller import CapCapWifiController
+from controller import CapWifiController
 from models import (
     AttackConfig,
     AttackState,
@@ -362,15 +362,15 @@ class DetailsWindow(ctk.CTkToplevel):
 # ─────────────────────────── Main Window ────────────────────────────
 
 
-class CapCapWifiApp(ctk.CTk):
+class CapWifiApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title(t("app.title"))
         self._apply_window_geometry()
         self.configure(fg_color=DARK_BG)
-        self.iconname("CapCapWifi")
+        self.iconname("CapWifi")
 
-        self._ctrl = CapCapWifiController()
+        self._ctrl = CapWifiController()
         self._ctrl.on_state_change = self._on_state
         self._ctrl.on_log = self._on_log
         self._ctrl.on_candidates = self._on_candidates
@@ -504,7 +504,7 @@ class CapCapWifiApp(ctk.CTk):
                      text_color=ACCENT_ON, fg_color=ACCENT,
                      corner_radius=9, width=32, height=32).pack(
             side="left", padx=(18, 10), pady=16)
-        ctk.CTkLabel(top, text="CapCapWifi", font=FONT_BRAND,
+        ctk.CTkLabel(top, text="CapWifi", font=FONT_BRAND,
                      text_color=TEXT_PRI).pack(side="left", pady=8)
         ctk.CTkLabel(top, text=f"  {t('app.subtitle')}",
                      font=FONT_UI, text_color=MUTED).pack(side="left", pady=9)
@@ -740,7 +740,7 @@ class CapCapWifiApp(ctk.CTk):
             bar, text="", font=FONT_UI_S, text_color=TEXT_SEC,
             anchor="w", justify="left")
         self._bar_label.pack(side="left", padx=(16, 10))
-        ctk.CTkLabel(bar, text="github.com/sametuca/capcapwifi",
+        ctk.CTkLabel(bar, text="github.com/sametuca/capwifi",
                      font=FONT_MONO_S,
                      text_color=TEXT_FAINT).pack(side="right", padx=16)
 
@@ -1606,5 +1606,5 @@ class CapCapWifiApp(ctk.CTk):
 # ─────────────────────────── Entry point ────────────────────────────
 
 if __name__ == "__main__":
-    app = CapCapWifiApp()
+    app = CapWifiApp()
     app.mainloop()

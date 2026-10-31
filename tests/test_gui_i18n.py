@@ -122,7 +122,7 @@ with tempfile.TemporaryDirectory() as tmp:
     original_dir, original_file = i18n.CONFIG_DIR, i18n.CONFIG_FILE
     original_env = os.environ.pop("CAPCAP_GUI_LANG", None)
     try:
-        i18n.CONFIG_DIR = Path(tmp) / "capcapwifi"
+        i18n.CONFIG_DIR = Path(tmp) / "capwifi"
         i18n.CONFIG_FILE = i18n.CONFIG_DIR / "gui.json"
         i18n.save_language("tr")
         check("preference file is written", i18n.CONFIG_FILE.is_file())

@@ -28,11 +28,11 @@ CAPCAPTargetTrackerInterfaceQueryTip="${CSYel}Choosing a dedicated interface may
 CAPCAPTargetTrackerInterfaceQueryTip2="${CBRed}If you're unsure, choose \"${CBYel}Skip${CBRed}\"!$CClr"
 CAPCAPTargetTrackerInterfaceUnsupportedError="The target tracker interface can't see the target's band (5GHz). Pass --tracker-interface with a 5GHz-capable card, or omit it to skip tracking."
 CAPCAPIncompleteTargettingInfoNotice="Missing ESSID, BSSID, or channel information!"
-CAPCAPTargettingAccessPointAboveNotice="CapCapWifi is targetting the access point above."
+CAPCAPTargettingAccessPointAboveNotice="CapWifi is targetting the access point above."
 CAPCAPContinueWithTargetQuery="Continue with this target?"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CAPCAPStartingScannerNotice="Lancement du scanner, veuillez patienter..."
-CAPCAPStartingScannerTip="Five seconds after the target AP appears, close the CAPCAPWIFI Scanner (ctrl+c)."
+CAPCAPStartingScannerTip="Five seconds after the target AP appears, close the CAPWIFI Scanner (ctrl+c)."
 CAPCAPPreparingScannerResultsNotice="Synthèse des résultats du scan, veuillez patienter..."
 CAPCAPScannerFailedNotice="Carte wireless probablement pas supportée (pas de point d'accès trouvé)."
 CAPCAPScannerDetectedNothingNotice="Pas de point d'accès trouvé, retour..."
@@ -53,7 +53,7 @@ CAPCAPScannerChannelSingleTip="Un seul canal"
 CAPCAPScannerChannelMiltipleTip="Plusieurs canaux"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CAPCAPScannerHeader="Scanner CAPCAP"
-CAPCAPClientScannerHeader="CAPCAPWIFI Client Scanner"
+CAPCAPClientScannerHeader="CAPWIFI Client Scanner"
 CAPCAPTargetClientsListNotice="Clients associated with the target access point:"
 CAPCAPTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 CAPCAPTargetClientsAllOption="All observed clients (directed)"
@@ -100,7 +100,7 @@ CAPCAPRestoringTputNotice="Restauration de ${CGry}tput"
 CAPCAPDeletingFilesNotice="Suppression ${CGry}files"
 CAPCAPRestartingNetworkManagerNotice="Redémarrage de ${CGry}Network-Manager"
 CAPCAPCleanupSuccessNotice="Nettoyage effectué avec succès !"
-CAPCAPThanksSupportersNotice="Merci d'avoir utilisé CAPCAPWIFI !"
+CAPCAPThanksSupportersNotice="Merci d'avoir utilisé CAPWIFI !"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # FLUXSCRIPT END

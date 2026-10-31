@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 
 capcap_help(){
-  echo " CAPCAPWIFI(1)                       User Manuals                       CAPCAPWIFI(1)
+  echo " CAPWIFI(1)                       User Manuals                       CAPWIFI(1)
 
 
 
   NAME
-         capcapwifi  -  CapCapWifi  is  a  security  auditing  and  social-engineering
+         capwifi  -  CapWifi  is  a  security  auditing  and  social-engineering
          research tool
 
   SYNOPSIS
-         capcapwifi [-debug] [-l language ] [-m] [--auto] [--scan-time N] attack ...
+         capwifi [-debug] [-l language ] [-m] [--auto] [--scan-time N] attack ...
 
   DESCRIPTION
-         capcapwifi is a security auditing and  social-engineering  research  tool.
+         capwifi is a security auditing and  social-engineering  research  tool.
          It  is  a remake of linset by vk496 with (hopefully) less bugs and more
          functionality. The script attempts to retrieve the WPA/WPA2 key from  a
          target  access point by means of a social engineering (phising) attack.
-         It's compatible with the latest release of  Kali  (rolling).  CapCapWifi's
+         It's compatible with the latest release of  Kali  (rolling).  CapWifi's
          attacks'  setup  is  mostly  manual, but experimental auto-mode handles
          some of the attacks' setup parameters.
 
@@ -28,13 +28,13 @@ capcap_help(){
 
          -m     Use tmux multiplexer instead of xterm. Enables headless
                 operation without an X11/graphical session. If not already
-                inside a tmux session, capcapwifi will re-exec itself inside
+                inside a tmux session, capwifi will re-exec itself inside
                 one. All sub-windows are opened as tmux windows instead of
                 xterm terminals.
 
-         --auto Run capcapwifi in fully non-interactive auto mode. Every
+         --auto Run capwifi in fully non-interactive auto mode. Every
                 interactive prompt auto-selects a sensible default. Implies
-                --killer (-k). In auto mode, capcapwifi runs one attack cycle
+                --killer (-k). In auto mode, capwifi runs one attack cycle
                 and exits (no looping). Best combined with -m for headless
                 operation.
 
@@ -59,7 +59,7 @@ capcap_help(){
                 missing (apt -y), then exit. Used by the GUI on first launch
                 so the user watches the installation instead of hitting a
                 missing-dependency error mid-attack.
-                Example: sudo ./capcapwifi.sh --install-deps --auto -m
+                Example: sudo ./capwifi.sh --install-deps --auto -m
 
          --interface <iface>
                 Use the specified wireless interface for scanning and
@@ -114,7 +114,7 @@ capcap_help(){
                 Comma-separated list of process names to spare when killer
                 mode (-k / --auto) terminates interfering processes. Useful
                 in lab setups where you run your own hostapd/wpa_supplicant
-                target alongside capcapwifi and don't want it killed.
+                target alongside capwifi and don't want it killed.
 
          --reg-domain <CC>
                 Override the wireless regulatory domain used when bringing
@@ -123,14 +123,14 @@ capcap_help(){
 
          --timeout <minutes>
                 Maximum duration in minutes for the attack in auto mode.
-                After this time the attack is stopped and capcapwifi exits.
+                After this time the attack is stopped and capwifi exits.
                 Default is no timeout (runs indefinitely until the attack
                 succeeds or is interrupted).
 
          -k     Kill interfering wireless processes (NetworkManager, etc.)
                 before allocating interfaces. Implied by --auto.
 
-         -d     Run capcapwifi in debug mode.
+         -d     Run capwifi in debug mode.
 
          -r     Reload driver.
 
@@ -170,22 +170,22 @@ capcap_help(){
 
   EXAMPLES
          # List all nearby WPA networks (60-second scan):
-         sudo ./capcapwifi.sh -m --scan-only --scan-time 60
+         sudo ./capwifi.sh -m --scan-only --scan-time 60
 
          # List networks on channel 6 only:
-         sudo ./capcapwifi.sh -m --scan-only --scan-time 30 -c 6
+         sudo ./capwifi.sh -m --scan-only --scan-time 30 -c 6
 
          # Scan both 2.4 GHz and 5 GHz bands:
-         sudo ./capcapwifi.sh --scan-only --scan-time 30 --band abg
+         sudo ./capwifi.sh --scan-only --scan-time 30 --band abg
 
          # Headless, non-interactive, 15-second scan:
-         sudo ./capcapwifi.sh -m --auto -l en --scan-time 15
+         sudo ./capwifi.sh -m --auto -l en --scan-time 15
 
          # Install every missing dependency and exit:
-         sudo ./capcapwifi.sh --install-deps --auto -m
+         sudo ./capwifi.sh --install-deps --auto -m
 
          # Headless with specific target:
-         sudo ./capcapwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
+         sudo ./capwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
 
   FILES
          /tmp/capcapspace/
@@ -195,10 +195,10 @@ capcap_help(){
 
   ENVIRONMENT
          CAPCAPAuto
-                Automatically run capcapwifi in auto mode if exported.
+                Automatically run capwifi in auto mode if exported.
 
          CAPCAPDebug
-                Automatically run capcapwifi in debug mode if exported.
+                Automatically run capwifi in debug mode if exported.
 
          CAPCAPWIKillProcesses
                 Automatically kill any interfering process(es).
@@ -207,8 +207,7 @@ capcap_help(){
          Please checkout the other log files or use the debug mode.
 
   BUGS
-         Please  report  any  bugs  at:  https://github.com/CapCapWifiNetwork/flux-
-         ion/issues
+         Please  report  any  bugs  at:  https://github.com/sametuca/capwifi/issues
 
   AUTHOR
          Cyberfee, l3op, dlinkproto, vk496, MPX4132
@@ -217,7 +216,7 @@ capcap_help(){
          aircrack-ng(8),
 
 
-  Linux                             MARCH 2018                        CAPCAPWIFI(1)"
+  Linux                             MARCH 2018                        CAPWIFI(1)"
 
 }
 

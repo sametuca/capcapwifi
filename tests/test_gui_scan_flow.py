@@ -70,12 +70,12 @@ FAKE.chmod(0o755)
 
 # Yalnızca yan etkisi olan çağrıları sabitliyoruz; taranan iş akışı gerçek.
 controller.SCRIPT = FAKE
-controller.CapCapWifiController.check_environment = lambda self, *a, **k: None
-controller.CapCapWifiController.list_handshakes = lambda self: []
-controller.CapCapWifiController.list_interfaces = lambda self: []
-controller.CapCapWifiController.console_windows = lambda self: []
-controller.CapCapWifiController.capture_console = lambda self, i: ""
-controller.CapCapWifiController.list_portals = lambda self: []
+controller.CapWifiController.check_environment = lambda self, *a, **k: None
+controller.CapWifiController.list_handshakes = lambda self: []
+controller.CapWifiController.list_interfaces = lambda self: []
+controller.CapWifiController.console_windows = lambda self: []
+controller.CapWifiController.capture_console = lambda self, i: ""
+controller.CapWifiController.list_portals = lambda self: []
 updater.check_for_update = lambda *a, **k: None
 
 i18n.set_language("tr")
@@ -83,7 +83,7 @@ i18n.set_language("tr")
 import app as app_module  # noqa: E402
 
 app_errors = []
-window = app_module.CapCapWifiApp()
+window = app_module.CapWifiApp()
 window.report_callback_exception = (
     lambda exc_type, exc, tb: app_errors.append(f"{exc_type.__name__}: {exc}"))
 
@@ -204,12 +204,12 @@ def step_crash_lock():
     """Motor döngüsü patlarsa arayüz kilitlenmemeli."""
     try:
         window._settings.set_target(None)
-        original = controller.CapCapWifiController._handle_status_line
+        original = controller.CapWifiController._handle_status_line
 
         def boom(self, line, mode):
             raise ValueError("simulated parse crash")
 
-        controller.CapCapWifiController._handle_status_line = boom
+        controller.CapWifiController._handle_status_line = boom
         try:
             window._btn_scan.invoke()
             for _ in range(14):
@@ -219,7 +219,7 @@ def step_crash_lock():
                 window.after(250)
                 window.update()
         finally:
-            controller.CapCapWifiController._handle_status_line = original
+            controller.CapWifiController._handle_status_line = original
 
         check("bozuk durum satırı arayüzü kilitlemedi",
               window._state is not AttackState.SCANNING, window._state.value)

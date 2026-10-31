@@ -1,7 +1,7 @@
 """
-CapCapWifi GUI – Backend Controller
+CapWifi GUI – Backend Controller
 
-capcapwifi.sh'i `--auto` modunda bir alt süreç olarak çalıştırır, çıktısını
+capwifi.sh'i `--auto` modunda bir alt süreç olarak çalıştırır, çıktısını
 okur ve GUI'ye callback'lerle aktarır. Arayüz hiçbir zaman doğrudan süreç veya
 dosya işlemez; her şey buradan geçer.
 
@@ -39,9 +39,9 @@ from models import (
 )
 
 REPO_DIR = Path(__file__).resolve().parent.parent
-SCRIPT = REPO_DIR / "capcapwifi.sh"
+SCRIPT = REPO_DIR / "capwifi.sh"
 
-#: capcapwifi.sh ile aynı varsayılan (capcapwifi.sh:19).
+#: capwifi.sh ile aynı varsayılan (capwifi.sh:19).
 WORKSPACE = Path(os.environ.get("CAPCAPWorkspacePath", "/tmp/capcapspace"))
 STATUS_FILE = WORKSPACE / "capcap.status"
 CREDENTIAL_LOG = WORKSPACE / "instagram_credentials.log"
@@ -103,7 +103,7 @@ def clean_log_line(raw: str) -> str:
     if line.startswith(("\033", "(B", "[?12l", "[?25h", "[?25l")):
         return ""
     # CLI veda/kapanış banner'ı ve teşekkür satırlarını GUI logundan filtrele
-    if any(k in line for k in ("CAPCAPWIFI 6.", "Capture The WiFi", "~~~~~", "tercih ettiğiniz için teşekkürler", "Thank you for using")):
+    if any(k in line for k in ("CAPWIFI 6.", "Capture The WiFi", "~~~~~", "tercih ettiğiniz için teşekkürler", "Thank you for using")):
         return ""
     return line
 
@@ -222,9 +222,9 @@ def parse_status_line(line: str) -> Optional[Dict[str, str]]:
     return event
 
 
-class CapCapWifiController:
+class CapWifiController:
     """
-    Hibrit denetleyici: capcapwifi.sh'i CLI bayraklarıyla `--auto` modunda
+    Hibrit denetleyici: capwifi.sh'i CLI bayraklarıyla `--auto` modunda
     çalıştırır. Arayüz şu callback'lerle bilgilendirilir:
 
         on_state_change(AttackState)
@@ -610,7 +610,7 @@ class CapCapWifiController:
         self._run_async(args, mode="attack")
 
     # ── gömülü konsollar (tmux panelleri) ───────────────────────
-    CONSOLE_SESSION = "CAPCAPWIFI"
+    CONSOLE_SESSION = "CAPWIFI"
 
     def console_windows(self) -> List[tuple]:
         """Saldırının açtığı tmux pencereleri: [(index, name), ...]."""

@@ -1,9 +1,9 @@
 # Problematic wireless adapters
 
-A running list of wireless adapters that misbehave with CapCapWifi, what the
+A running list of wireless adapters that misbehave with CapWifi, what the
 symptom looks like, and what (if anything) can be done about it. Most entries
-here are **not** CapCapWifi bugs — they are driver/firmware limitations that show
-up as confusing CapCapWifi behavior (empty client lists, no handshake, etc.).
+here are **not** CapWifi bugs — they are driver/firmware limitations that show
+up as confusing CapWifi behavior (empty client lists, no handshake, etc.).
 
 If you hit a similar problem, check here first. To add an adapter, copy the
 template at the bottom and fill it in with what you observed.
@@ -22,7 +22,7 @@ template at the bottom and fill it in with what you observed.
 
 In monitor mode the adapter sees access points fine (beacons show up in
 `airodump-ng`), but the **STATION** list stays empty — even when clients are
-associated and actively passing traffic. In CapCapWifi this surfaces as the
+associated and actively passing traffic. In CapWifi this surfaces as the
 Captive Portal / Handshake Snooper client scanner reporting *no associated
 clients* on a target that clearly has them.
 
@@ -85,7 +85,7 @@ multi-adapter setups.
 - **Roles affected:** <scan / capture / AP / deauth>
 
 ### Symptom
-<what the user sees in CapCapWifi / airodump>
+<what the user sees in CapWifi / airodump>
 
 ### Root cause
 <driver/firmware behavior, if known>

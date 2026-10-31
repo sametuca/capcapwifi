@@ -1,11 +1,11 @@
 """
-CapCapWifi GUI - interface languages.
+CapWifi GUI - interface languages.
 
 The GUI ships with English and Turkish. All user-facing text lives in the
 tables below; widgets call :func:`t` at render time, so switching language
 re-renders the window without restarting the attack engine.
 
-The choice is persisted in ``~/.config/capcapwifi/gui.json`` and can be
+The choice is persisted in ``~/.config/capwifi/gui.json`` and can be
 overridden per run with ``CAPCAP_GUI_LANG=en|tr``.
 """
 from __future__ import annotations
@@ -23,12 +23,12 @@ LANGUAGES: Tuple[Tuple[str, str], ...] = (
     ("tr", "Türkçe"),
 )
 
-CONFIG_DIR = Path.home() / ".config" / "capcapwifi"
+CONFIG_DIR = Path.home() / ".config" / "capwifi"
 CONFIG_FILE = CONFIG_DIR / "gui.json"
 
 EN: Dict[str, str] = {
     # ── window chrome ───────────────────────────────────────────
-    "app.title": "CapCapWifi – Wi-Fi Security Auditor",
+    "app.title": "CapWifi – Wi-Fi Security Auditor",
     "app.subtitle": "Wi-Fi security auditor",
     "app.tab.networks": "Networks",
     "app.tab.credentials": "Passwords",
@@ -216,7 +216,7 @@ NOTES
     "log.needs_root": "[!] Installation needs root: sudo ./run_gui.sh",
     "log.install_done": "[+] Installation finished. Re-checking environment…",
     "log.install_failed": ("[!] Installation could not finish. Check the apt output in the log; "
-                           "if needed run `sudo ./capcapwifi.sh --install-deps` in a terminal."),
+                           "if needed run `sudo ./capwifi.sh --install-deps` in a terminal."),
     "log.install_first": ("[i] First install: missing packages are being fetched automatically. "
                           "This can take a few minutes; do not close the window."),
     "log.handshake_archive_error": "[!] Error scanning the handshake archive: {error}",
@@ -425,7 +425,7 @@ NOTES
     "ctrl.attack.start": "Starting attack: {attack} → {target}",
     "ctrl.attack.none": "no target selected",
     "ctrl.stop.done": "Process stopped.",
-    "ctrl.error.script_missing": ("capcapwifi.sh not found or sudo is asking for a password. "
+    "ctrl.error.script_missing": ("capwifi.sh not found or sudo is asking for a password. "
                                   "Start the GUI with `sudo ./run_gui.sh`."),
     "ctrl.error.spawn": "Could not start the process: {error}",
     "ctrl.error.parse": "Skipped an unreadable status line: {error}",
@@ -496,7 +496,7 @@ TR: Dict[str, str] = {
     "basic.learning": ("Her şey otomatik: adaptör, kanal, portal ve deauth yöntemi "
                        "senin yerine seçilir."),
 
-    "app.title": "CapCapWifi – Wi-Fi Güvenlik Denetleyicisi",
+    "app.title": "CapWifi – Wi-Fi Güvenlik Denetleyicisi",
     "app.subtitle": "Wi-Fi güvenlik denetleyicisi",
     "app.tab.networks": "Ağlar",
     "app.tab.credentials": "Şifreler",
@@ -662,7 +662,7 @@ NOTLAR
     "log.needs_root": "[!] Kurulum için root gerekli: sudo ./run_gui.sh",
     "log.install_done": "[+] Kurulum tamamlandı. Ortam yeniden kontrol ediliyor…",
     "log.install_failed": ("[!] Kurulum tamamlanamadı. Log'daki apt çıktısına bak; gerekirse "
-                           "terminalde `sudo ./capcapwifi.sh --install-deps` çalıştır."),
+                           "terminalde `sudo ./capwifi.sh --install-deps` çalıştır."),
     "log.install_first": ("[i] İlk kurulum: eksik paketler otomatik yükleniyor. Bu işlem birkaç "
                           "dakika sürebilir, pencereyi kapatmayın."),
     "log.handshake_archive_error": "[!] Handshake arşivi taranırken hata: {error}",
@@ -864,7 +864,7 @@ NOTLAR
     "ctrl.attack.start": "Saldırı başlatılıyor: {attack} → {target}",
     "ctrl.attack.none": "hedef seçilmedi",
     "ctrl.stop.done": "İşlem durduruldu.",
-    "ctrl.error.script_missing": ("capcapwifi.sh bulunamadı ya da sudo parola soruyor. "
+    "ctrl.error.script_missing": ("capwifi.sh bulunamadı ya da sudo parola soruyor. "
                                   "GUI'yi `sudo ./run_gui.sh` ile başlatın."),
     "ctrl.error.spawn": "İşlem başlatılamadı: {error}",
     "ctrl.error.parse": "Okunamayan bir durum satırı atlandı: {error}",

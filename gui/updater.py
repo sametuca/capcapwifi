@@ -1,5 +1,5 @@
 """
-CapCapWifi – git tabanlı güncelleyici.
+CapWifi – git tabanlı güncelleyici.
 
 Uygulama bir git klonu olarak çalıştığı için "güncelleme" = origin/master ile
 eşitleme. Buradaki fonksiyonlar bloklayıcıdır (ağ + subprocess); çağıran taraf

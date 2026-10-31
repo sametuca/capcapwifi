@@ -25,7 +25,7 @@ run_capcap() {
       CAPCAPWorkspacePath="$TEST_RUNTIME_DIR/capcapspace" \
       CAPCAPPreferencesFile="$TEST_RUNTIME_DIR/preferences.conf" \
       InstallerUtilsInstalledPackagesFile="$TEST_RUNTIME_DIR/installed_packages.list" \
-      bash "$REPO_DIR/capcapwifi.sh" "$@"
+      bash "$REPO_DIR/capwifi.sh" "$@"
 
   CAPCAP_STDOUT=$stdout_value
   CAPCAP_STDERR=$stderr_value
@@ -36,8 +36,8 @@ EXPECTED_VERSION=$(
   awk -F= '
     /^readonly CAPCAPVersion=/ { version=$2 }
     /^readonly CAPCAPRevision=/ { revision=$2 }
-    END { print "CAPCAPWIFI V" version "." revision }
-  ' "$REPO_DIR/capcapwifi.sh"
+    END { print "CAPWIFI V" version "." revision }
+  ' "$REPO_DIR/capwifi.sh"
 )
 
 FAKEBIN_DIR="$TEST_RUNTIME_DIR/fakebin"

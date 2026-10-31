@@ -8,7 +8,7 @@ source "$(dirname "$(readlink -f "$0")")/lib/testlib.sh"
 
 tests_init "$(basename "$0")"
 
-MAIN="$REPO_DIR/capcapwifi.sh"
+MAIN="$REPO_DIR/capwifi.sh"
 HELP="$REPO_DIR/lib/HelpUtils.sh"
 
 echo "=== Install-Deps Mode Test Suite ==="

@@ -28,7 +28,7 @@ CAPCAPTargetTrackerInterfaceQueryTip="${CSYel}Choosing a dedicated interface may
 CAPCAPTargetTrackerInterfaceQueryTip2="${CBRed}If you're unsure, choose \"${CBYel}Skip${CBRed}\"!$CClr"
 CAPCAPTargetTrackerInterfaceUnsupportedError="The target tracker interface can't see the target's band (5GHz). Pass --tracker-interface with a 5GHz-capable card, or omit it to skip tracking."
 CAPCAPIncompleteTargettingInfoNotice="Missing ESSID, BSSID, or channel information!"
-CAPCAPTargettingAccessPointAboveNotice="CapCapWifi is targetting the access point above."
+CAPCAPTargettingAccessPointAboveNotice="CapWifi is targetting the access point above."
 CAPCAPContinueWithTargetQuery="Continue with this target?"
 
 CAPCAPTargetListTitle="WIRELESS NETWORKS"
@@ -48,7 +48,7 @@ CAPCAPDeauthMethodOverrideTip="Want the other one? Start with --deauth-method %s
 CAPCAPDeauthMethodUnknown="Unknown --deauth-method '%s', using aireplay-ng."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CAPCAPStartingScannerNotice="Starting scanner, please wait..."
-CAPCAPStartingScannerTip="The scanner window is filling with nearby networks. When your target network appears, wait about 5 seconds so its connected clients are recorded too, then close that window with Ctrl+C. CapCapWifi reads the results and shows the network list next."
+CAPCAPStartingScannerTip="The scanner window is filling with nearby networks. When your target network appears, wait about 5 seconds so its connected clients are recorded too, then close that window with Ctrl+C. CapWifi reads the results and shows the network list next."
 CAPCAPPreparingScannerResultsNotice="Synthesizing scan results, please wait..."
 CAPCAPScannerFailedNotice="Wireless card may not be supported (no APs found)"
 CAPCAPScannerDetectedNothingNotice="No access points were detected, returning..."
@@ -68,8 +68,8 @@ CAPCAPScannerChannelOptionSpecific="Specific channel(s)"
 CAPCAPScannerChannelSingleTip="Single channel"
 CAPCAPScannerChannelMiltipleTip="Multiple channels"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-CAPCAPScannerHeader="CAPCAPWIFI Scanner"
-CAPCAPClientScannerHeader="CAPCAPWIFI Client Scanner"
+CAPCAPScannerHeader="CAPWIFI Scanner"
+CAPCAPClientScannerHeader="CAPWIFI Client Scanner"
 CAPCAPTargetClientsListNotice="Clients associated with the target access point:"
 CAPCAPTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 CAPCAPTargetClientsAllOption="All observed clients (directed)"

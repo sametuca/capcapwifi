@@ -1,5 +1,5 @@
 """
-CapCapWifi GUI - Veri Modelleri
+CapWifi GUI - Veri Modelleri
 
 Bu dosyada GUI'nin kullandığı saf veri sınıfları var; hiçbiri ekran veya
 süreç çağırmaz, bu yüzden test edilebilirler. Görünen metinler i18n'den

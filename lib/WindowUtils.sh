@@ -22,7 +22,7 @@ capcap_window_init() {
 
 		# If not already inside a tmux session, re-exec inside one.
 		if [ -z "$TMUX" ]; then
-			local _sessionName="CAPCAPWIFI"
+			local _sessionName="CAPWIFI"
 			tmux has-session -t "$_sessionName" 2>/dev/null && _sessionName="CAPCAP_$$"
 			exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 \
 				tmux new-session -s "$_sessionName" "$0 $CAPCAPOriginalArgs"
@@ -35,8 +35,8 @@ capcap_window_init() {
 		export LC_ALL=C.UTF-8
 
 		# If already inside tmux (either we just re-execed or user ran inside tmux),
-		# rename the session to CAPCAPWIFI for consistency.
-		tmux rename-session CAPCAPWIFI 2>/dev/null
+		# rename the session to CAPWIFI for consistency.
+		tmux rename-session CAPWIFI 2>/dev/null
 
 		# Enable mouse support (scrolling, pane selection).
 		tmux set-option -g mouse on 2>/dev/null
@@ -46,12 +46,12 @@ capcap_window_init() {
 		if ! hash xterm 2>/dev/null && hash tmux 2>/dev/null; then
 			CAPCAPDisplayMode="tmux"
 			if [ -z "$TMUX" ]; then
-				local _sessionName="CAPCAPWIFI"
+				local _sessionName="CAPWIFI"
 				tmux has-session -t "$_sessionName" 2>/dev/null && _sessionName="CAPCAP_$$"
 				exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 \
 					tmux new-session -s "$_sessionName" "$0 $CAPCAPOriginalArgs"
 			fi
-			tmux rename-session CAPCAPWIFI 2>/dev/null
+			tmux rename-session CAPWIFI 2>/dev/null
 			tmux set-option -g mouse on 2>/dev/null
 			CAPCAPTMux=1
 		else
@@ -184,10 +184,10 @@ capcap_window_close() {
 }
 
 # capcap_window_cleanup
-# Kills the entire CAPCAPWIFI tmux session at shutdown.
+# Kills the entire CAPWIFI tmux session at shutdown.
 capcap_window_cleanup() {
 	if [ "$CAPCAPDisplayMode" = "tmux" ]; then
-		# Kill all windows in the CAPCAPWIFI session except the current one
+		# Kill all windows in the CAPWIFI session except the current one
 		local currentWindow
 		currentWindow=$(tmux display-message -p '#{window_id}' 2>/dev/null)
 

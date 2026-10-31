@@ -144,16 +144,16 @@ fake.write_text("#!/usr/bin/env bash\nsleep 1\nexit 0\n", encoding="utf-8")
 fake.chmod(0o755)
 
 controller.SCRIPT = fake
-controller.CapCapWifiController.check_environment = lambda self, *a, **k: None
-controller.CapCapWifiController.list_handshakes = lambda self: []
-controller.CapCapWifiController.list_interfaces = lambda self: []
-controller.CapCapWifiController.console_windows = lambda self: []
-controller.CapCapWifiController.capture_console = lambda self, i: ""
-controller.CapCapWifiController.list_portals = lambda self: []
+controller.CapWifiController.check_environment = lambda self, *a, **k: None
+controller.CapWifiController.list_handshakes = lambda self: []
+controller.CapWifiController.list_interfaces = lambda self: []
+controller.CapWifiController.console_windows = lambda self: []
+controller.CapWifiController.capture_console = lambda self, i: ""
+controller.CapWifiController.list_portals = lambda self: []
 updater.check_for_update = lambda *a, **k: None
 
 i18n.set_language("en")
-window = app_module.CapCapWifiApp()
+window = app_module.CapWifiApp()
 app_errors = []
 window.report_callback_exception = (
     lambda t, v, tb: app_errors.append(f"{t.__name__}: {v}"))

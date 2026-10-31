@@ -1,5 +1,5 @@
 """
-CapCapWifi GUI – yeniden kullanılabilir arayüz bileşenleri.
+CapWifi GUI – yeniden kullanılabilir arayüz bileşenleri.
 
 Buradaki sınıfların hiçbiri ağ veya süreç işlemez; yalnızca görüntüler ve
 kullanıcı etkileşimini callback olarak dışarı verir. Görünen tüm metinler
