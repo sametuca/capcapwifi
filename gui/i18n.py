@@ -47,9 +47,7 @@ EN: Dict[str, str] = {
     "app.health.installing_short": "Installing…",
     "app.language.label": "Language",
 
-    # ── basit / detay mod ──────────────────────────────────────
-    "mode.basic": "Basic",
-    "mode.detail": "Detail",
+    # ── tek akış metinleri ─────────────────────────────────────
     "basic.need_target": ("Pick a network from the list first – tap the row whose signal "
                           "is strongest."),
     "basic.phase.handshake": ("Step 1/2 – disconnecting devices and listening for a "
@@ -333,6 +331,35 @@ NOTES
     "hint.pmf_target": ("This network uses WPA3/PMF: deauthentication frames are ignored, "
                         "so clients will not drop. Pick a WPA2 network instead."),
 
+    # ── selected-network summary ──────────────────────────────
+    "summary.none_title": "No network selected yet",
+    "summary.none_detail": "Pick a row from the list above.",
+    "summary.signal": "SIGNAL",
+    "summary.signal_detail": "{quality} quality · {bssid}",
+    "summary.clients": "CONNECTED DEVICES",
+    "summary.clients_value": "{count} devices",
+    "summary.clients_good": "Devices can be dropped, so a handshake or a portal visitor is possible.",
+    "summary.clients_none": "Nobody to drop – this network yields no result.",
+    "summary.portal": "PAGE TO SHOW",
+    "summary.portal_missing": "No portal template found",
+    "summary.portal_missing_hint": ("The portal folder is empty. Check the "
+                                    "environment from Details."),
+    "summary.action_hint": ("Tap a network, then press Start. Everything else "
+                            "(adapter, channel, deauth method) is chosen for you."),
+
+    # ── details window ────────────────────────────────────────
+    "details.title": "Details",
+    "details.desc": ("Everything the attack needs is checked here. Missing items "
+                     "are installed automatically where possible; the fields below "
+                     "are only needed in unusual setups."),
+    "details.done": "Done",
+    "details.manual.title": "MANUAL OVERRIDES",
+    "details.manual.desc": "Optional. Leave them alone unless you know you need them.",
+    "details.manual.note": ("The adapter, band and deauth method are picked "
+                            "automatically. Changing the channel forces the "
+                            "attack onto that channel."),
+    "config.scan.time_short": "Duration:",
+
     # ── toast notifications ───────────────────────────────────
     "toast.credential": "Login captured on {ssid} – see the Passwords tab.",
     "toast.handshake": "Handshake captured on {ssid} – saved to the archive.",
@@ -439,9 +466,7 @@ NOTES
 }
 
 TR: Dict[str, str] = {
-    # ── basit / detay mod ──────────────────────────────────────
-    "mode.basic": "Basit",
-    "mode.detail": "Detay",
+    # ── tek akış metinleri ─────────────────────────────────────
     "basic.need_target": ("Önce listeden bir ağ seç – sinyali en güçlü satıra dokun."),
     "basic.phase.handshake": ("1/2 – cihazlar ağdan düşürülüyor ve handshake "
                               "bekleniyor…"),
@@ -729,6 +754,34 @@ NOTLAR
     "hint.target_ready": "Hedef hazır. “Başlat” ile devam et.",
     "hint.pmf_target": ("Bu ağ WPA3/PMF kullanıyor: deauth çerçeveleri yok sayılır, "
                         "cihazlar ağdan düşmez. WPA2 bir ağ seçin."),
+
+    # ── seçili ağ özeti ───────────────────────────────────────
+    "summary.none_title": "Henüz ağ seçilmedi",
+    "summary.none_detail": "Yukarıdaki listeden bir satıra dokun.",
+    "summary.signal": "SİNYAL",
+    "summary.signal_detail": "{quality} kalite · {bssid}",
+    "summary.clients": "BAĞLI CİHAZ",
+    "summary.clients_value": "{count} cihaz",
+    "summary.clients_good": "Cihazlar düşürülebilir; handshake ya da portal ziyaretçisi gelebilir.",
+    "summary.clients_none": "Düşürecek cihaz yok – bu ağdan sonuç çıkmaz.",
+    "summary.portal": "GÖSTERİLECEK SAYFA",
+    "summary.portal_missing": "Portal şablonu bulunamadı",
+    "summary.portal_missing_hint": ("Portal klasörü boş. Detaylar'dan ortam "
+                                    "kontrolüne bak."),
+    "summary.action_hint": ("Bir ağa dokun, sonra Başlat'a bas. Gerisi "
+                            "(adaptör, kanal, deauth yöntemi) senin için seçilir."),
+
+    # ── detaylar penceresi ────────────────────────────────────
+    "details.title": "Detaylar",
+    "details.desc": ("Saldırı için gereken her şey burada kontrol edilir. Eksik "
+                     "paketler mümkünse kendiliğinden kurulur; aşağıdaki alanlar "
+                     "yalnızca sıra dışı kurulumlarda gerekir."),
+    "details.done": "Kapat",
+    "details.manual.title": "ELLE AYAR",
+    "details.manual.desc": "İsteğe bağlı. Gerekmediğinden emin değilsen dokunma.",
+    "details.manual.note": ("Adaptör, bant ve deauth yöntemi otomatik seçilir. "
+                            "Kanalı değiştirirsen saldırı o kanala zorlanır."),
+    "config.scan.time_short": "Süre:",
 
     # ── bildirimler (toast) ───────────────────────────────────
     "toast.credential": "{ssid} ağında giriş yakalandı – Şifreler sekmesine bak.",

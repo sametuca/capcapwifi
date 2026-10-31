@@ -50,6 +50,7 @@ from theme import (
     FONT_UI_B,
     FONT_UI_S,
     FONT_UI_SB,
+    FONT_UI_XS,
     MUTED,
     OFF_BG,
     OFF_BORDER,
@@ -142,8 +143,9 @@ def form_entry(master, placeholder: str = "", width: int = 200,
     Placeholder mutlak MUTED yerine TEXT_SEC kullanır: ipucu metni de
     okunabilir olmalı, "boş alan" gibi görünmemeli.
     """
+    kw.setdefault("height", 30)
     return ctk.CTkEntry(
-        master, placeholder_text=placeholder, width=width, height=30,
+        master, placeholder_text=placeholder, width=width,
         fg_color=DARK_BG, border_color=BORDER, border_width=1,
         text_color=TEXT_PRI, placeholder_text_color=MUTED,
         font=FONT_UI, corner_radius=8, **kw)
@@ -152,8 +154,9 @@ def form_entry(master, placeholder: str = "", width: int = 200,
 def form_combo(master, values, variable=None, width: int = 200,
                **kw) -> ctk.CTkComboBox:
     """Açılır seçim: koyu zemin, vurgu rengi ok, okunur pasif metin."""
+    kw.setdefault("height", 30)
     return ctk.CTkComboBox(
-        master, values=values, variable=variable, width=width, height=30,
+        master, values=values, variable=variable, width=width,
         fg_color=DARK_BG, border_color=BORDER, border_width=1,
         button_color=mix_colour(DARK_BG, ACCENT2, 0.35),
         button_hover_color=mix_colour(DARK_BG, ACCENT2, 0.55),
@@ -471,19 +474,253 @@ class GuideBar(ctk.CTkFrame):
 
 # ────────────────────────── Ağ tablosu ──────────────────────────────
 
-class NetworkRow(ctk.CTkFrame):
-    """Tek bir ağın modern satırı: ferah 2 satırlı düzen.
+class SelectionSummary(ctk.CTkFrame):
+    """Seçili ağ kartı: "ne seçtim, nasıl bir ağ?" sorusunu tek yerde yanıtlar.
 
-    Üst satır: Kanal rozeti · AĞ ADI (SSID - asla sıkışmaz) · Sinyal & Rozetler
-    Alt satır: BSSID (MAC) · Şifreleme · Üretici · Bağlı cihaz & Handshake rozetleri
+    Tek görünüm kararı sonrası ortaya çıkan boşluk buradan doluyor: kullanıcı
+    artık adaptör/kanal gibi alanları doldurmuyor, ama seçtiği ağın sinyalini,
+    kaç cihaz bağlı olduğunu, şifrelemesini ve hangi portal sayfasının
+    yayınlanacağını görmek istiyor. Hepsi burada, üç sütunda durur:
 
-    Satır pasif değil ama "soluk" başlar: cihazı olmayan bir ağ, satır
-    seçilebilir olsa da görsel olarak geri planda durur. Böylece kullanıcı
-    hangi satırların işe yarayacağını taramadan görür.
+    * sol   – Sinyal: çubuklar + dBm + kalite yüzdesi
+    * orta  – Bağlı cihaz: sayı + "deauth atılabilir mi" yorumu
+    * sağ   – Yayınlanacak sayfa: portal seçimi ve tek satır açıklaması
+
+    Ağ seçilmeden önce kart bir yönlendirme gösterir; seçim gelince değerler
+    yumuşak bir geçişle dolar.
     """
 
-    def __init__(self, master, candidate, on_click: Callable,
-                 compact: bool = False, **kw):
+    def __init__(self, master, on_portal_change: Optional[Callable] = None,
+                 **kw):
+        super().__init__(master, fg_color=CARD_BG, corner_radius=12,
+                         border_width=1, border_color=BORDER, **kw)
+        self._portal_callback = on_portal_change
+        self._animator = Animator(self)
+        self._candidate = None
+        self._portals: List = []
+
+        head = ctk.CTkFrame(self, fg_color="transparent")
+        head.pack(fill="x", padx=14, pady=(11, 0))
+
+        self._dot = ctk.CTkLabel(head, text="●", font=("Inter", 10),
+                                 text_color=OFF_TEXT, width=10)
+        self._dot.pack(side="left", padx=(0, 7))
+        self._title = ctk.CTkLabel(head, text=t("summary.none_title"),
+                                   font=FONT_UI_B, text_color=TEXT_SEC,
+                                   anchor="w", justify="left")
+        self._title.pack(side="left")
+
+        self._channel_pill = pill(head, "", ACCENT2, width=44, height=20)
+        self._enc_pill = pill(head, "", OFF_TEXT, fg=OFF_BG, height=20)
+
+        hairline(self).pack(fill="x", padx=14, pady=(9, 8))
+
+        grid = ctk.CTkFrame(self, fg_color="transparent")
+        grid.pack(fill="x", padx=14, pady=(0, 12))
+        for column in range(3):
+            grid.columnconfigure(column, weight=1, uniform="summary")
+
+        self._signal_cell = self._build_signal_cell(grid, 0)
+        self._clients_cell = self._build_clients_cell(grid, 1)
+        self._portal_cell = self._build_portal_cell(grid, 2)
+
+        self.set_candidate(None, animate=False)
+
+    # ── inşa ────────────────────────────────────────────────────
+
+    def _caption(self, parent, key: str) -> ctk.CTkLabel:
+        label = ctk.CTkLabel(parent, text=t(key), font=FONT_UI_XS,
+                             text_color=MUTED, anchor="w")
+        label.pack(anchor="w", pady=(0, 4))
+        return label
+
+    def _build_signal_cell(self, parent, column: int) -> dict:
+        cell = ctk.CTkFrame(parent, fg_color="transparent")
+        cell.grid(row=0, column=column, sticky="nw", padx=(0, 10))
+        self._caption(cell, "summary.signal")
+
+        row = ctk.CTkFrame(cell, fg_color="transparent")
+        row.pack(anchor="w")
+        bars = SignalBars(row, width=40, bg=CARD_BG)
+        bars.pack(side="left", padx=(0, 7))
+        value = ctk.CTkLabel(row, text="—", font=FONT_UI_B,
+                             text_color=TEXT_PRI, anchor="w")
+        value.pack(side="left")
+        detail = ctk.CTkLabel(cell, text="", font=FONT_UI_XS,
+                              text_color=MUTED, anchor="w")
+        detail.pack(anchor="w", pady=(3, 0))
+        return {"bars": bars, "value": value, "detail": detail}
+
+    def _build_clients_cell(self, parent, column: int) -> dict:
+        cell = ctk.CTkFrame(parent, fg_color="transparent")
+        cell.grid(row=0, column=column, sticky="nw", padx=(0, 10))
+        self._caption(cell, "summary.clients")
+        value = ctk.CTkLabel(cell, text="—", font=FONT_UI_B,
+                             text_color=TEXT_PRI, anchor="w")
+        value.pack(anchor="w")
+        detail = ctk.CTkLabel(cell, text="", font=FONT_UI_XS,
+                              text_color=MUTED, anchor="w", justify="left",
+                              wraplength=150)
+        detail.pack(anchor="w", pady=(3, 0))
+        return {"value": value, "detail": detail}
+
+    def _build_portal_cell(self, parent, column: int) -> dict:
+        cell = ctk.CTkFrame(parent, fg_color="transparent")
+        cell.grid(row=0, column=column, sticky="new")
+        self._caption(cell, "summary.portal")
+        # StringVar'ı kendimiz tutuyoruz: CTkComboBox cget("variable") ile
+        # değişkeni geri vermiyor (None döner), seçim de bu yüzden okunamıyordu.
+        self._portal_var = ctk.StringVar(
+            value=t("config.attack.portal_loading"))
+        combo = form_combo(cell, [t("config.attack.portal_loading")],
+                           self._portal_var, width=168,
+                           command=self._on_portal_change)
+        combo.pack(anchor="w")
+        detail = ctk.CTkLabel(cell, text="", font=FONT_UI_XS,
+                              text_color=MUTED, anchor="w", justify="left",
+                              wraplength=180)
+        detail.pack(anchor="w", pady=(3, 0))
+        return {"combo": combo, "detail": detail}
+
+    # ── portal seçimi ──────────────────────────────────────────
+
+    @property
+    def portal_var(self) -> ctk.StringVar:
+        return self._portal_var
+
+    def portal_title(self) -> str:
+        return self._portal_var.get()
+
+    def set_portal(self, title: str) -> None:
+        try:
+            self._portal_var.set(title)
+            self._on_portal_change()
+        except Exception:
+            pass
+
+    def _on_portal_change(self, _value: str = "") -> None:
+        portal = self.selected_portal()
+        if portal is not None:
+            self._portal_cell["detail"].configure(text=portal.description)
+        elif not self._portals:
+            self._portal_cell["detail"].configure(
+                text=t("summary.portal_missing_hint"))
+        if self._portal_callback:
+            self._portal_callback()
+
+    # ── genel API ───────────────────────────────────────────────
+
+    def load_portals(self, portals: List) -> None:
+        """Portal listesini doldurur; mevcut seçim varsa korunur.
+
+        Liste boşsa "Yükleniyor…" gibi sonsuz bir izlenim bırakmamak için
+        açıkça "bulunamadı" denir: kullanıcı beklemek yerine ne yapacağını
+        (Detaylar → ortam kontrolü) bilir.
+        """
+        self._portals = list(portals)
+        titles = [p.display_title for p in portals]
+        combo = self._portal_cell["combo"]
+        if titles:
+            combo.configure(values=titles)
+            if self.portal_title() not in titles:
+                self._portal_var.set(titles[0])
+        else:
+            combo.configure(values=[t("summary.portal_missing")])
+            self._portal_var.set(t("summary.portal_missing"))
+        self._on_portal_change()
+
+    @property
+    def portals(self) -> List:
+        return list(self._portals)
+
+    def selected_portal(self):
+        title = self.portal_title()
+        return next((p for p in self._portals if p.display_title == title),
+                    None)
+
+    def set_candidate(self, candidate, animate: bool = True) -> None:
+        self._candidate = candidate
+
+        if candidate is None:
+            self._title.configure(text=t("summary.none_title"),
+                                  text_color=TEXT_SEC)
+            self._dot.configure(text_color=OFF_TEXT)
+            self._channel_pill.pack_forget()
+            self._enc_pill.pack_forget()
+            self._signal_cell["bars"].set(0.0)
+            self._signal_cell["value"].configure(text="—",
+                                                 text_color=TEXT_PRI)
+            self._signal_cell["detail"].configure(text=t("summary.none_detail"))
+            self._clients_cell["value"].configure(text="—",
+                                                  text_color=TEXT_PRI)
+            self._clients_cell["detail"].configure(text="")
+            return
+
+        has_clients = candidate.has_clients
+        self._title.configure(
+            text=candidate.clean_essid,
+            text_color=TEXT_PRI if has_clients else TEXT_SEC)
+        self._dot.configure(
+            text_color=ACCENT if has_clients else OFF_TEXT)
+
+        self._channel_pill.configure(
+            text=f"CH {candidate.channel}",
+            text_color=WARN if candidate.is_dfs else ACCENT2,
+            fg_color=mix_colour(CARD_BG, WARN if candidate.is_dfs else ACCENT2,
+                                0.14))
+        self._channel_pill.pack(side="left", padx=(10, 0))
+        if candidate.enc:
+            self._enc_pill.configure(text=candidate.enc)
+            self._enc_pill.pack(side="left", padx=(6, 0))
+        else:
+            self._enc_pill.pack_forget()
+
+        percent = max(0, min(100, int(round(candidate.signal_percent * 100))))
+        quality = (candidate.quality or "").strip() or f"{percent}%"
+        self._signal_cell["bars"].set(candidate.signal_percent,
+                                      animate=animate)
+        self._signal_cell["value"].configure(
+            text=f"{candidate.power} dBm",
+            text_color=ACCENT if percent >= 70 else
+            (WARN if percent >= 40 else DANGER))
+        self._signal_cell["detail"].configure(
+            text=t("summary.signal_detail", quality=quality,
+                   bssid=candidate.bssid))
+
+        if has_clients:
+            self._clients_cell["value"].configure(
+                text=t("summary.clients_value", count=candidate.clients),
+                text_color=ACCENT)
+            self._clients_cell["detail"].configure(
+                text=t("summary.clients_good"))
+        else:
+            self._clients_cell["value"].configure(
+                text=t("networks.no_clients"), text_color=MUTED)
+            self._clients_cell["detail"].configure(
+                text=t("summary.clients_none"))
+
+        if animate and has_clients:
+            current = str(self.cget("border_color"))
+            target = mix_colour(BORDER, ACCENT, 0.7)
+            self._animator.colour(
+                "flash", self, "border_color", current, target, 200,
+                done=lambda: self._animator.colour(
+                    "flash2", self, "border_color", target, BORDER, 320))
+
+
+class NetworkRow(ctk.CTkFrame):
+    """Tek bir ağın ferah iki satırlı satırı.
+
+    Üst satır: kanal rozeti · AĞ ADI (SSID – asla sıkışmaz) · sinyal + dBm
+    Alt satır: BSSID (MAC) · şifreleme · üretici · bağlı cihaz rozeti
+
+    Tek görünüme geçtikten sonra "kompakt" varyant kaldırıldı: kullanıcı artık
+    sinyal ve cihaz sayısını görmek istiyor, bunlar da yalnızca tam satırda
+    vardı. Cihazı olmayan ağ satırı yine geri planda durur (seçilebilir ama
+    sönük), böylece hangi satırların işe yarayacağı taramadan belli olur.
+    """
+
+    def __init__(self, master, candidate, on_click: Callable, **kw):
         super().__init__(master, fg_color=CARD_BG, corner_radius=10,
                          border_width=1, border_color=BORDER, **kw)
         self.candidate = candidate
@@ -491,7 +728,6 @@ class NetworkRow(ctk.CTkFrame):
         self._selected = False
         self._hovered = False
         self._dimmed = False
-        self._compact = compact
         self._animator = Animator(self)
 
         self.columnconfigure(1, weight=1)
@@ -503,48 +739,31 @@ class NetworkRow(ctk.CTkFrame):
         candidate = self.candidate
         strong = candidate.has_clients
 
-        if not self._compact:
-            badge_text = f"{candidate.channel}"
-            if candidate.is_dfs:
-                badge_text += "!"
-            badge_colour = WARN if candidate.is_dfs else ACCENT2
-            pill(self, badge_text, badge_colour, width=40, height=26,
-                 font=FONT_UI_B, corner_radius=8).grid(
-                row=0, column=0, padx=(12, 10), pady=(10, 2), sticky="w")
+        badge_text = f"{candidate.channel}"
+        if candidate.is_dfs:
+            badge_text += "!"
+        pill(self, badge_text, WARN if candidate.is_dfs else ACCENT2,
+             width=40, height=26, font=FONT_UI_B,
+             corner_radius=8).grid(row=0, column=0, padx=(12, 10),
+                                   pady=(10, 2), sticky="w")
 
-        # SSID: kalın ve belirgin. Cihaz bağlıysa tam beyaz, değilse ikincil.
-        name = ctk.CTkLabel(
+        ctk.CTkLabel(
             self, text=candidate.clean_essid, font=FONT_UI_B,
             text_color=TEXT_PRI if strong else TEXT_SEC,
             anchor="w", justify="left",
-        )
-        name.grid(row=0, column=1, sticky="ew",
-                  padx=(0, 8) if not self._compact else (14, 8),
-                  pady=(12, 4) if self._compact else (10, 2))
+        ).grid(row=0, column=1, sticky="ew", padx=(0, 8), pady=(10, 2))
 
         sig_frame = ctk.CTkFrame(self, fg_color="transparent")
-        sig_frame.grid(row=0, column=2,
-                       padx=(0, 12), pady=(12, 4) if self._compact else (10, 2),
-                       sticky="e")
+        sig_frame.grid(row=0, column=2, padx=(0, 12), pady=(10, 2), sticky="e")
 
         self.bars = SignalBars(sig_frame)
         self.bars.set(candidate.signal_percent)
         self.bars.pack(side="left", padx=(0, 5))
 
-        if not self._compact:
-            ctk.CTkLabel(
-                sig_frame, text=f"{candidate.power} dBm",
-                font=FONT_MONO_S, text_color=MUTED, width=54, anchor="e",
-            ).pack(side="left")
-
-        if self._compact:
-            if strong:
-                solid_pill(sig_frame, t("networks.clients_short"),
-                           ACCENT, ACCENT_ON, height=20).pack(
-                    side="left", padx=(4, 0))
-            self._bind_events(self)
-            self._apply_tone()
-            return
+        ctk.CTkLabel(
+            sig_frame, text=f"{candidate.power} dBm",
+            font=FONT_MONO_S, text_color=MUTED, width=54, anchor="e",
+        ).pack(side="left")
 
         # ── 2. SATIR ──
         parts = [candidate.bssid]
@@ -552,11 +771,10 @@ class NetworkRow(ctk.CTkFrame):
             parts.append(candidate.enc)
         if candidate.vendor:
             parts.append(candidate.vendor)
-        sub = ctk.CTkLabel(
+        ctk.CTkLabel(
             self, text="  ·  ".join(parts), font=FONT_MONO_S,
             text_color=MUTED, anchor="w", justify="left",
-        )
-        sub.grid(row=1, column=1, sticky="w", padx=(0, 8), pady=(0, 10))
+        ).grid(row=1, column=1, sticky="w", padx=(0, 8), pady=(0, 10))
 
         extra = ctk.CTkFrame(self, fg_color="transparent")
         extra.grid(row=1, column=2, padx=(0, 12), pady=(0, 10), sticky="e")
@@ -659,11 +877,9 @@ class NetworkTable(ctk.CTkFrame):
 
     STAGGER_MS = 34   # satırların art arda belirme aralığı
 
-    def __init__(self, master, on_select: Callable = None,
-                 compact: bool = False, **kw):
+    def __init__(self, master, on_select: Callable = None, **kw):
         super().__init__(master, fg_color=PANEL_BG, corner_radius=12, **kw)
         self._on_select = on_select
-        self._compact = compact
         self._candidates: List = []
         self._rows: Dict[str, NetworkRow] = {}
         self._selected = None
@@ -821,8 +1037,7 @@ class NetworkTable(ctk.CTkFrame):
         )
         self._ordered = ordered
         for index, candidate in enumerate(ordered):
-            row = NetworkRow(self._list, candidate, self._select,
-                             compact=self._compact)
+            row = NetworkRow(self._list, candidate, self._select)
             row.pack(fill="x", padx=4, pady=3)
             self._rows[candidate.bssid] = row
             if animate:
@@ -833,17 +1048,27 @@ class NetworkTable(ctk.CTkFrame):
         self._apply_filter()
 
     def _reveal(self, row: "NetworkRow", index: int) -> None:
-        """Satırı soldan sağa doğru belirginleştir (art arda)."""
+        """Satırı belirginleştirerek göster (art arda).
+
+        Zamanlayıcı mutlaka ``self.after`` ile kurulur: daha önce
+        ``row.after(...)`` kullanılıyordu ama iptal ``self.after_cancel`` ile
+        yapılıyordu. Bu dengesizlik satırın Tk komut tablosunu bozuk
+        bırakıyor, sonraki ``destroy()`` "can't delete Tcl command" hatası
+        veriyordu (liste temizlenirken ortaya çıkıyordu).
+        """
         target_bg = str(row.cget("fg_color"))
         fade_from = mix_colour(target_bg, DARK_BG, 0.55)
 
         def _start() -> None:
-            if not row.winfo_exists():
+            try:
+                if not row.winfo_exists():
+                    return
+            except Exception:
                 return
             row._paint(fade_from, BORDER_SOFT, animate=False)
             row._paint(target_bg, BORDER_SOFT, animate=True)
 
-        job = row.after(min(600, index * self.STAGGER_MS), _start)
+        job = self.after(min(600, index * self.STAGGER_MS), _start)
         self._reveal_jobs.append(job)
 
     def _cancel_reveals(self) -> None:

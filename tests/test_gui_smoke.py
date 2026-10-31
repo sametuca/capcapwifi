@@ -82,8 +82,8 @@ def step_geometry():
           f"pencere geniş açıldı (genişlik={width}px)")
     check(getattr(window, "_guide", None) is not None,
           "adım çubuğu oluştu")
-    check(getattr(window, "_mode", None) in ("basic", "detail"),
-          "basit/detay modu okundu")
+    check(getattr(window, "_settings", None) is not None,
+          "motor ayarları okundu")
     check(getattr(window, "_console_text", None) is not None,
           "gömülü konsol sekmesi oluştu")
     placeholder = window._console_text.get("1.0", "end")
@@ -93,22 +93,14 @@ def step_geometry():
 
 
 def step_mode():
-    """Basit modda ayar paneli gizli, detay modda görünür olmalı."""
-    basic = window._mode == "basic"
-    # CTkScrollableFrame'in winfo_ismapped() değeri yerleştirilmese de 1
-    # dönebiliyor; gerçek ölçüt grid_info().
-    check(bool(window._config_panel.grid_info()) == (not basic),
-          "basit modda ayar paneli gizli")
-    other = "detail" if basic else "basic"
-    window._on_mode_selected(i18n.t("mode.detail") if other == "detail"
-                             else i18n.t("mode.basic"))
-    window.update_idletasks()
-    check(window._mode == other, f"mod {other} olarak değişti")
-    check(bool(window._config_panel.grid_info()) == (other == "detail"),
-          "mod değişiminde panel görünürlüğü güncellendi")
-    if window._mode != "basic":
-        window._on_mode_selected(i18n.t("mode.basic"))
-        window.update_idletasks()
+    """Tek görünüm: Basit/Detay ayrımı kalktı, seçim kartı geldi."""
+    check(not hasattr(window, "_mode_switch"),
+          "mod değiştirici kaldırıldı (tek görünüm)")
+    check(not hasattr(window, "_config_panel"),
+          "eski sol ayar paneli kaldırıldı")
+    check(hasattr(window, "_summary"), "seçili ağ kartı oluştu")
+    check(window._active_tab in window._tab_names,
+          "açılışta geçerli bir sekme seçili")
     window.after(150, step_handshake)
 
 
