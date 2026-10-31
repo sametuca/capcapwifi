@@ -44,6 +44,7 @@ EN: Dict[str, str] = {
     "app.health.checking.name": "Checking…",
     "app.health.checking.detail": "scanning tools and adapter",
     "app.health.installing": "Installing – apt output appears in the log panel…",
+    "app.health.installing_short": "Installing…",
     "app.language.label": "Language",
 
     # ── basit / detay mod ──────────────────────────────────────
@@ -280,6 +281,7 @@ NOTES
                     "submits a password.\n"
                     "• Captured WPA handshake files are listed here too."),
     "creds.copy": "Copy",
+    "creds.copied": "Copied",
     "creds.handshake_header": "── Captured WPA handshake (.cap) files ──",
     "creds.count_passwords": "{count} passwords",
     "creds.count_handshakes": "{count} handshake",
@@ -309,6 +311,7 @@ NOTES
     "hint.installing": ("Required packages are being installed. The check refreshes "
                         "automatically when it finishes; do not close the window."),
     "hint.scanning": "Scanning networks… The table fills when it finishes, then pick a target.",
+    "hint.scanning.progress": "Scanning networks… {seconds}s left",
     "hint.starting": ("Preparing the attack: the adapter is put into monitor mode and "
                       "services are starting."),
     "hint.running.portal": ("Rogue AP is on air. When a device connects and submits the form, "
@@ -329,6 +332,13 @@ NOTES
     "hint.target_ready": "Target is ready. Continue with “Start”.",
     "hint.pmf_target": ("This network uses WPA3/PMF: deauthentication frames are ignored, "
                         "so clients will not drop. Pick a WPA2 network instead."),
+
+    # ── toast notifications ───────────────────────────────────
+    "toast.credential": "Login captured on {ssid} – see the Passwords tab.",
+    "toast.handshake": "Handshake captured on {ssid} – saved to the archive.",
+    "toast.env_missing": "{count} required component(s) missing – see the check card.",
+    "toast.scan_done": "{count} networks found.",
+    "toast.stopped": "Everything was closed cleanly.",
 
     # ── controller: environment checks ─────────────────────────
     "env.root.name": "Root privileges",
@@ -460,6 +470,7 @@ TR: Dict[str, str] = {
     "app.health.checking.name": "Kontrol ediliyor…",
     "app.health.checking.detail": "araçlar ve adaptör taranıyor",
     "app.health.installing": "Kurulum sürüyor – apt çıktısı log panelinde…",
+    "app.health.installing_short": "Kuruluyor…",
     "app.language.label": "Dil",
 
     "step.adapter": "Adaptör",
@@ -669,6 +680,7 @@ NOTLAR
                     "• Bir cihaz sahte portala bağlanıp şifre girdiğinde burada belirir.\n"
                     "• Yakalanan WPA handshake dosyaları da burada listelenir."),
     "creds.copy": "Kopyala",
+    "creds.copied": "Kopyalandı",
     "creds.handshake_header": "── Yakalanan WPA handshake (.cap) dosyaları ──",
     "creds.count_passwords": "{count} şifre",
     "creds.count_handshakes": "{count} handshake",
@@ -695,6 +707,7 @@ NOTLAR
     "hint.installing": ("Gerekli paketler kuruluyor. Bitince kontrol otomatik yenilenecek; "
                         "pencereyi kapatmayın."),
     "hint.scanning": "Ağlar taranıyor… Bitince tablo dolacak, sonra hedef seç.",
+    "hint.scanning.progress": "Ağlar taranıyor… {seconds} sn kaldı",
     "hint.starting": ("Saldırı hazırlanıyor: adaptör monitor moda alınıyor, servisler "
                       "başlatılıyor."),
     "hint.running.portal": ("Sahte AP yayında. Cihaz bağlanıp formu gönderdiğinde Şifreler "
@@ -716,6 +729,13 @@ NOTLAR
     "hint.target_ready": "Hedef hazır. “Başlat” ile devam et.",
     "hint.pmf_target": ("Bu ağ WPA3/PMF kullanıyor: deauth çerçeveleri yok sayılır, "
                         "cihazlar ağdan düşmez. WPA2 bir ağ seçin."),
+
+    # ── bildirimler (toast) ───────────────────────────────────
+    "toast.credential": "{ssid} ağında giriş yakalandı – Şifreler sekmesine bak.",
+    "toast.handshake": "{ssid} ağında handshake yakalandı – arşive kaydedildi.",
+    "toast.env_missing": "{count} zorunlu bileşen eksik – kontrol kartına bak.",
+    "toast.scan_done": "{count} ağ bulundu.",
+    "toast.stopped": "Her şey temiz kapatıldı.",
 
     "env.root.name": "Root yetkisi",
     "env.root.ok": "yönetici olarak çalışıyor",
