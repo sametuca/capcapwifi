@@ -470,11 +470,13 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
     def _refresh_ifaces(self) -> None:
         def _load():
             ifaces = self._ctrl.list_interfaces()
-            self._ifaces = ifaces
-            names = [t("config.auto")] + [i.name for i in ifaces]
-            for var in (self._iface_var, self._jammer_var, self._ap_iface_var):
-                if var.get() not in names:
-                    var.set(t("config.auto"))
+            def _apply():
+                self._ifaces = ifaces
+                names = [t("config.auto")] + [i.name for i in ifaces]
+                for var in (self._iface_var, self._jammer_var, self._ap_iface_var):
+                    if var.get() not in names:
+                        var.set(t("config.auto"))
+            self.after(0, _apply)
 
         threading.Thread(target=_load, daemon=True).start()
 
@@ -729,7 +731,7 @@ class CapCapWifiApp(ctk.CTk):
 
         # Action buttons
         btn_row = ctk.CTkFrame(centre, fg_color="transparent")
-        btn_row.grid(row=1, column=0, sticky="ew", pady=(10, 0))
+        btn_row.grid(row=2, column=0, sticky="ew", pady=(10, 0))
         for column in range(4):
             btn_row.columnconfigure(column, weight=1)
 

@@ -57,15 +57,31 @@ FONT_TITLE  = ("Inter", 15, "bold")
 
 
 def auto_wrap(label: "ctk.CTkLabel", minimum: int = 220,
-              slack: int = 10) -> "ctk.CTkLabel":
-    """Etiketi bulunduğu genişliğe göre sar.
+              slack: int = 24) -> "ctk.CTkLabel":
+    """Etiketi bulunduğu kapsayıcının genişliğine göre sar.
 
-    Sabit `wraplength` dar pencerede satırı kırpmıyor, taşırıyordu; geniş
-    ekranda da gereksiz erken satır kırıyordu.
+    Tkinter içinde döngüye (feedback loop) yol açmaması için:
+      1) Event doğrudan etikete değil, kapsayıcısına (master) bağlanır;
+         böylece wraplength değişimi yeni bir <Configure> tetiklemez.
+      2) Yalnızca en az 12 piksellik genişlik değişimlerinde configure
+         çağrılır, gereksiz yeniden hesaplamalar engellenir.
     """
+    last_wrap = [0]
+    parent = getattr(label, "master", None)
+
     def _resize(event) -> None:
-        label.configure(wraplength=max(minimum, event.width - slack))
-    label.bind("<Configure>", _resize, add="+")
+        if parent is not None and event.widget != parent:
+            return
+        target = max(minimum, int(event.width) - slack)
+        if abs(target - last_wrap[0]) >= 12:
+            last_wrap[0] = target
+            try:
+                label.configure(wraplength=target)
+            except Exception:
+                pass
+
+    if parent is not None:
+        parent.bind("<Configure>", _resize, add="+")
     return label
 
 
@@ -409,16 +425,7 @@ class NetworkTable(ctk.CTkFrame):
 
         self._list = ctk.CTkScrollableFrame(self, fg_color=DARK_BG,
                                             corner_radius=10)
-        self._list.pack(fill="both", expand=True, padx=12, pady=(0, 2))
-
-        # Alttaki yatay scroll çubuğu (dar ekranlarda yatay gezinme sağlar)
-        self._x_scroll = ctk.CTkScrollbar(
-            self, orientation="horizontal",
-            command=self._list._parent_canvas.xview,
-            height=10
-        )
-        self._list._parent_canvas.configure(xscrollcommand=self._x_scroll.set)
-        self._x_scroll.pack(fill="x", padx=12, pady=(0, 6))
+        self._list.pack(fill="both", expand=True, padx=12, pady=(0, 6))
 
         self._empty = ctk.CTkLabel(
             self._list,
