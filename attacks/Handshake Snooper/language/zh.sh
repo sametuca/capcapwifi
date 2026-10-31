@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Snooping for \$HandshakeSnooperVerifi
 HandshakeSnooperStoppingForVerifierNotice="停止窥探并检查hashes."
 HandshakeSnooperSearchingForHashesNotice="在捕获文件中搜索hashes."
 HandshakeSnooperArbiterAbortedWarning="${CYel}失败${CClr}: 操作已中止，未找到有效的hash."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}成功${CClr}: 检测到有效hash并保存到fluxion的数据库中."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}成功${CClr}: 检测到有效hash并保存到capcap的数据库中."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel 攻击完成，关闭此窗口并开始另一次攻击.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

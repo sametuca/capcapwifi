@@ -32,9 +32,9 @@ cmd_version() {
 # Resolve the capcapwifi root directory.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/../capcapwifi.sh" ]; then
-	FLUXION_ROOT="$SCRIPT_DIR/.."
+	CAPCAP_ROOT="$SCRIPT_DIR/.."
 elif [ -f "./capcapwifi.sh" ]; then
-	FLUXION_ROOT="."
+	CAPCAP_ROOT="."
 else
 	echo "Error: cannot find capcapwifi.sh. Run from the capcapwifi directory or scripts/." >&2
 	exit 1
@@ -42,20 +42,20 @@ fi
 
 # Source interface utilities if available.
 HAS_IFACE_UTILS=0
-if source "$FLUXION_ROOT/lib/InterfaceUtils.sh" 2>/dev/null; then
+if source "$CAPCAP_ROOT/lib/InterfaceUtils.sh" 2>/dev/null; then
 	HAS_IFACE_UTILS=1
 fi
 
 # ── CapCapWifi ──────────────────────────────────────────────────────────────────
 section "CapCapWifi"
-fluxion_version=$(grep -oP 'FLUXIONVersion=\K[0-9]+' "$FLUXION_ROOT/capcapwifi.sh" 2>/dev/null)
-fluxion_revision=$(grep -oP 'FLUXIONRevision=\K[0-9]+' "$FLUXION_ROOT/capcapwifi.sh" 2>/dev/null)
-item "Version" "${fluxion_version:-?}.${fluxion_revision:-?}"
-item "Path" "$(cd "$FLUXION_ROOT" && pwd)"
-if command -v git &>/dev/null && [ -d "$FLUXION_ROOT/.git" ]; then
-	item "Git branch" "$(git -C "$FLUXION_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
-	item "Git commit" "$(git -C "$FLUXION_ROOT" log -1 --format='%h %s' 2>/dev/null)"
-	local_changes=$(git -C "$FLUXION_ROOT" status --porcelain 2>/dev/null | wc -l)
+capcap_version=$(grep -oP 'CAPCAPVersion=\K[0-9]+' "$CAPCAP_ROOT/capcapwifi.sh" 2>/dev/null)
+capcap_revision=$(grep -oP 'CAPCAPRevision=\K[0-9]+' "$CAPCAP_ROOT/capcapwifi.sh" 2>/dev/null)
+item "Version" "${capcap_version:-?}.${capcap_revision:-?}"
+item "Path" "$(cd "$CAPCAP_ROOT" && pwd)"
+if command -v git &>/dev/null && [ -d "$CAPCAP_ROOT/.git" ]; then
+	item "Git branch" "$(git -C "$CAPCAP_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+	item "Git commit" "$(git -C "$CAPCAP_ROOT" log -1 --format='%h %s' 2>/dev/null)"
+	local_changes=$(git -C "$CAPCAP_ROOT" status --porcelain 2>/dev/null | wc -l)
 	[ "$local_changes" -gt 0 ] && item "Uncommitted changes" "$(warn "$local_changes file(s)")"
 fi
 
@@ -255,7 +255,7 @@ if command -v iptables &>/dev/null && [ "$(id -u)" -eq 0 ]; then
 	item "Active rules" "$rules"
 	nat_rules=$(iptables -t nat -L -n 2>/dev/null | grep -Ecv '^Chain|^target|^$'; true)
 	item "NAT rules" "$nat_rules"
-	if [ -f "$FLUXION_ROOT/iptables-rules" ]; then
+	if [ -f "$CAPCAP_ROOT/iptables-rules" ]; then
 		item "Backup file" "$(ok 'present')"
 	else
 		item "Backup file" "not present"
@@ -274,13 +274,13 @@ if [ -d /etc/apparmor.d ]; then
 	if [ -f /etc/apparmor.d/usr.sbin.kea-dhcp4 ]; then
 		item "kea-dhcp4 profile" "present"
 		if [ -f /etc/apparmor.d/local/usr.sbin.kea-dhcp4 ]; then
-			if grep -q "fluxspace" /etc/apparmor.d/local/usr.sbin.kea-dhcp4 2>/dev/null; then
-				item "kea-dhcp4 fluxspace override" "$(ok 'configured')"
+			if grep -q "capcapspace" /etc/apparmor.d/local/usr.sbin.kea-dhcp4 2>/dev/null; then
+				item "kea-dhcp4 capcapspace override" "$(ok 'configured')"
 			else
-				item "kea-dhcp4 fluxspace override" "$(warn 'file exists but no fluxspace rule')"
+				item "kea-dhcp4 capcapspace override" "$(warn 'file exists but no capcapspace rule')"
 			fi
 		else
-			item "kea-dhcp4 fluxspace override" "$(err 'MISSING — kea-dhcp4 will fail to read /tmp/fluxspace/')"
+			item "kea-dhcp4 capcapspace override" "$(err 'MISSING — kea-dhcp4 will fail to read /tmp/capcapspace/')"
 		fi
 	else
 		item "kea-dhcp4 profile" "not present (OK)"
@@ -314,7 +314,7 @@ fi
 
 # ── Workspace ────────────────────────────────────────────────────────────────
 section "Workspace"
-workspace="/tmp/fluxspace"
+workspace="/tmp/capcapspace"
 if [ -d "$workspace" ]; then
 	item "Path" "$workspace (exists)"
 	item "Contents" "$(ls -1 "$workspace" 2>/dev/null | wc -l) items"

@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Snooping for \$HandshakeSnooperVerifi
 HandshakeSnooperStoppingForVerifierNotice="Stopping snooper & checking for hashes."
 HandshakeSnooperSearchingForHashesNotice="Searching for hashes in the capture file."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Aborted${CClr}: The operation's been aborted, no valid hash was found."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Success${CClr}: A valid hash was detected and saved to fluxion's database."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Success${CClr}: A valid hash was detected and saved to capcap's database."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel attack completed, close this window and start another attack.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

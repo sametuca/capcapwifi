@@ -3,7 +3,7 @@
 # ================================================================
 # Configuration Section
 # ================================================================
-APServiceConfigDirectory=$FLUXIONWorkspacePath
+APServiceConfigDirectory=$CAPCAPWorkspacePath
 # ================================================================
 
 #if [ "$APServiceVersion" ]; then return 0; fi
@@ -11,11 +11,11 @@ APServiceConfigDirectory=$FLUXIONWorkspacePath
 
 function ap_service_stop() {
   if [ "$APServiceXtermPID" ]; then
-    kill $APServiceXtermPID &>> $FLUXIONOutputDevice
+    kill $APServiceXtermPID &>> $CAPCAPOutputDevice
   fi
 
   if [ "$APServicePID" ]; then
-    kill $APServicePID &>> $FLUXIONOutputDevice
+    kill $APServicePID &>> $CAPCAPOutputDevice
   fi
 
   APServiceXtermPID=""
@@ -39,7 +39,7 @@ function ap_service_reset() {
     ip link set "$APServiceInterface" down 2>/dev/null
     sleep 0.25
 
-    macchanger -p "$APServiceInterface" &>> $FLUXIONOutputDevice
+    macchanger -p "$APServiceInterface" &>> $CAPCAPOutputDevice
     sleep 0.25
 
     ip link set "$APServiceInterface" up 2>/dev/null
@@ -57,7 +57,7 @@ function ap_service_reset() {
 }
 
 function ap_service_route() {
-  echo "APService: No custom routes for hostapd" >> $FLUXIONOutputDevice
+  echo "APService: No custom routes for hostapd" >> $CAPCAPOutputDevice
 }
 
 function ap_service_prep() {
@@ -80,12 +80,12 @@ function ap_service_prep() {
   APServiceSSID=${APServiceSSID//[$'\r\n\t']/}
 
   if [[ ! "$APServiceMAC" =~ ^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$ ]]; then
-    echo "Invalid AP BSSID: '$APServiceMAC'" >> "$FLUXIONOutputDevice"
+    echo "Invalid AP BSSID: '$APServiceMAC'" >> "$CAPCAPOutputDevice"
     return 1
   fi
 
   if [[ ! "$APServiceChannel" =~ ^[0-9]{1,4}$ ]]; then
-    echo "Invalid AP channel: '$APServiceChannel'" >> "$FLUXIONOutputDevice"
+    echo "Invalid AP channel: '$APServiceChannel'" >> "$CAPCAPOutputDevice"
     return 1
   fi
 
@@ -96,7 +96,7 @@ function ap_service_prep() {
     local __iw=$(command -v iw 2>/dev/null || echo /usr/sbin/iw)
     if [ -x "$__iw" ]; then
       APServiceOrigRegDomain=$("$__iw" reg get 2>/dev/null | grep -m1 "^country" | sed 's/country \([A-Z0-9]*\).*/\1/')
-      "$__iw" reg set "${FLUXIONRegDomain:-US}" 2>/dev/null
+      "$__iw" reg set "${CAPCAPRegDomain:-US}" 2>/dev/null
       sleep 0.5
     fi
   fi
@@ -106,7 +106,7 @@ function ap_service_prep() {
   local __extraConf=""
   if [ "$APServiceChannel" -gt 14 ] 2>/dev/null; then
     __hwMode="a"
-    __extraConf="country_code=${FLUXIONRegDomain:-US}
+    __extraConf="country_code=${CAPCAPRegDomain:-US}
 ieee80211d=1"
   fi
 
@@ -123,7 +123,7 @@ $__extraConf" \
   ip link set "$APServiceInterface" down 2>/dev/null
   sleep 0.5
 
-  macchanger --mac="$APServiceMAC" "$APServiceInterface" &>> $FLUXIONOutputDevice
+  macchanger --mac="$APServiceMAC" "$APServiceInterface" &>> $CAPCAPOutputDevice
   sleep 0.5
 
   ip link set "$APServiceInterface" up 2>/dev/null
@@ -137,7 +137,7 @@ $__extraConf" \
 function ap_service_start() {
   ap_service_stop
 
-  fluxion_window_open APServiceXtermPID \
+  capcap_window_open APServiceXtermPID \
     "CAPCAPWIFI AP Service [hostapd]" "$TOP" "#000000" "#FFFFFF" \
     "hostapd \"$APServiceConfigDirectory/$APServiceMAC-hostapd.conf\""
 
@@ -149,12 +149,12 @@ function ap_service_start() {
     APServicePID=$(pgrep -P $APServiceXtermPID 2>/dev/null)
     # If the window process itself is gone, hostapd failed — abort.
     if [ -n "$APServiceXtermPID" ] && ! kill -0 "$APServiceXtermPID" 2>/dev/null; then
-      echo "hostapd window exited; AP service failed to start." >> $FLUXIONOutputDevice
+      echo "hostapd window exited; AP service failed to start." >> $CAPCAPOutputDevice
       return 1
     fi
     apWaitRetry=$((apWaitRetry + 1))
     if [ $apWaitRetry -ge 15 ]; then
-      echo "hostapd did not start within 15s; aborting." >> $FLUXIONOutputDevice
+      echo "hostapd did not start within 15s; aborting." >> $CAPCAPOutputDevice
       return 1
     fi
   done

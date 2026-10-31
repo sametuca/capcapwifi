@@ -5,11 +5,11 @@ source "$(dirname "$(readlink -f "$0")")/lib/testlib.sh"
 tests_init "$(basename "$0")"
 
 # Extract the target-completeness conditions straight out of capcapwifi.sh's
-# fluxion_target_set() so this test tracks the real implementation instead
+# capcap_target_set() so this test tracks the real implementation instead
 # of a hand-copied stand-in.
 extract_complete_condition() {
   awk '
-    /^fluxion_target_set\(\) \{/ { infunc=1 }
+    /^capcap_target_set\(\) \{/ { infunc=1 }
     infunc && /^  if \[\[ \\$/ { capture=1; sub(/^  if /, ""); print; next }
     capture { print }
     capture && /\]\]; then$/ { exit }
@@ -18,7 +18,7 @@ extract_complete_condition() {
 
 extract_partial_condition() {
   awk '
-    /^fluxion_target_set\(\) \{/ { infunc=1 }
+    /^capcap_target_set\(\) \{/ { infunc=1 }
     infunc && /^  elif \[\[ \\$/ { capture=1; sub(/^  elif /, ""); print; next }
     capture { print }
     capture && /\]\]; then$/ { exit }
@@ -35,9 +35,9 @@ if [ -z "$COMPLETE_CONDITION" ] || [ -z "$PARTIAL_CONDITION" ]; then
 fi
 
 check_target_state() {
-  local FluxionTargetSSID=$1
-  local FluxionTargetMAC=$2
-  local FluxionTargetChannel=$3
+  local CapCapTargetSSID=$1
+  local CapCapTargetMAC=$2
+  local CapCapTargetChannel=$3
   local state
 
   eval "

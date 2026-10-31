@@ -8,7 +8,7 @@ if [ -f "/etc/debian_version" ]; then
   PackageManagerOutputDevice="/dev/stdout"
 
   unprep_package_manager() {
-    echo "$(cat /etc/apt/sources.list | grep -v 'deb http://http.kali.org/kali kali-rolling main non-free contrib # Installed By FLUXION')" >/etc/apt/sources.list
+    echo "$(cat /etc/apt/sources.list | grep -v 'deb http://http.kali.org/kali kali-rolling main non-free contrib # Installed By CAPCAP')" >/etc/apt/sources.list
   }
 
   check_package_manager() {
@@ -31,7 +31,7 @@ if [ -f "/etc/debian_version" ]; then
         return 1
       fi
 
-      echo "deb http://http.kali.org/kali kali-rolling main non-free contrib # Installed By FLUXION" >>/etc/apt/sources.list
+      echo "deb http://http.kali.org/kali kali-rolling main non-free contrib # Installed By CAPCAP" >>/etc/apt/sources.list
     fi
 
     # Cleanup package manager

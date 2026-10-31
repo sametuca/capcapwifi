@@ -1,5 +1,5 @@
 {
-  "_comment": "Strings for the Instagram captive portals. 'code' becomes the directory suffix (Instagram_<code>.portal) and must follow Fluxion's language suffixes, which is why Turkish is 'tur' and not 'tr'.",
+  "_comment": "Strings for the Instagram captive portals. 'code' becomes the directory suffix (Instagram_<code>.portal) and must follow CapCap's language suffixes, which is why Turkish is 'tur' and not 'tr'.",
   "languages": [
     {
       "code": "tur",

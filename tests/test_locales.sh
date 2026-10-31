@@ -33,9 +33,9 @@ for locale_file in "$REPO_DIR"/language/*.sh; do
 
   check_required_variables \
     "$locale_file" \
-    FLUXIONInterfaceQuery \
-    FLUXIONAttackQuery \
-    FLUXIONCleanupSuccessNotice
+    CAPCAPInterfaceQuery \
+    CAPCAPAttackQuery \
+    CAPCAPCleanupSuccessNotice
 done
 
 for locale_file in "$REPO_DIR"/attacks/Captive\ Portal/language/*.sh; do
@@ -71,17 +71,17 @@ done
 # screen renders blanks.
 check_required_variables \
   "$REPO_DIR/language/en.sh" \
-  FLUXIONTargetListTitle \
-  FLUXIONTargetListLegendClients \
-  FLUXIONTargetListLegendHandshake \
-  FLUXIONTargetListLegendDFS \
-  FLUXIONTargetListColumns \
-  FLUXIONTargetListFilteredNotice \
-  FLUXIONTargetListEmptyFiltered \
-  FLUXIONTargetListEmptyNone \
-  FLUXIONDeauthMethodUsing \
-  FLUXIONDeauthMethodOverrideTip \
-  FLUXIONDeauthMethodUnknown
+  CAPCAPTargetListTitle \
+  CAPCAPTargetListLegendClients \
+  CAPCAPTargetListLegendHandshake \
+  CAPCAPTargetListLegendDFS \
+  CAPCAPTargetListColumns \
+  CAPCAPTargetListFilteredNotice \
+  CAPCAPTargetListEmptyFiltered \
+  CAPCAPTargetListEmptyNone \
+  CAPCAPDeauthMethodUsing \
+  CAPCAPDeauthMethodOverrideTip \
+  CAPCAPDeauthMethodUnknown
 
 check_required_variables \
   "$REPO_DIR/attacks/Captive Portal/language/en.sh" \

@@ -28,11 +28,11 @@ library_symbol_type() {
     ColorUtils.sh) echo "variable CGrn" ;;
     FormatUtils.sh) echo "function format_apply_autosize" ;;
     HashUtils.sh) echo "function hash_check_handshake" ;;
-    HelpUtils.sh) echo "function fluxion_help" ;;
+    HelpUtils.sh) echo "function capcap_help" ;;
     IOUtils.sh) echo "function io_query_choice" ;;
     InterfaceUtils.sh) echo "function interface_list_wireless" ;;
     SandboxUtils.sh) echo "function sandbox_remove_workfile" ;;
-    WindowUtils.sh) echo "function fluxion_window_init" ;;
+    WindowUtils.sh) echo "function capcap_window_init" ;;
     InstallerUtils.sh) echo "function installer_utils_check_dependencies" ;;
     airbase-ng.sh|hostapd.sh) echo "function ap_service_start" ;;
     *) echo "" ;;
@@ -45,10 +45,10 @@ for library_file in "${library_files[@]}"; do
   library_symbol=${library_meta#* }
 
   if (
-    FLUXIONPath="$REPO_DIR"
-    FLUXIONLibPath="$REPO_DIR/lib"
-    FLUXIONWorkspacePath="$TEST_RUNTIME_DIR/workspace"
-    FLUXIONOutputDevice="$TEST_RUNTIME_DIR/output.log"
+    CAPCAPPath="$REPO_DIR"
+    CAPCAPLibPath="$REPO_DIR/lib"
+    CAPCAPWorkspacePath="$TEST_RUNTIME_DIR/workspace"
+    CAPCAPOutputDevice="$TEST_RUNTIME_DIR/output.log"
     InstallerUtilsInstalledPackagesFile="$TEST_RUNTIME_DIR/installed_packages.list"
     source "$library_file"
 

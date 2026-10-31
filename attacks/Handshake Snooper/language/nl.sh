@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Snooping voor \$HandshakeSnooperVerif
 HandshakeSnooperStoppingForVerifierNotice="Stop snooper & controle voor hashes."
 HandshakeSnooperSearchingForHashesNotice="Zoek naar hashes in het capture bestand."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Afgebroken${CClr}: De operatie is afgebroken, geen geldige hash gevonden."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Gelukt${CClr}: Een geldige hash is gedetecteerd en opgeslagen in de fluxion database."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Gelukt${CClr}: Een geldige hash is gedetecteerd en opgeslagen in de capcap database."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel aanval afgerond, Sluit dit scherm en start een andere aanval.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

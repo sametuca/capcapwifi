@@ -56,5 +56,5 @@ capcapwifi/
 ```
 
 > **Not:** GUI, `capcapwifi.sh`'yi `--auto` modunda arka planda çalıştırır ve  
-> `fluxion_status` satırlarını parse ederek durum güncellemelerini gerçek zamanlı  
+> `capcap_status` satırlarını parse ederek durum güncellemelerini gerçek zamanlı  
 > olarak arayüze yansıtır.

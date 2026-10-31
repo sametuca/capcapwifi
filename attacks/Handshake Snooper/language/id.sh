@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Mengintai untuk \$HandshakeSnooperVer
 HandshakeSnooperStoppingForVerifierNotice="Menghentikan pengintai & memeriksa hash."
 HandshakeSnooperSearchingForHashesNotice="Mencari hash di file tangkapan."
 HandshakeSnooperArbiterAbortedWarning="${CYel}dibatalkan${CClr}: Operasi telah dibatalkan, hash yang valid tidak ditemukan.."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}sukses${CClr}: Hash yang valid terdeteksi dan disimpan ke database fluxion."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}sukses${CClr}: Hash yang valid terdeteksi dan disimpan ke database capcap."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Pengintai handshake$CBYel serangan selesai, tutup jendela ini dan mulai serangan lain.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

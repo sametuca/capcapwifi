@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Snooping per \$HandshakeSnooperVerifi
 HandshakeSnooperStoppingForVerifierNotice="Stop dello snooper & Ricerca degli hash."
 HandshakeSnooperSearchingForHashesNotice="Ricerca degli hash nel file di cattura."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Cancellato${CClr}: L'operazione è stata cancellata, nessun hash trovato."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Riuscito${CClr}: Un hash valido è stato rilevato e salvato nel database fluxion."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Riuscito${CClr}: Un hash valido è stato rilevato e salvato nel database capcap."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel attacco completato, chiudi questa finestra ed inizia un nuovo attacco.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

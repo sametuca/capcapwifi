@@ -335,7 +335,7 @@ class CapCapWifiController:
 
     def _finish_scan(self) -> None:
         """Try to parse the CSV dump after scan-only mode finishes."""
-        workspace = os.environ.get("FLUXIONWorkspacePath", "/tmp/fluxspace")
+        workspace = os.environ.get("CAPCAPWorkspacePath", "/tmp/capcapspace")
         csv_path = Path(workspace) / "dump-01.csv"
         if csv_path.exists():
             cands = _parse_csv_candidates(csv_path)

@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Проверка каждые \$Hands
 HandshakeSnooperStoppingForVerifierNotice="Остановка атаки и проверка хэшей."
 HandshakeSnooperSearchingForHashesNotice="Поиск хэшей в файле захвата."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Прервано${CClr}: Операция была прервана, не найдено валидного хэша."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Успех${CClr}: Валидный хэш был найден и сохранён в базе данных fluxion."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Успех${CClr}: Валидный хэш был найден и сохранён в базе данных capcap."
 HandshakeSnooperArbiterCompletedTip="Атака ${CBCyn}Разведчик рукопожатий$CBYel завершена, закройте это окно и начните другую атаку.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

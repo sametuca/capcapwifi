@@ -1,4 +1,4 @@
-FLUXION(1)                        User Manuals                       FLUXION(1)
+CAPCAP(1)                        User Manuals                       CAPCAP(1)
 
 NAME
        capcapwifi - CapCapWifi is a security auditing and social-engineering research
@@ -146,19 +146,19 @@ EXAMPLES
               sudo ./capcapwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
 
 FILES
-       /tmp/fluxspace/
+       /tmp/capcapspace/
               The system wide tmp directory.
-       $FLUXION/attacks/
+       $CAPCAP/attacks/
               Folder where handshakes and passwords are stored in.
 
 ENVIRONMENT
-       FLUXIONAuto
+       CAPCAPAuto
               Automatically run capcapwifi in auto mode if exported.
 
-       FLUXIONDebug
+       CAPCAPDebug
               Automatically run capcapwifi in debug mode if exported.
 
-       FLUXIONWIKillProcesses
+       CAPCAPWIKillProcesses
               Automatically kill any interfering process(es).
 
 DIAGNOSTICS
@@ -173,4 +173,4 @@ AUTHOR
 SEE ALSO
        aircrack-ng(8),
 
-Linux                              MARCH 2026                        FLUXION(1)
+Linux                              MARCH 2026                        CAPCAP(1)

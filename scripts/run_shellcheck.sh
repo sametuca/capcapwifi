@@ -33,8 +33,8 @@ if ! command -v "$SHELLCHECK" >/dev/null 2>&1; then
   exit 2
 fi
 
-__raw_output=$(mktemp "${TMPDIR:-/tmp}/fluxion-shellcheck.XXXXXX")
-__current_keys=$(mktemp "${TMPDIR:-/tmp}/fluxion-shellcheck-keys.XXXXXX")
+__raw_output=$(mktemp "${TMPDIR:-/tmp}/capcap-shellcheck.XXXXXX")
+__current_keys=$(mktemp "${TMPDIR:-/tmp}/capcap-shellcheck-keys.XXXXXX")
 trap 'rm -f "$__raw_output" "$__current_keys"' EXIT
 
 # Full report, kept for the failure message.
@@ -61,8 +61,8 @@ if [ ! -f "$BASELINE" ]; then
   exit 2
 fi
 
-__known=$(mktemp "${TMPDIR:-/tmp}/fluxion-shellcheck-known.XXXXXX")
-__new=$(mktemp "${TMPDIR:-/tmp}/fluxion-shellcheck-new.XXXXXX")
+__known=$(mktemp "${TMPDIR:-/tmp}/capcap-shellcheck-known.XXXXXX")
+__new=$(mktemp "${TMPDIR:-/tmp}/capcap-shellcheck-new.XXXXXX")
 trap 'rm -f "$__raw_output" "$__current_keys" "$__known" "$__new"' EXIT
 
 sort -u "$BASELINE" >"$__known"

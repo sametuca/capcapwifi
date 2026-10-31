@@ -3,7 +3,7 @@
 # ================================================================
 # Configuration Section
 # ================================================================
-#APServiceConfigDirectory=$FLUXIONWorkspacePath
+#APServiceConfigDirectory=$CAPCAPWorkspacePath
 # ================================================================
 
 #if [ "$APServiceVersion" ]; then return 0; fi
@@ -11,11 +11,11 @@
 
 function ap_service_stop() {
   if [ "$APServiceXtermPID" ]; then
-    kill $APServiceXtermPID &>> $FLUXIONOutputDevice
+    kill $APServiceXtermPID &>> $CAPCAPOutputDevice
   fi
 
   if [ "$APServicePID" ]; then
-    kill $APServicePID &>> $FLUXIONOutputDevice
+    kill $APServicePID &>> $CAPCAPOutputDevice
   fi
 
   APServiceXtermPID=""
@@ -49,7 +49,7 @@ function ap_service_route() {
 
   ip addr add "$networkSubnet.$networkAddress/24" dev "at0" 2>/dev/null
 
-  if ! sysctl net.ipv6.conf.at0.disable_ipv6=1 &>> $FLUXIONOutputDevice; then
+  if ! sysctl net.ipv6.conf.at0.disable_ipv6=1 &>> $CAPCAPOutputDevice; then
     return 2
   fi
 }
@@ -72,7 +72,7 @@ function ap_service_prep() {
     local __iw=$(command -v iw 2>/dev/null || echo /usr/sbin/iw)
     if [ -x "$__iw" ]; then
       APServiceOrigRegDomain=$("$__iw" reg get 2>/dev/null | grep -m1 "^country" | sed 's/country \([A-Z0-9]*\).*/\1/')
-      "$__iw" reg set "${FLUXIONRegDomain:-US}" 2>/dev/null
+      "$__iw" reg set "${CAPCAPRegDomain:-US}" 2>/dev/null
       sleep 0.5
     fi
   fi
@@ -88,7 +88,7 @@ function ap_service_prep() {
 function ap_service_start() {
   ap_service_stop
 
-  fluxion_window_open APServiceXtermPID \
+  capcap_window_open APServiceXtermPID \
     "CAPCAPWIFI AP Service [airbase-ng]" "$TOP" "#000000" "#FFFFFF" \
     "airbase-ng -P -e $APServiceSSID -c $APServiceChannel -a $APServiceMAC $APServiceInterface"
 
@@ -104,7 +104,7 @@ function ap_service_start() {
     sleep 1
     __retries=$((__retries + 1))
     if [ $__retries -ge 15 ]; then
-      echo "at0 not created after 15s; aborting." >> $FLUXIONOutputDevice
+      echo "at0 not created after 15s; aborting." >> $CAPCAPOutputDevice
       return 1
     fi
   done
@@ -116,7 +116,7 @@ function ap_service_start() {
     sleep 1
     __retries=$((__retries + 1))
     if [ $__retries -ge 10 ]; then
-      echo "at0 failed to come up after 10s; aborting." >> $FLUXIONOutputDevice
+      echo "at0 failed to come up after 10s; aborting." >> $CAPCAPOutputDevice
       return 1
     fi
   done

@@ -71,7 +71,7 @@ for language in tur en de es fr it pt-br; do
 done
 
 # The workspace holds the credential log; the portal lives one level down, as
-# it does under /tmp/fluxspace/captive_portal at runtime.
+# it does under /tmp/capcapspace/captive_portal at runtime.
 mkdir -p "$DOCROOT"
 cp "$PORTAL_SRC"/* "$DOCROOT"/
 

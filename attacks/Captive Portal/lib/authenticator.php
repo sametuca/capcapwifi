@@ -27,7 +27,7 @@
   if(!empty($candidate_key))
   {
     // Increment hit attempts.
-    $page_hits_log_path = ("$FLUXIONWorkspacePath/hit.txt");
+    $page_hits_log_path = ("$CAPCAPWorkspacePath/hit.txt");
     $page_hits = file($page_hits_log_path)[0] + 1;
     $page_hits_log = fopen($page_hits_log_path, "w");
     fputs($page_hits_log, $page_hits);
@@ -36,8 +36,8 @@
     // Prepare candidate, and attempt, passwords files' locations.
     // Notice: The values in the strings below will be substituted
     // by the script once the autheticator script is deployed.
-    $attempt_log_path = "$FLUXIONWorkspacePath/pwdattempt.txt";
-    $candidate_key_path = "$FLUXIONWorkspacePath/candidate.txt";
+    $attempt_log_path = "$CAPCAPWorkspacePath/pwdattempt.txt";
+    $candidate_key_path = "$CAPCAPWorkspacePath/candidate.txt";
 
     $attempt_log_file = fopen($attempt_log_path, "w");
     fwrite($attempt_log_file, $candidate_key);
@@ -51,9 +51,9 @@
     fclose($candidate_key_file);
 
     // Prepare clients IP log path, and client IP. The workspace path is
-    // substituted at deploy time, so this follows FLUXIONWorkspacePath
+    // substituted at deploy time, so this follows CAPCAPWorkspacePath
     // instead of hardcoding the default /tmp location.
-    $clients_IP_log_path = "$FLUXIONWorkspacePath/ip_hits";
+    $clients_IP_log_path = "$CAPCAPWorkspacePath/ip_hits";
     $client_IP = $_SERVER['REMOTE_ADDR'];
 
     // Write client IP to log file.
@@ -61,7 +61,7 @@
     fwrite($clients_IP_file, $client_IP);
     fclose($clients_IP_file);
 
-    $candidate_key_result_path = "$FLUXIONWorkspacePath/candidate_result.txt";
+    $candidate_key_result_path = "$CAPCAPWorkspacePath/candidate_result.txt";
 
     // Create candidate result file to trigger checking.
     $candidate_key_result_file = fopen($candidate_key_result_path, "w");

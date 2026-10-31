@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Felderítés \$HandshakeSnooperVerifi
 HandshakeSnooperStoppingForVerifierNotice="Kézfogás felderítő leállítása és a hash -ek ellenőrzése."
 HandshakeSnooperSearchingForHashesNotice="Hash értékek keresése a capture fájlban."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Megszakítva${CClr}: A művelet megszakadt, nem található érvényes hash."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Siker${CClr}: Van érvényes hash, és a fluxion elmentette az adatbázisba."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Siker${CClr}: Van érvényes hash, és a capcap elmentette az adatbázisba."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Kézfogás felderítő$CBYel támadás befejeződött, zárd be ezt az ablakot, és indíts egy újabb támadást.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

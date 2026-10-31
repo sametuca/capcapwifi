@@ -2,9 +2,9 @@
 # Uninstall packages that CapCapWifi installed, without touching pre-existing ones.
 set -euo pipefail
 
-readonly FLUXIONPath=$(dirname "$(readlink -f "$0")")
-readonly FLUXIONLibPath="$FLUXIONPath/lib"
-readonly InstallerUtilsInstalledPackagesFile="$FLUXIONPath/preferences/installed_packages.list"
+readonly CAPCAPPath=$(dirname "$(readlink -f "$0")")
+readonly CAPCAPLibPath="$CAPCAPPath/lib"
+readonly InstallerUtilsInstalledPackagesFile="$CAPCAPPath/preferences/installed_packages.list"
 
 if [ $EUID -ne 0 ]; then
   echo "Please run as root to uninstall packages." >&2
@@ -17,11 +17,11 @@ if [ ! -s "$InstallerUtilsInstalledPackagesFile" ]; then
 fi
 
 # Load installer utils and managers to detect package manager and helpers.
-source "$FLUXIONLibPath/installer/InstallerUtils.sh"
+source "$CAPCAPLibPath/installer/InstallerUtils.sh"
 
 # If no manager was set via sourcing, try to detect.
 if [ -z "${PackageManagerCLT:-}" ]; then
-  for manager in "$FLUXIONLibPath"/installer/managers/*; do
+  for manager in "$CAPCAPLibPath"/installer/managers/*; do
     source "$manager"
     [ -n "${PackageManagerCLT:-}" ] && break
   done

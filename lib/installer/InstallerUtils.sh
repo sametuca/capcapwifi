@@ -13,7 +13,7 @@ PackageManagerLog="$InstallerUtilsWorkspacePath/package_manager.log"
 
 # Respect pre-set or readonly value to avoid assignment errors under set -u/-r.
 if ! declare -p InstallerUtilsInstalledPackagesFile >/dev/null 2>&1; then
-  InstallerUtilsInstalledPackagesFile="${FLUXIONPath:-$PWD}/preferences/installed_packages.list"
+  InstallerUtilsInstalledPackagesFile="${CAPCAPPath:-$PWD}/preferences/installed_packages.list"
 fi
 
 # Ensure install-tracking file exists so we can later uninstall only what we added.
@@ -33,7 +33,7 @@ installer_utils_package_installed() {
   esac
 }
 
-# Remember packages that were newly installed by fluxion so they can be removed safely.
+# Remember packages that were newly installed by capcap so they can be removed safely.
 installer_utils_log_new_install() {
   local pkg="$1"
   grep -qx "$PackageManagerCLT:$pkg" "$InstallerUtilsInstalledPackagesFile" 2>/dev/null || echo "$PackageManagerCLT:$pkg" >> "$InstallerUtilsInstalledPackagesFile"
@@ -248,10 +248,10 @@ installer_utils_check_dependencies() {
 
     if ! hash "$__installer_utils_check_dependencies__CLITool" 2>/dev/null; then
       __installer_utils_check_dependencies__state="$CRed Missing!$CClr"
-        if [ $FLUXIONSkipDependencies -eq 0 ];then
+        if [ $CAPCAPSkipDependencies -eq 0 ];then
             InstallerUtilsCheckDependencies+=("$__installer_utils_check_dependencies__CLIToolInfo")
         else
-            FLUXIONMissingDependencies=1
+            CAPCAPMissingDependencies=1
         fi
     fi
 
@@ -278,7 +278,7 @@ installer_utils_run_dependencies() {
   # The array below holds all the packages that will be installed.
   local __installer_utils_run_dependencies__dependenciesInfo=("${!1}")
 
-  local __installer_utils_run_dependencies__managers=("$FLUXIONLibPath/installer/managers/"*)
+  local __installer_utils_run_dependencies__managers=("$CAPCAPLibPath/installer/managers/"*)
 
   local __installer_utils_run_dependencies__manager
   for __installer_utils_run_dependencies__manager in "${__installer_utils_run_dependencies__managers[@]}"; do

@@ -27,8 +27,8 @@ eval "$channel_supported_source"
 # Mirrors the fallback used at every AP-channel consumer in the attack module.
 effective_ap_channel() {
   local CaptivePortalAccessPointChannel=$1
-  local FluxionTargetChannel=$2
-  echo "${CaptivePortalAccessPointChannel:-$FluxionTargetChannel}"
+  local CapCapTargetChannel=$2
+  echo "${CaptivePortalAccessPointChannel:-$CapCapTargetChannel}"
 }
 
 assert_supported() {

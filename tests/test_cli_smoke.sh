@@ -14,7 +14,7 @@ EOF
   chmod +x "$FAKEBIN_DIR/$command_name"
 }
 
-run_fluxion() {
+run_capcap() {
   local stdout_value=""
   local stderr_value=""
   local status_value=0
@@ -22,20 +22,20 @@ run_fluxion() {
   run_capture stdout_value stderr_value status_value \
     env \
       PATH="$FAKEBIN_DIR:$PATH" \
-      FLUXIONWorkspacePath="$TEST_RUNTIME_DIR/fluxspace" \
-      FLUXIONPreferencesFile="$TEST_RUNTIME_DIR/preferences.conf" \
+      CAPCAPWorkspacePath="$TEST_RUNTIME_DIR/capcapspace" \
+      CAPCAPPreferencesFile="$TEST_RUNTIME_DIR/preferences.conf" \
       InstallerUtilsInstalledPackagesFile="$TEST_RUNTIME_DIR/installed_packages.list" \
       bash "$REPO_DIR/capcapwifi.sh" "$@"
 
-  FLUXION_STDOUT=$stdout_value
-  FLUXION_STDERR=$stderr_value
-  FLUXION_STATUS=$status_value
+  CAPCAP_STDOUT=$stdout_value
+  CAPCAP_STDERR=$stderr_value
+  CAPCAP_STATUS=$status_value
 }
 
 EXPECTED_VERSION=$(
   awk -F= '
-    /^readonly FLUXIONVersion=/ { version=$2 }
-    /^readonly FLUXIONRevision=/ { revision=$2 }
+    /^readonly CAPCAPVersion=/ { version=$2 }
+    /^readonly CAPCAPRevision=/ { revision=$2 }
     END { print "CAPCAPWIFI V" version "." revision }
   ' "$REPO_DIR/capcapwifi.sh"
 )
@@ -62,20 +62,20 @@ echo "=== CLI Smoke Test Suite ==="
 echo
 
 echo "Test 1: version mode handles non-interactive flags safely"
-run_fluxion --auto --scan-only --version
-assert_exit_code 0 "$FLUXION_STATUS" "Combined version mode exits successfully"
-assert_contains "$FLUXION_STDOUT" "$EXPECTED_VERSION" "Combined version mode prints the expected version"
+run_capcap --auto --scan-only --version
+assert_exit_code 0 "$CAPCAP_STATUS" "Combined version mode exits successfully"
+assert_contains "$CAPCAP_STDOUT" "$EXPECTED_VERSION" "Combined version mode prints the expected version"
 
 echo "Test 2: help mode advertises smoke-safe flags"
-run_fluxion --help
-assert_exit_code 0 "$FLUXION_STATUS" "Help mode exits successfully"
-assert_contains "$FLUXION_STDOUT" "--scan-only" "Help output documents scan-only mode"
-assert_contains "$FLUXION_STDOUT" "--list-interfaces" "Help output documents list-interfaces mode"
+run_capcap --help
+assert_exit_code 0 "$CAPCAP_STATUS" "Help mode exits successfully"
+assert_contains "$CAPCAP_STDOUT" "--scan-only" "Help output documents scan-only mode"
+assert_contains "$CAPCAP_STDOUT" "--list-interfaces" "Help output documents list-interfaces mode"
 
 echo "Test 3: list-interfaces exits cleanly without wireless hardware"
-run_fluxion --list-interfaces
-assert_exit_code 1 "$FLUXION_STATUS" "List-interfaces reports no hardware"
-assert_contains "$FLUXION_STDOUT" "No wireless interfaces detected." "List-interfaces prints the no-hardware message"
+run_capcap --list-interfaces
+assert_exit_code 1 "$CAPCAP_STATUS" "List-interfaces reports no hardware"
+assert_contains "$CAPCAP_STDOUT" "No wireless interfaces detected." "List-interfaces prints the no-hardware message"
 
 assert_empty_file "$UNEXPECTED_LOG" "Smoke modes did not invoke stubbed wireless or terminal commands"
 

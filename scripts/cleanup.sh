@@ -18,7 +18,7 @@ for proc in hostapd dnsmasq lighttpd kea-dhcp4 php-cgi airodump-ng aireplay-ng m
 done
 
 echo "[*] Killing CAPCAPWIFI tmux sessions..."
-for session in $(tmux ls 2>/dev/null | grep -oE '^FLUXION[^:]*'); do
+for session in $(tmux ls 2>/dev/null | grep -oE '^CAPCAP[^:]*'); do
 	tmux kill-session -t "$session" 2>/dev/null && echo "    killed tmux session $session"
 done
 
@@ -48,8 +48,8 @@ for iface in $(ip link show | grep -oE 'fluxwl[^ :@]+'); do
 done
 
 echo "[*] Restoring ip_forward..."
-if [ -f /tmp/fluxspace/ip_forward ]; then
-	sysctl -w net.ipv4.ip_forward=$(cat /tmp/fluxspace/ip_forward) 2>/dev/null \
+if [ -f /tmp/capcapspace/ip_forward ]; then
+	sysctl -w net.ipv4.ip_forward=$(cat /tmp/capcapspace/ip_forward) 2>/dev/null \
 		&& echo "    ip_forward restored from saved value"
 else
 	sysctl -w net.ipv4.ip_forward=0 2>/dev/null \
@@ -57,10 +57,10 @@ else
 fi
 
 echo "[*] Cleaning up workspace..."
-rm -rf /tmp/fluxspace/ 2>/dev/null && echo "    /tmp/fluxspace/ removed"
+rm -rf /tmp/capcapspace/ 2>/dev/null && echo "    /tmp/capcapspace/ removed"
 
 echo "[*] Restoring iptables..."
-# capcapwifi saves iptables backup at <fluxion_dir>/iptables-rules
+# capcapwifi saves iptables backup at <capcap_dir>/iptables-rules
 _script_dir="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 _iptables_bak="$_script_dir/iptables-rules"
 if [ -f "$_iptables_bak" ]; then

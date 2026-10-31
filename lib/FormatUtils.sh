@@ -10,7 +10,7 @@ FormatValidSpecifiers='%([+-]?([0-9]+|\*)?(\.([0-9]+|\*))?)?[bqdiouxXfeEgGcsnaA]
 tabs -$FormatTabLength &>/dev/null # Set tab width to var
 
 # This function strips (some) invisible characters.
-# It only strips those needed by fluxion, currently.
+# It only strips those needed by capcap, currently.
 # Parameters: $1 - format
 function format_strip_invisibles() {
   # This function currently only strips the following:

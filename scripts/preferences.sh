@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# export FLUXIONAuto=1
-# export FLUXIONDebug=1
-# export FLUXIONWIKillProcesses=1
-# export FLUXIONWIReloadDriver=1
+# export CAPCAPAuto=1
+# export CAPCAPDebug=1
+# export CAPCAPWIKillProcesses=1
+# export CAPCAPWIReloadDriver=1
 
 # FLUXSCRIPT END

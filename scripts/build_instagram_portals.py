@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the Instagram captive portals from a single set of templates.
 
-Fluxion copies a portal directory verbatim into the lighttpd document root, so
+CapCap copies a portal directory verbatim into the lighttpd document root, so
 every language has to exist on disk as its own ``Instagram_<code>.portal``
 directory. Keeping seven copies of the same markup in sync by hand does not
 survive a design change, so the portals are generated here from

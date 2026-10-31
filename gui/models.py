@@ -1,3 +1,6 @@
+"""
+CapCapWifi GUI - Veri Modelleri
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -49,20 +52,27 @@ class TargetCandidate:
 
     @property
     def clean_essid(self) -> str:
-        return self.essid.strip() or "<Hidden SSID>"
+        return self.essid.strip() or "<Gizli Ağ>"
 
     @property
     def signal_color(self) -> str:
         try:
             val = int(self.quality.replace("%", "").replace("?", "0"))
             if val >= 70:
-                return "#00E676"  # Bright Green
+                return "#00E676"  # Çok İyi (Yeşil)
             elif val >= 40:
-                return "#FFD600"  # Amber Yellow
+                return "#FFD600"  # Orta (Sarı)
             else:
-                return "#FF5252"  # Red
+                return "#FF5252"  # Zayıf (Kırmızı)
         except Exception:
             return "#9E9E9E"
+
+    @property
+    def signal_percent(self) -> float:
+        try:
+            return float(self.quality.replace("%", "").replace("?", "0")) / 100.0
+        except Exception:
+            return 0.1
 
 
 @dataclass
@@ -92,9 +102,9 @@ class AttackConfig:
     ap_service: str = "hostapd"
     deauth_method: str = "aireplay-ng"
     portal_site: str = "Instagram_tur"
-    language: str = "en"
+    language: str = "tur"
     band: str = "bg"
-    reg_domain: str = "US"
+    reg_domain: str = "TR"
     kill_processes: bool = True
     timeout_minutes: Optional[int] = None
 
@@ -107,3 +117,13 @@ class CapturedCredential:
     password: str
     client_ip: Optional[str] = None
     extra_info: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class HandshakeFile:
+    filename: str
+    filepath: str
+    ssid: str
+    bssid: str
+    size_bytes: int
+    created_at: str

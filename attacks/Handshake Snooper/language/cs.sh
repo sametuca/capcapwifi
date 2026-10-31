@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Snooping for \$HandshakeSnooperVerifi
 HandshakeSnooperStoppingForVerifierNotice="Zastavuji snooper & kontroluji hashe."
 HandshakeSnooperSearchingForHashesNotice="Hledám hashe v zachyceném souboru."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Přerušeno${CClr}: Operace byla přerušena, nebyl nalezen žádný platný hash."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Úspěch${CClr}: Platný hash byl detekován a uložen do databáze fluxionu."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Úspěch${CClr}: Platný hash byl detekován a uložen do databáze capcapu."
 HandshakeSnooperArbiterCompletedTip="Útok ${CBCyn}Handshake Snooper$CBYel dokončen, zavřete toto okno a začněte další útok.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

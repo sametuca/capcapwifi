@@ -6,10 +6,10 @@ tests_init "$(basename "$0")"
 
 FAKEBIN_DIR="$TEST_RUNTIME_DIR/fakebin"
 KILLALL_LOG="$TEST_RUNTIME_DIR/killall.log"
-FLUXIONOutputDevice="$TEST_RUNTIME_DIR/output.log"
+CAPCAPOutputDevice="$TEST_RUNTIME_DIR/output.log"
 mkdir -p "$FAKEBIN_DIR"
 : >"$KILLALL_LOG"
-: >"$FLUXIONOutputDevice"
+: >"$CAPCAPOutputDevice"
 
 cat >"$FAKEBIN_DIR/airmon-ng" <<'EOF'
 #!/usr/bin/env bash

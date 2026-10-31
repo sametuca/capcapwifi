@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-fluxion_help(){
+capcap_help(){
   echo " CAPCAPWIFI(1)                       User Manuals                       CAPCAPWIFI(1)
 
 
@@ -172,19 +172,19 @@ fluxion_help(){
          sudo ./capcapwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
 
   FILES
-         /tmp/fluxspace/
+         /tmp/capcapspace/
                 The system wide tmp directory.
-         \$FLUXION/attacks/
+         \$CAPCAP/attacks/
                 Folder where handshakes and passwords are stored in.
 
   ENVIRONMENT
-         FLUXIONAuto
+         CAPCAPAuto
                 Automatically run capcapwifi in auto mode if exported.
 
-         FLUXIONDebug
+         CAPCAPDebug
                 Automatically run capcapwifi in debug mode if exported.
 
-         FLUXIONWIKillProcesses
+         CAPCAPWIKillProcesses
                 Automatically kill any interfering process(es).
 
   DIAGNOSTICS

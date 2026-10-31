@@ -6,24 +6,24 @@
 # Abstraction layer over xterm/tmux for headless operation.
 # When -m/--multiplexer is set, uses tmux instead of xterm.
 
-FLUXIONWindowCounter=0
+CAPCAPWindowCounter=0
 
-fluxion_window_init() {
+capcap_window_init() {
 	# Scan-only mode doesn't need a terminal multiplexer.
-	if [ "$FLUXIONScanOnly" ]; then
-		FLUXIONDisplayMode="headless"
+	if [ "$CAPCAPScanOnly" ]; then
+		CAPCAPDisplayMode="headless"
 		return 0
 	fi
 
-	if [ "$FLUXIONTMux" ]; then
-		FLUXIONDisplayMode="tmux"
+	if [ "$CAPCAPTMux" ]; then
+		CAPCAPDisplayMode="tmux"
 
 		# If not already inside a tmux session, re-exec inside one.
 		if [ -z "$TMUX" ]; then
 			local _sessionName="CAPCAPWIFI"
-			tmux has-session -t "$_sessionName" 2>/dev/null && _sessionName="FLUXION_$$"
+			tmux has-session -t "$_sessionName" 2>/dev/null && _sessionName="CAPCAP_$$"
 			exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 \
-				tmux new-session -s "$_sessionName" "$0 $FLUXIONOriginalArgs"
+				tmux new-session -s "$_sessionName" "$0 $CAPCAPOriginalArgs"
 		fi
 
 		# Ensure UTF-8 is set for the current session's environment.
@@ -39,15 +39,15 @@ fluxion_window_init() {
 		# Enable mouse support (scrolling, pane selection).
 		tmux set-option -g mouse on 2>/dev/null
 	else
-		FLUXIONDisplayMode="xterm"
+		CAPCAPDisplayMode="xterm"
 	fi
 }
 
-# fluxion_window_open <pid_var> <title> <geometry> <bg> <fg> <command>
+# capcap_window_open <pid_var> <title> <geometry> <bg> <fg> <command>
 #   pid_var=""  -> foreground/blocking (waits for command to finish)
 #   pid_var="X" -> background (stores xterm/tmux parent PID in variable X)
 #   In debug mode, windows remain open after command exits.
-fluxion_window_open() {
+capcap_window_open() {
 	local pidVar="$1"
 	local title="$2"
 	local geometry="$3"
@@ -55,12 +55,12 @@ fluxion_window_open() {
 	local fg="$5"
 	local command="$6"
 
-	FLUXIONWindowCounter=$((FLUXIONWindowCounter + 1))
-	local windowName="${title:0:30}_${FLUXIONWindowCounter}"
+	CAPCAPWindowCounter=$((CAPCAPWindowCounter + 1))
+	local windowName="${title:0:30}_${CAPCAPWindowCounter}"
 	# Sanitize window name for tmux (no dots or colons)
 	windowName=$(echo "$windowName" | tr '.:"' '___')
 
-	if [ "$FLUXIONScanOnly" ]; then
+	if [ "$CAPCAPScanOnly" ]; then
 		# Scan-only mode: no terminal windows, just background processes.
 		if [ -z "$pidVar" ]; then
 			# Foreground/blocking: run directly.
@@ -70,13 +70,13 @@ fluxion_window_open() {
 			eval $command &>/dev/null &
 			eval "$pidVar=$!"
 		fi
-	elif [ "$FLUXIONDisplayMode" = "tmux" ]; then
+	elif [ "$CAPCAPDisplayMode" = "tmux" ]; then
 		# Write command to a temp script to avoid all quoting issues with tmux.
-		local cmdScript="$FLUXIONWorkspacePath/.cmd_${FLUXIONWindowCounter}.sh"
+		local cmdScript="$CAPCAPWorkspacePath/.cmd_${CAPCAPWindowCounter}.sh"
 
 		if [ -z "$pidVar" ]; then
 			# Foreground/blocking: create window, poll until command finishes.
-			local doneFile="$FLUXIONWorkspacePath/.window_done_${FLUXIONWindowCounter}"
+			local doneFile="$CAPCAPWorkspacePath/.window_done_${CAPCAPWindowCounter}"
 			rm -f "$doneFile"
 
 			# Use a trap so the done file is written even if the window is
@@ -86,7 +86,7 @@ fluxion_window_open() {
 				"$doneFile" "$command" > "$cmdScript"
 			chmod +x "$cmdScript"
 
-			if [ "$FLUXIONDebug" ]; then
+			if [ "$CAPCAPDebug" ]; then
 				tmux new-window -n "$windowName" \
 					"$cmdScript; echo 'Press enter to close...'; read"
 			else
@@ -109,7 +109,7 @@ fluxion_window_open() {
 			chmod +x "$cmdScript"
 			tmux new-window -d -n "$windowName" "$cmdScript"
 
-			if [ "$FLUXIONDebug" ]; then
+			if [ "$CAPCAPDebug" ]; then
 				# Set remain-on-exit for debug mode
 				tmux set-option -t "$windowName" remain-on-exit on 2>/dev/null
 			fi
@@ -129,14 +129,14 @@ fluxion_window_open() {
 	else
 		# xterm mode (original behavior)
 		local holdFlag=""
-		if [ "$FLUXIONDebug" ]; then
+		if [ "$CAPCAPDebug" ]; then
 			holdFlag="-hold"
 		fi
 
 		if [ -z "$pidVar" ]; then
 			# Foreground/blocking
 			xterm $holdFlag -title "$title" $geometry \
-				-bg "$bg" -fg "$fg" -e "$command" 2>> $FLUXIONOutputDevice
+				-bg "$bg" -fg "$fg" -e "$command" 2>> $CAPCAPOutputDevice
 		else
 			# Background
 			xterm $holdFlag -title "$title" $geometry \
@@ -148,9 +148,9 @@ fluxion_window_open() {
 	return 0
 }
 
-# fluxion_window_close <pid_var_name>
+# capcap_window_close <pid_var_name>
 # Kills the window and its process tree, then clears the variable.
-fluxion_window_close() {
+capcap_window_close() {
 	local pidVarName="$1"
 	local pid="${!pidVarName}"
 
@@ -166,10 +166,10 @@ fluxion_window_close() {
 	fi
 }
 
-# fluxion_window_cleanup
+# capcap_window_cleanup
 # Kills the entire CAPCAPWIFI tmux session at shutdown.
-fluxion_window_cleanup() {
-	if [ "$FLUXIONDisplayMode" = "tmux" ]; then
+capcap_window_cleanup() {
+	if [ "$CAPCAPDisplayMode" = "tmux" ]; then
 		# Kill all windows in the CAPCAPWIFI session except the current one
 		local currentWindow
 		currentWindow=$(tmux display-message -p '#{window_id}' 2>/dev/null)

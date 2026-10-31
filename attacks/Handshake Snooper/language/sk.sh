@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="Špehujem \$HandshakeSnooperVerifierI
 HandshakeSnooperStoppingForVerifierNotice="Prerušujem špehovanie & kontrolujem 'hashes'."
 HandshakeSnooperSearchingForHashesNotice="Hľadám 'hashes' v 'capture' súbore."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Prerušené${CClr}: Operácia bola prerušená, žiadny platný 'hash' neboj nájdený."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Úspešné${CClr}: Platný 'hash' bol detekovaný a uložený do fluxion databázy."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Úspešné${CClr}: Platný 'hash' bol detekovaný a uložený do capcap databázy."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel attack completed, close this window and start another attack.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

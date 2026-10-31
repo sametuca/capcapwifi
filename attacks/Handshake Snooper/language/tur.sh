@@ -27,7 +27,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="\$HandshakeSnooperVerifierInterval sa
 HandshakeSnooperStoppingForVerifierNotice="İzleme durduruluyor & hash kontrolü yapılıyor"
 HandshakeSnooperSearchingForHashesNotice="Capture dosyasında hash aranıyor..."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Durduruldu${CClr}: Bu işlem durduruldu, geçerli bir hash bulunamadı."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Başarı${CClr}: Geçerli bir hash tespit edildi ve fluxion veritabanına kaydedildi."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Başarı${CClr}: Geçerli bir hash tespit edildi ve capcap veritabanına kaydedildi."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel saldırısı tamamlandı, bu pencereyi kapatın ve başka bir saldırıya başlayın.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

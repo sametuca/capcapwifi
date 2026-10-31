@@ -3,14 +3,14 @@
 if [ "$IOUtilsVersion" ]; then return 0; fi
 readonly IOUtilsVersion="1.0"
 
-if [ ! "$FLUXIONLibPath" ]; then return 1; fi
+if [ ! "$CAPCAPLibPath" ]; then return 1; fi
 
 IOUtilsHeader="[x] ================================ [x]"
 IOUtilsQueryMark="[-] "
 IOUtilsPrompt="[$USER@$HOSTNAME]> "
 
 if [ ! "$ArrayUtilsVersion" ]; then
-  source "$FLUXIONLibPath/ArrayUtils.sh"
+  source "$CAPCAPLibPath/ArrayUtils.sh"
 fi
 
 io_input_choice() {
@@ -124,7 +124,7 @@ io_query_choice() {
     return 1
   fi
 
-  __io_query_choice__query=$([ -z "$1" ] && echo -n "" || echo -ne "$FLUXIONVLine $1\n")
+  __io_query_choice__query=$([ -z "$1" ] && echo -n "" || echo -ne "$CAPCAPVLine $1\n")
   io_query_format_fields "$__io_query_choice__query" "\t$CRed[$CSYel%d$CClr$CRed]$CClr %b$CClr\n" $2
 
   IOQueryChoice="${IOQueryFormatFields[0]}"
