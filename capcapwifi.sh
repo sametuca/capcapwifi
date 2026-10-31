@@ -2152,6 +2152,15 @@ capcap_target_show() {
   printf "$colorfullFormat" "" "BSSID" " ${CapCapTargetMAC:-[N/A]} ($CYel${CapCapTargetMaker:-[N/A]}$CClr)" ""
 
   echo
+
+  # WPA3/SAE protects management frames (PMF), so deauth frames are discarded
+  # by the client and it stays associated. Say that before the user spends
+  # time wondering why the phone never drops.
+  local -u __target_enc="${CapCapTargetEncryption:-}"
+  if [[ "$__target_enc" == *WPA3* || "$__target_enc" == *SAE* ]]; then
+    echo -e "$CAPCAPVLine ${CYel}$CAPCAPTargetPMFWarning$CClr"
+    echo
+  fi
 }
 
 

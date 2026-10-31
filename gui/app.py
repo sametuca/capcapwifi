@@ -54,7 +54,7 @@ from models import (
 )
 from widgets import (
     ACCENT, ACCENT_DK, ACCENT_DIM, ACCENT2, ACCENT2_DIM, CARD_BG, CARD_HOVER,
-    DANGER, DANGER_DIM, DARK_BG, ELEV_BG, FONT_MONO_S, FONT_TITLE, FONT_UI,
+    DANGER, DANGER_DIM, DARK_BG, FONT_MONO_S, FONT_TITLE, FONT_UI,
     FONT_UI_B, FONT_UI_S, FONT_UI_SB, MUTED, PANEL_BG, TEXT_PRI, TEXT_SEC,
     WARN, WARN_DIM, BORDER,
     Checklist, CredentialsPanel, GuideBar, LogPanel, NetworkTable,
@@ -972,6 +972,9 @@ class CapCapWifiApp(ctk.CTk):
 
         if target.has_handshake:
             self._log_panel.append(t("log.target_has_handshake"), "info")
+        if target.uses_pmf:
+            self._log_panel.append(
+                t("log.pmf_target", ssid=target.clean_essid), "warn")
 
     def _on_handshake(self, hf: HandshakeFile) -> None:
         def _apply():
@@ -1285,6 +1288,9 @@ class CapCapWifiApp(ctk.CTk):
                 text, colour = t("hint.pick_row"), ACCENT2
             else:
                 text, colour = t("hint.target_ready"), ACCENT
+                target = self._target
+                if target is not None and target.uses_pmf:
+                    text, colour = t("hint.pmf_target"), WARN
 
         self._bar_label.configure(text="▶  " + text, text_color=colour)
 

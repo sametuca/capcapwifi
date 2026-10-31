@@ -10,6 +10,7 @@ ve ikincil olarak camgöbeği. Sinyal gücü sayı yerine çubuklarla gösterili
 """
 from __future__ import annotations
 
+import math
 import tkinter as tk
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence
@@ -54,6 +55,15 @@ FONT_UI_S   = ("Inter", 11)
 FONT_UI_B   = ("Inter", 12, "bold")
 FONT_UI_SB  = ("Inter", 11, "bold")
 FONT_TITLE  = ("Inter", 15, "bold")
+
+
+def mix_colour(first: str, second: str, amount: float) -> str:
+    """İki #RRGGBB rengi arasında doğrusal geçiş (0 = first, 1 = second)."""
+    amount = max(0.0, min(1.0, amount))
+    a = tuple(int(first[i:i + 2], 16) for i in (1, 3, 5))
+    b = tuple(int(second[i:i + 2], 16) for i in (1, 3, 5))
+    return "#%02X%02X%02X" % tuple(
+        round(x + (y - x) * amount) for x, y in zip(a, b))
 
 
 def auto_wrap(label: "ctk.CTkLabel", minimum: int = 220,
@@ -372,7 +382,7 @@ class NetworkRow(ctk.CTkFrame):
 
     def _enter(self, _event=None) -> None:
         if not self._selected:
-            self._paint(CARD_HOVER, BORDER)
+            self._paint(CARD_HOVER, ACCENT2)
 
     def _leave(self, _event=None) -> None:
         if not self._selected:
@@ -571,16 +581,47 @@ class StatusBadge(ctk.CTkFrame):
         self._label = ctk.CTkLabel(self, text=t("state.IDLE"), font=FONT_UI_B,
                                    text_color=MUTED)
         self._label.pack(side="left", padx=(0, 14), pady=6)
+        self._pulse_job = None
+        self._pulse_colour = MUTED
+        self._pulse_state = ""
+
+    def _stop_pulse(self) -> None:
+        if self._pulse_job is not None:
+            try:
+                self.after_cancel(self._pulse_job)
+            except Exception:
+                pass
+            self._pulse_job = None
+
+    def _pulse(self, step: int = 0) -> None:
+        # Canlı durumda nokta nefes alsın: yeni başlayan kullanıcı "çalışıyor"
+        # bilgisini renk değişiminden de okur.
+        wave = (math.sin(step / 7.0 * math.pi) + 1.0) / 2.0
+        colour = mix_colour(self._pulse_colour, DARK_BG, wave * 0.65)
+        self._icon.configure(text_color=colour)
+        self._label.configure(text_color=colour)
+        self._pulse_job = self.after(70, self._pulse, step + 1)
 
     def update_state(self, text: str, colour: Optional[str] = None) -> None:
         icon, default_colour = STATE_ICONS.get(text, ("●", MUTED))
-        self._icon.configure(text=icon, text_color=colour or default_colour)
+        self._pulse_colour = colour or default_colour
+        self._icon.configure(text=icon, text_color=self._pulse_colour)
         self._label.configure(
             text=t(f"state.{text}"),
-            text_color=colour or default_colour,
+            text_color=self._pulse_colour,
         )
+        self._stop_pulse()
+        if text in ("SCANNING", "STARTING", "RUNNING", "INSTALLING"):
+            # Aynı durumda yeniden başlatmak animasyonu titretir; sürdür.
+            if self._pulse_state != text:
+                self._pulse_state = text
+                self._pulse()
+        else:
+            self._pulse_state = ""
 
     def set_text(self, label: str, icon: str = "●", colour: str = MUTED) -> None:
+        self._stop_pulse()
+        self._pulse_state = ""
         self._icon.configure(text=icon, text_color=colour)
         self._label.configure(text=label, text_color=colour)
 
@@ -719,6 +760,7 @@ class NextStepGuideCard(ctk.CTkFrame):
         self._on_crack_wordlist = on_crack_wordlist
         self._on_dismiss = on_dismiss
         self._hf = None
+        self._glow_job = None
 
         # Üst Başlık & Kapatma Butonu
         head = ctk.CTkFrame(self, fg_color="transparent")
@@ -790,6 +832,27 @@ class NextStepGuideCard(ctk.CTkFrame):
             self._saved_lbl.configure(text=t("guide.saved", path=hf.filepath))
         else:
             self._saved_lbl.configure(text="")
+        self._glow()
+
+    def _glow(self, step: int = 0) -> None:
+        """Yakalama anında çerçeve birkaç kez parlasın.
+
+        Kullanıcı başka bir sekmeye bakıyor olsa bile gözüne çarpar; kalıcı
+        animasyon yorucu olacağı için ~1,2 saniye sonra sabit renge döner.
+        """
+        if step == 0 and self._glow_job is not None:
+            try:
+                self.after_cancel(self._glow_job)
+            except Exception:
+                pass
+            self._glow_job = None
+        wave = (math.sin(step / 5.0 * math.pi) + 1.0) / 2.0
+        self.configure(border_color=mix_colour(ACCENT, "#C8FFE6", wave * 0.85))
+        if step < 24:
+            self._glow_job = self.after(55, self._glow, step + 1)
+        else:
+            self._glow_job = None
+            self.configure(border_color=ACCENT)
 
     def _portal_clicked(self) -> None:
         if self._on_start_portal:

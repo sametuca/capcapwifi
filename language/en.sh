@@ -43,6 +43,7 @@ CAPCAPTargetListEmptyFilteredHint="Scan another channel, or delete the saved han
 CAPCAPTargetListEmptyNone="No networks were found on this channel."
 
 CAPCAPDeauthMethodUsing="Deauthentication method: %s"
+CAPCAPTargetPMFWarning="WARNING: this network uses WPA3/SAE (PMF). Clients ignore deauth frames and will not disconnect; pick a WPA2 network for this attack."
 CAPCAPDeauthMethodOverrideTip="Want the other one? Start with --deauth-method %s."
 CAPCAPDeauthMethodUnknown="Unknown --deauth-method '%s', using aireplay-ng."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -118,6 +119,8 @@ CAPCAPInstallDepsNotice="Checking required packages, installing whatever is miss
 CAPCAPInstallDepsDone="All required packages are ready."
 CAPCAPInstallDepsFailed="Package installation did not complete. Check the internet connection and apt sources."
 CAPCAPSiteIgnoredWarning="--site is only meaningful for Captive Portal; ignoring it for this attack."
+CaptivePortalSameRadioChannelWarning="The rogue AP and the jammer share one radio, so the AP channel is used for deauth; clients on another channel will not drop. Use a second adapter to deauth on a different channel."
+CaptivePortalChannelSetWarning="Could not lock the jammer interface to the target channel; the deauth may not reach the clients."
 CAPCAPKillingProcessNotice="Killing ${CGry}\$targetID$CClr"
 CAPCAPRestoringPackageManagerNotice="Restoring ${CCyn}\$PackageManagerCLT$CClr"
 CAPCAPDisablingMonitorNotice="Disabling monitoring interface"

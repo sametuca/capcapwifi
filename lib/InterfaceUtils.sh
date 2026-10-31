@@ -212,6 +212,26 @@ function interface_set_mode() {
   if ! interface_set_state "$1" "up"; then return 4; fi
 }
 
+# interface_set_channel <interface> <channel>
+#   Pins a (usually monitor-mode) interface to one channel. Switching the
+#   interface type resets the radio to its default channel, so a deauth
+#   launched afterwards transmits on the wrong channel and the target clients
+#   never receive it. Returns non-zero when neither tool accepts the channel.
+function interface_set_channel() {
+  if [ "${#@}" -ne 2 ]; then return 1; fi
+  local interface="$1"
+  local channel="$2"
+  if [ ! "$interface" ] || [ ! "$channel" ]; then return 1; fi
+
+  if iw dev "$interface" set channel "$channel" &> $InterfaceUtilsOutputDevice; then
+    return 0
+  fi
+  if iwconfig "$interface" channel "$channel" &> $InterfaceUtilsOutputDevice; then
+    return 0
+  fi
+  return 2
+}
+
 function interface_reidentify() {
   if [ ${#@} -ne 2 ]; then return 1; fi
 

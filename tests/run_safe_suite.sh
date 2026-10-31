@@ -12,11 +12,13 @@ tests=(
   "$SCRIPT_DIR/test_target_completeness.sh"
   "$SCRIPT_DIR/test_mac_brand_lookup.sh"
   "$SCRIPT_DIR/test_ap_channel.sh"
+  "$SCRIPT_DIR/test_interface_channel.sh"
   "$SCRIPT_DIR/test_sandbox_utils.sh"
   "$SCRIPT_DIR/test_instagram_portal.sh"
   "$SCRIPT_DIR/test_install_deps.sh"
   "$SCRIPT_DIR/test_gui_i18n.sh"
   "$SCRIPT_DIR/test_gui_status.sh"
+  "$SCRIPT_DIR/test_target_pmf.sh"
 )
 
 failures=0

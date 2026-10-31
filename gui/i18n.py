@@ -207,6 +207,9 @@ NOTES
     "log.handshake_captured": "[+] HANDSHAKE CAPTURED → saved to {file}. All attack processes are stopped; see the green panel for what to do next.",
     "log.target_selected": "[+] Target: {ssid} ({bssid}) CH{channel}",
     "log.target_has_handshake": "ℹ️ A saved handshake already exists for this network; you can start Captive Portal directly.",
+    "log.pmf_target": ("⚠️ {ssid} uses WPA3/PMF. Deauthentication is protected on this "
+                       "network, so the phone will not disconnect; the captive portal "
+                       "step also cannot pull clients over. Try a WPA2 network."),
     "log.scan_start": "[*] Scan starting – interface {iface}, {seconds}s",
     "log.iface_auto": "automatic",
     "log.no_target": "[!] No target. Pick a network from the table or enter a BSSID/SSID.",
@@ -216,7 +219,7 @@ NOTES
     "log.attack_start": "[*] {attack} → {target}",
     "log.guide_portal_ready": ("[*] Captive Portal prepared: target {ssid} ({bssid}). "
                                "The captured handshake will be used for password verification."),
-    "log.guide_start_hint": "[*] Press the 'Start attack' button at the bottom to begin.",
+    "log.guide_start_hint": "[*] Press the 'Start' button at the bottom to begin.",
     "log.crack_start": "[*] Starting aircrack-ng wordlist attack… Target: {ssid} ({bssid})",
 
     # ── network table ──────────────────────────────────────────
@@ -312,7 +315,9 @@ adapter were closed and restored. Nothing is running in the background.
     "hint.ready_scan": "Everything is ready. Next step: find networks with “Scan”.",
     "hint.pick_row": ("Click a green row (one with connected clients) in the table; "
                       "the fields fill themselves."),
-    "hint.target_ready": "Target is ready. Continue with “Start attack”.",
+    "hint.target_ready": "Target is ready. Continue with “Start”.",
+    "hint.pmf_target": ("This network uses WPA3/PMF: deauthentication frames are ignored, "
+                        "so clients will not drop. Pick a WPA2 network instead."),
 
     # ── controller: environment checks ─────────────────────────
     "env.root.name": "Root privileges",
@@ -570,6 +575,9 @@ NOTLAR
     "log.handshake_captured": "[+] HANDSHAKE YAKALANDI → {file} dosyasına kaydedildi. Tüm saldırı süreçleri durduruldu; sırada ne yapacağın yeşil panelde yazıyor.",
     "log.target_selected": "[+] Hedef: {ssid} ({bssid}) CH{channel}",
     "log.target_has_handshake": "ℹ️ Bu ağ için önceden yakalanmış handshake mevcut; doğrudan Captive Portal başlatabilirsiniz.",
+    "log.pmf_target": ("⚠️ {ssid} WPA3/PMF kullanıyor. Bu ağda deauth çerçeveleri "
+                       "korunuyor; telefon ağdan düşmez ve captive portal adımı da "
+                       "istemcileri çekemez. WPA2 bir ağ deneyin."),
     "log.scan_start": "[*] Tarama başlıyor – arayüz {iface}, {seconds} sn",
     "log.iface_auto": "otomatik",
     "log.no_target": "[!] Hedef yok. Tablodan bir ağ seç veya BSSID/SSID gir.",
@@ -579,7 +587,7 @@ NOTLAR
     "log.attack_start": "[*] {attack} → {target}",
     "log.guide_portal_ready": ("[*] Captive Portal hazırlandı: Hedef {ssid} ({bssid}). "
                                "Yakalanan handshake şifre doğrulamada otomatik kullanılacak."),
-    "log.guide_start_hint": "[*] Başlamak için alttaki 'Saldırıyı başlat' düğmesine basın.",
+    "log.guide_start_hint": "[*] Başlamak için alttaki 'Başlat' düğmesine basın.",
     "log.crack_start": "[*] Aircrack-ng wordlist kırma başlatılıyor… Hedef: {ssid} ({bssid})",
 
     "networks.title": "Yakındaki ağlar",
@@ -669,7 +677,9 @@ döndürüldü. Arka planda çalışan bir işlem yok.
     "hint.ready_scan": "Her şey hazır. Sıradaki adım: “Tara” ile ağları bul.",
     "hint.pick_row": ("Tabloda yeşil (bağlı cihazı olan) bir satıra tıkla; alanlar "
                       "kendiliğinden dolar."),
-    "hint.target_ready": "Hedef hazır. “Saldırıyı başlat” ile devam et.",
+    "hint.target_ready": "Hedef hazır. “Başlat” ile devam et.",
+    "hint.pmf_target": ("Bu ağ WPA3/PMF kullanıyor: deauth çerçeveleri yok sayılır, "
+                        "cihazlar ağdan düşmez. WPA2 bir ağ seçin."),
 
     "env.root.name": "Root yetkisi",
     "env.root.ok": "yönetici olarak çalışıyor",

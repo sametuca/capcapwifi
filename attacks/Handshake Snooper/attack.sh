@@ -223,6 +223,20 @@ handshake_snooper_start_deauthenticator() {
     echo "Jammer interface already in monitor mode, skipping..." >> $CAPCAPOutputDevice
   fi
 
+  # Monitor mode resets the radio to its default channel. aireplay-ng does not
+  # switch channels itself, so without this the deauth frames go out on the
+  # wrong channel and no client ever drops.
+  if [ "$CapCapTargetChannel" ]; then
+    if interface_set_channel \
+      "$HandshakeSnooperJammerInterface" "$CapCapTargetChannel"; then
+      echo "Jammer locked to target channel $CapCapTargetChannel." \
+        >> $CAPCAPOutputDevice
+    else
+      echo -e "$CAPCAPVLine $HandshakeSnooperChannelSetWarning" \
+        >> "$CAPCAPOutputDevice"
+    fi
+  fi
+
   local targetClients=""
   local targetMode="all"
   case "$HandshakeSnooperTargetClients" in

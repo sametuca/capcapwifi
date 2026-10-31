@@ -43,6 +43,7 @@ CAPCAPTargetListEmptyFilteredHint="Başka bir kanal tara ya da kayıtlı handsha
 CAPCAPTargetListEmptyNone="Bu kanalda hiç ağ bulunamadı."
 
 CAPCAPDeauthMethodUsing="Deauth yöntemi: %s"
+CAPCAPTargetPMFWarning="UYARI: bu ağ WPA3/SAE (PMF) kullanıyor. Cihazlar deauth çerçevelerini yok sayar ve ağdan düşmez; bu saldırı için WPA2 bir ağ seçin."
 CAPCAPDeauthMethodOverrideTip="Diğerini istersen: --deauth-method %s ile başlat."
 CAPCAPDeauthMethodUnknown="Bilinmeyen --deauth-method değeri '%s', aireplay-ng kullanılıyor."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -118,6 +119,8 @@ CAPCAPInstallDepsNotice="Gerekli paketler kontrol ediliyor, eksikler kurulacak (
 CAPCAPInstallDepsDone="Tüm gerekli paketler hazır."
 CAPCAPInstallDepsFailed="Paket kurulumu tamamlanamadı. İnternet bağlantısını ve apt kaynaklarını kontrol edin."
 CAPCAPSiteIgnoredWarning="--site yalnızca Captive Portal için anlamlıdır; bu saldırıda yok sayılıyor."
+CaptivePortalSameRadioChannelWarning="Sahte AP ile jammer aynı radyoyu paylaşıyor, bu yüzden deauth AP kanalından gönderiliyor; başka kanaldaki cihazlar düşmez. Farklı kanaldan deauth için ikinci bir adaptör kullanın."
+CaptivePortalChannelSetWarning="Jammer arabirimi hedef kanala sabitlenemedi; deauth cihazlara ulaşmayabilir."
 CAPCAPKillingProcessNotice="${CGry}\$targetID$CClr sonlandırılıyor"
 CAPCAPRestoringPackageManagerNotice="${CCyn}\$PackageManagerCLT$CClr restore ediliyor"
 CAPCAPDisablingMonitorNotice="Monitör arabirimi devre dışı bırakılıyor"

@@ -32,4 +32,5 @@ HandshakeSnooperSavedFileNotice="Saved file: %s"
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel attack completed.$CClr Use the saved handshake with the Captive Portal (it verifies the password automatically) or crack it offline with aircrack-ng."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+HandshakeSnooperChannelSetWarning="Could not lock the jammer interface to the target channel; the deauth may not reach the clients. Stop and check the adapter."
 # FLUXSCRIPT END

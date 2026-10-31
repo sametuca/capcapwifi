@@ -32,4 +32,5 @@ HandshakeSnooperSavedFileNotice="Kayıt dosyası: %s"
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel saldırısı tamamlandı.$CClr Kayıtlı handshake'i Captive Portal ile kullanabilir (şifreyi otomatik doğrular) ya da aircrack-ng ile çevrimdışı kırabilirsiniz."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+HandshakeSnooperChannelSetWarning="Jammer arabirimi hedef kanala sabitlenemedi; deauth cihazlara ulaşmayabilir. Durdurup adaptörü kontrol edin."
 # FLUXSCRIPT END

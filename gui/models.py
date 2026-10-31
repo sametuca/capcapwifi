@@ -89,6 +89,17 @@ class TargetCandidate:
         return self.essid.strip() or t("target.hidden_ssid")
 
     @property
+    def uses_pmf(self) -> bool:
+        """WPA3/SAE ağlarında yönetim çerçeveleri korunur (PMF).
+
+        Bu ağlarda deauth paketleri istemci tarafından yok sayılır, yani
+        istemciler saldırı sırasında ağdan düşmez. Kullanıcıyı boş yere
+        denemek yerine önceden uyarıyoruz.
+        """
+        enc = (self.enc or "").upper()
+        return "WPA3" in enc or "SAE" in enc or "802.11W" in enc
+
+    @property
     def is_dfs(self) -> bool:
         """52-64 ve 100-144 arası kanallar DFS: sahte AP orada açılamaz."""
         try:
