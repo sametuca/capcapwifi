@@ -950,6 +950,12 @@ class CapCapWifiApp(ctk.CTk):
             if candidates:
                 self._set_step(2)
                 self._refresh_hint()
+            else:
+                # Boş sonuç "hiçbir şey olmadı" gibi görünmesin: tablo ve alt
+                # satır neden boş olduğunu ve ne yapılacağını söylesin.
+                self._net_table.set_hint(t("networks.empty_after_scan"), "warn")
+                self._notify(t("toast.scan_empty"), "warn", 6000)
+                self._refresh_hint()
         self.after(0, _apply)
 
     def _on_credential(self, cred: CapturedCredential) -> None:

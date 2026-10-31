@@ -250,6 +250,9 @@ NOTES
     "networks.empty": ("No networks yet.\n\nNext step: set a duration on the left and "
                        "press “Scan”."),
     "networks.hint_initial": "First list the networks with “Scan”.",
+    "networks.empty_after_scan": ("The scan finished but saw no networks. Check the "
+                                  "environment in Details: root rights and a wireless "
+                                  "adapter are required."),
     "networks.summary": ("{total} networks, {clients} with connected clients, "
                          "{handshakes} with a saved handshake. Click a row; the fields "
                          "below fill themselves."),
@@ -365,6 +368,8 @@ NOTES
     "toast.handshake": "Handshake captured on {ssid} – saved to the archive.",
     "toast.env_missing": "{count} required component(s) missing – see the check card.",
     "toast.scan_done": "{count} networks found.",
+    "toast.scan_empty": ("No networks found. Check that the adapter is plugged in and "
+                         "the app runs with root rights."),
     "toast.stopped": "Everything was closed cleanly.",
 
     # ── controller: environment checks ─────────────────────────
@@ -423,6 +428,16 @@ NOTES
     "ctrl.error.script_missing": ("capcapwifi.sh not found or sudo is asking for a password. "
                                   "Start the GUI with `sudo ./run_gui.sh`."),
     "ctrl.error.spawn": "Could not start the process: {error}",
+    "ctrl.error.parse": "Skipped an unreadable status line: {error}",
+    "ctrl.error.read": "Lost the process output: {error}",
+    "ctrl.error.finalize": "Could not finish the run cleanly: {error}",
+    "ctrl.error.early_exit": ("The command exited immediately (code {code}) without "
+                              "producing any output."),
+    "ctrl.error.needs_root": ("This usually means sudo asked for a password. Start the "
+                              "app with `sudo ./run_gui.sh` so it can run without "
+                              "prompting."),
+    "ctrl.watch.error": ("The live status file could not be read ({error}). "
+                         "The attack keeps running, but events may be delayed."),
     "ctrl.dep.check": "Checking packages…",
     "ctrl.dep.missing": "Installing missing packages: {tools}",
     "ctrl.dep.ok": "All required packages are ready.",
@@ -431,6 +446,8 @@ NOTES
     "ctrl.scan.found": "{count} networks listed.",
     "ctrl.scan.empty": ("No networks found in the scan output. Does the adapter support "
                         "monitor mode? Try a longer duration."),
+    "ctrl.scan.empty_next": ("Next: open Details and check that the environment is ready "
+                             "(root rights and a wireless adapter) before scanning again."),
     "ctrl.target": "Target: {ssid} ({bssid}) channel {channel}",
     "ctrl.timeout": "Time limit reached ({minutes} min), closing the attack.",
     "ctrl.handshake.congrats": "WPA 4-way handshake captured and verified!",
@@ -678,6 +695,9 @@ NOTLAR
     "networks.empty": ("Henüz ağ yok.\n\nSıradaki adım: sol panelden süreyi seç ve "
                        "“Tara” düğmesine bas."),
     "networks.hint_initial": "Önce “Tara” ile ağları listeleyin.",
+    "networks.empty_after_scan": ("Tarama bitti ama hiç ağ görünmedi. Detaylar'dan "
+                                  "ortamı kontrol et: root yetkisi ve kablosuz adaptör "
+                                  "gerekli."),
     "networks.summary": ("{total} ağ, {clients} tanesinde bağlı cihaz, {handshakes} tanesinde "
                          "kayıtlı handshake. Bir satıra tıkla; alttaki alanlar kendiliğinden "
                          "dolar."),
@@ -788,6 +808,8 @@ NOTLAR
     "toast.handshake": "{ssid} ağında handshake yakalandı – arşive kaydedildi.",
     "toast.env_missing": "{count} zorunlu bileşen eksik – kontrol kartına bak.",
     "toast.scan_done": "{count} ağ bulundu.",
+    "toast.scan_empty": ("Ağ bulunamadı. Adaptörün takılı olduğunu ve uygulamanın root "
+                         "yetkisiyle çalıştığını kontrol et."),
     "toast.stopped": "Her şey temiz kapatıldı.",
 
     "env.root.name": "Root yetkisi",
@@ -845,6 +867,16 @@ NOTLAR
     "ctrl.error.script_missing": ("capcapwifi.sh bulunamadı ya da sudo parola soruyor. "
                                   "GUI'yi `sudo ./run_gui.sh` ile başlatın."),
     "ctrl.error.spawn": "İşlem başlatılamadı: {error}",
+    "ctrl.error.parse": "Okunamayan bir durum satırı atlandı: {error}",
+    "ctrl.error.read": "Süreç çıktısı okunamadı: {error}",
+    "ctrl.error.finalize": "İşlem düzgün kapatılamadı: {error}",
+    "ctrl.error.early_exit": ("Komut hiç çıktı vermeden hemen kapandı "
+                              "(kod {code})."),
+    "ctrl.error.needs_root": ("Bu genelde sudo'nun parola istemesi demektir. "
+                              "Uygulamayı `sudo ./run_gui.sh` ile başlatın ki "
+                              "parola sormadan çalışsın."),
+    "ctrl.watch.error": ("Canlı durum dosyası okunamadı ({error}). Saldırı "
+                         "çalışmaya devam eder, ama olaylar gecikebilir."),
     "ctrl.dep.check": "Paketler kontrol ediliyor…",
     "ctrl.dep.missing": "Eksik paketler kuruluyor: {tools}",
     "ctrl.dep.ok": "Tüm gerekli paketler hazır.",
@@ -853,6 +885,8 @@ NOTLAR
     "ctrl.scan.found": "{count} ağ listelendi.",
     "ctrl.scan.empty": ("Tarama çıktısında ağ bulunamadı. Adaptör monitor mode destekliyor "
                         "mu? Süreyi artırmayı deneyin."),
+    "ctrl.scan.empty_next": ("Sonraki adım: Detaylar'ı aç ve ortamın hazır olduğunu doğrula "
+                             "(root yetkisi ve kablosuz adaptör), sonra yeniden tara."),
     "ctrl.target": "Hedef: {ssid} ({bssid}) kanal {channel}",
     "ctrl.timeout": "Süre doldu ({minutes} dk), saldırı kapatılıyor.",
     "ctrl.handshake.congrats": "WPA 4-yönlü handshake başarıyla yakalandı ve doğrulandı!",
