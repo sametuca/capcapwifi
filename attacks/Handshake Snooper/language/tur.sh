@@ -9,6 +9,9 @@ HandshakeSnooperMethodQuery="Handshake elde etme yöntemini seçin"
 HandshakeSnooperMonitorMethodOption="İzle (${CYel}pasif$CClr)"
 HandshakeSnooperAireplayMethodOption="aireplay-ng kimlik doğrulamadan çıkarma (${CRed}saldırgan$CClr)"
 HandshakeSnooperMdk4MethodOption="mdk4 kimlik doğrulamadan çıkarma (${CRed}saldırgan$CClr)"
+HandshakeSnooperMethodExplanation="${CCyn}İzle$CClr: hiçbir şeyi kesmez, cihaz kendi kendine bağlanana kadar bekler — sessiz ama uzun sürebilir.
+${CCyn}aireplay-ng$CClr: cihazları tek tek düşürür, handshake daha hızlı gelir, öngörülebilir.
+${CCyn}mdk4$CClr: bağlı tüm cihazları aynı anda düşürür, en hızlısı, ama bazı cihazlar hiç geri bağlanmayabilir."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 HandshakeSnooperVerifierIntervalQuery="Doğrulacı ne kadar aralıklarla hash kontrolü yapsın?"
 HandshakeSnooperVerifierInterval30SOption="Her 30 saniyede (${CGrn}önerilen${CClr})."

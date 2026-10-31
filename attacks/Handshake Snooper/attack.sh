@@ -295,7 +295,11 @@ handshake_snooper_set_deauthenticator_identifier() {
     "$HandshakeSnooperMdk4MethodOption"
     "$FLUXIONGeneralBackOption"
   )
-  io_query_choice "$HandshakeSnooperMethodQuery" methods[@]
+  if [ "$HandshakeSnooperMethodExplanation" ]; then
+    io_query_choice "$HandshakeSnooperMethodExplanation\n\n$HandshakeSnooperMethodQuery" methods[@]
+  else
+    io_query_choice "$HandshakeSnooperMethodQuery" methods[@]
+  fi
 
   HandshakeSnooperDeauthenticatorIdentifier=$IOQueryChoice
 

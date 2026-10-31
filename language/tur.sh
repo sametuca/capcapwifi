@@ -30,6 +30,24 @@ FLUXIONTargetTrackerInterfaceUnsupportedError="The target tracker interface can'
 FLUXIONIncompleteTargettingInfoNotice="ESSID, BSSID veya kanal bilgisi kayıp!"
 FLUXIONTargettingAccessPointAboveNotice="CapCapWifi yukarıdaki access point'i hedefliyor."
 FLUXIONContinueWithTargetQuery="Bu hedefle devam edilsin mi?"
+
+FLUXIONTargetListTitle="KABLOSUZ AĞLAR"
+FLUXIONTargetListLegendClients="${CGrn}Yeşil satırlar$CClr: bu ağa bağlı en az bir cihaz var — deauth için en uygun hedefler."
+FLUXIONTargetListLegendHandshake="${CYel}*$CClr: bu ağın handshake'i daha önce yakalandı ve diske kaydedildi."
+FLUXIONTargetListLegendDFS="${CYel}!$CClr: DFS kanalı — sahte access point burada çalışamaz, mümkünse başka bir ağ seç."
+FLUXIONTargetListColumns="${CCyn}Sütunlar${CClr}  HS handshake kayıtlı mı · QLTY sinyal kalitesi (%) · PWR sinyal gücü (0'a yakın = güçlü)
+           STA bağlı cihaz sayısı · CH kanal · SECURITY şifreleme · BSSID donanım adresi"
+FLUXIONTargetListFilteredNotice="Handshake'i zaten olan %s ağ gizlendi"
+FLUXIONTargetListEmptyFiltered="Bu kanaldaki tüm ağların handshake'i zaten var."
+FLUXIONTargetListEmptyFilteredHint="Başka bir kanal tara ya da kayıtlı handshake'leri sil."
+FLUXIONTargetListEmptyNone="Bu kanalda hiç ağ bulunamadı."
+
+FLUXIONDeauthMethodQuery="Deauth (bağlantı kesme) yöntemi seç"
+FLUXIONDeauthMethodMdk4="Daha hızlı: hedefe bağlı tüm cihazları aynı anda düşürür."
+FLUXIONDeauthMethodAireplay="Klasik aircrack-ng aracı: cihazları tek tek düşürür, yavaş ama daha öngörülebilir."
+FLUXIONDeauthMethodRecommended="önerilen"
+FLUXIONDeauthMethodInvalid="Lütfen 1 veya 2 yaz."
+FLUXIONDeauthMethodAutoSelected="Deauth yöntemi otomatik seçildi: %s"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONStartingScannerNotice="Tarayıcı başlatılıyor, lütfen bekleyiniz..."
 FLUXIONStartingScannerTip="Hedef access point'i gördükten 5 saniye sonra CapCapWifi Tarayıcısını kapatınız (ctrl+c)."

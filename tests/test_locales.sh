@@ -66,6 +66,26 @@ for locale_file in "$REPO_DIR"/attacks/Handshake\ Snooper/language/*.sh; do
     HandshakeSnooperArbiterSuccededNotice
 done
 
+# English is sourced first and the selected locale only overrides what it
+# defines, so every string these screens use has to exist in en.sh or the
+# screen renders blanks.
+check_required_variables \
+  "$REPO_DIR/language/en.sh" \
+  FLUXIONTargetListTitle \
+  FLUXIONTargetListLegendClients \
+  FLUXIONTargetListLegendHandshake \
+  FLUXIONTargetListLegendDFS \
+  FLUXIONTargetListColumns \
+  FLUXIONTargetListFilteredNotice \
+  FLUXIONTargetListEmptyFiltered \
+  FLUXIONTargetListEmptyNone \
+  FLUXIONDeauthMethodQuery \
+  FLUXIONDeauthMethodMdk4 \
+  FLUXIONDeauthMethodAireplay \
+  FLUXIONDeauthMethodRecommended \
+  FLUXIONDeauthMethodInvalid \
+  FLUXIONDeauthMethodAutoSelected
+
 finish_tests
 
 # FLUXSCRIPT END

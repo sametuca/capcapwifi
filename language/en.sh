@@ -30,6 +30,24 @@ FLUXIONTargetTrackerInterfaceUnsupportedError="The target tracker interface can'
 FLUXIONIncompleteTargettingInfoNotice="Missing ESSID, BSSID, or channel information!"
 FLUXIONTargettingAccessPointAboveNotice="CapCapWifi is targetting the access point above."
 FLUXIONContinueWithTargetQuery="Continue with this target?"
+
+FLUXIONTargetListTitle="WIRELESS NETWORKS"
+FLUXIONTargetListLegendClients="${CGrn}Green rows$CClr: at least one device is connected — these are the best targets to deauthenticate."
+FLUXIONTargetListLegendHandshake="${CYel}*$CClr: this network's handshake was captured before and is saved on disk."
+FLUXIONTargetListLegendDFS="${CYel}!$CClr: DFS channel — the fake access point cannot run there, pick another network if you can."
+FLUXIONTargetListColumns="${CCyn}Columns${CClr}  HS handshake saved · QLTY signal quality (%) · PWR signal strength (closer to 0 = stronger)
+         STA devices connected · CH channel · SECURITY encryption · BSSID hardware address"
+FLUXIONTargetListFilteredNotice="%s network(s) with an existing handshake were hidden"
+FLUXIONTargetListEmptyFiltered="Every network on this channel already has a handshake."
+FLUXIONTargetListEmptyFilteredHint="Scan another channel, or delete the saved handshakes first."
+FLUXIONTargetListEmptyNone="No networks were found on this channel."
+
+FLUXIONDeauthMethodQuery="Select a method of deauthentication"
+FLUXIONDeauthMethodMdk4="Faster: knocks every connected device off at once."
+FLUXIONDeauthMethodAireplay="Classic aircrack-ng tool: drops devices one at a time, slower but more predictable."
+FLUXIONDeauthMethodRecommended="recommended"
+FLUXIONDeauthMethodInvalid="Please type 1 or 2."
+FLUXIONDeauthMethodAutoSelected="Auto-selected deauthentication method: %s"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 FLUXIONStartingScannerNotice="Starting scanner, please wait..."
 FLUXIONStartingScannerTip="Five seconds after the target AP appears, close the CAPCAPWIFI Scanner (ctrl+c)."

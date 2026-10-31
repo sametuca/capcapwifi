@@ -39,6 +39,73 @@ Useful flags: `--auto`, `--bssid`, `--channel`, `--attack`, `--deauth-method`,
 `--band`, `--scan-time`, `--list-interfaces`, `--scan-only`, `-m`/`--multiplexer`
 (headless tmux, no X11). See `docs/man/capcapwifi.1` or `--help`.
 
+## Running from a terminal, step by step
+
+The first run is interactive: the tool asks one question at a time and every
+screen keeps a `[q]` option to go back. Nothing needs to be configured by hand.
+
+**1. Open a terminal on the Linux machine and get the code.**
+
+```bash
+sudo apt update
+sudo apt install -y git
+git clone https://github.com/sametuca/capcapwifi.git
+cd capcapwifi
+```
+
+**2. Check that the adapter is usable.** It must support monitor mode and frame
+injection, and if this is a VM it must already be attached to the VM (USB
+passthrough), not to the host.
+
+```bash
+sudo iw dev            # the adapter should be listed here
+sudo rfkill unblock all
+```
+
+**3. Install the missing tools.** This prints what is missing and asks before
+installing:
+
+```bash
+sudo ./capcapwifi.sh -i
+```
+
+**4. Start it.** Root is required; without it the wireless interfaces cannot be
+switched to monitor mode.
+
+```bash
+sudo ./capcapwifi.sh
+```
+
+The banner appears, then the first prompt:
+
+| Prompt | What to answer |
+|---|---|
+| **Wireless interface** | The adapter in monitor mode, usually `wlan0`. `--list-interfaces` shows the names. |
+| **Attack** | `Handshake Snooper` to capture a WPA handshake, `Captive Portal` to serve a login page. |
+| **Target AP** | A scan list appears. Green rows have at least one device connected — those are the useful ones. Type the number and press Enter. |
+| **Deauthentication method** | `aireplay-ng` (recommended) or `mdk4`; the screen explains the difference. Enter alone picks the recommended one. |
+| **Captive Portal: portal site** | The language/design pair, e.g. `Instagram_tur`. |
+
+**5. Watch the result.** Both modules write into `/tmp/fluxspace`, which is
+wiped on exit:
+
+```bash
+sudo tail -f /tmp/fluxspace/instagram_credentials.log   # captive portal captures
+ls /tmp/fluxspace/*.cap                                  # handshake files
+```
+
+**6. No X server?** On a VM you reach over SSH, or a machine without a desktop,
+run it inside tmux instead of spawning `xterm` windows:
+
+```bash
+sudo ./capcapwifi.sh -m
+```
+
+Detach with `Ctrl-b d`, reattach with `tmux attach -t CAPCAPWIFI`.
+
+If something does not work, `sudo bash scripts/diagnostics.sh wlan0` reports the
+driver, regulatory domain, channel support and tool versions.
+
 ## Captive Portal
 
 The portal runs locally: the rogue AP hands out a gateway address, `dnsspoof`

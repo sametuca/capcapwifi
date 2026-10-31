@@ -1900,10 +1900,11 @@ fluxion_get_target() {
   if [ ${#candidatesMAC[@]} -eq 0 ]; then
     local emptyMessage=""
     if [ $filteredCount -gt 0 ]; then
-      emptyMessage="${CYel}All $filteredCount network(s) on this channel have existing handshakes.$CClr\n"
-      emptyMessage+="${CYel}Please scan a different channel or delete existing handshakes.$CClr\n\n"
+      # shellcheck disable=SC2059
+      emptyMessage="${CYel}$(printf "${FLUXIONTargetListEmptyFiltered:-Every network on this channel already has a handshake.}")$CClr\n"
+      emptyMessage+="${CYel}${FLUXIONTargetListEmptyFilteredHint:-Scan another channel first.}$CClr\n\n"
     else
-      emptyMessage="${CRed}No networks found on this channel.$CClr\n\n"
+      emptyMessage="${CRed}${FLUXIONTargetListEmptyNone:-No networks were found on this channel.}$CClr\n\n"
     fi
 
     local choices=("$FLUXIONGeneralBackOption")
@@ -1911,23 +1912,44 @@ fluxion_get_target() {
     return 1
   fi
 
-  format_center_literals "WIFI LIST"
+  format_center_literals "${FLUXIONTargetListTitle:-WIFI LIST}"
   local headerTitle="$FormatCenterLiterals\n\n"
 
-  # Add notice if networks were filtered
+  # Explain the table before showing it: the colour of a row carries meaning
+  # and nothing on screen said what that meaning was. Each legend line is only
+  # printed when at least one row actually shows that marker.
+  local __hasClients="" __hasHandshake="" __hasDFS=""
+  local __chk __chkHandshake
+  local __chkIndex
+  for __chkIndex in "${!candidatesMAC[@]}"; do
+    [ "${candidatesClientsCount[__chkIndex]}" -gt 0 ] && __hasClients=1
+    [ "${candidatesChannel[__chkIndex]}" != "${candidatesChannel[__chkIndex]//!/}" ] && __hasDFS=1
+    [ "${candidatesHandshake[__chkIndex]}" = "*" ] && __hasHandshake=1
+  done
+  # printf %b because the literal "\e[..m" colour sequences in the locale
+  # strings are expanded later by echo -e, and a command substitution would eat
+  # the trailing newline and run all three lines together.
+  local __legendLine=""
+  if [ "$__hasClients" ]; then
+    printf -v __legendLine "%b\n" "${FLUXIONTargetListLegendClients:-Green rows: at least one device is connected.}$CClr"
+    headerTitle+="$__legendLine"
+  fi
+  if [ "$__hasHandshake" ]; then
+    printf -v __legendLine "%b\n" "${FLUXIONTargetListLegendHandshake:-*: a saved handshake exists.}$CClr"
+    headerTitle+="$__legendLine"
+  fi
+  if [ "$__hasDFS" ]; then
+    printf -v __legendLine "%b\n" "${FLUXIONTargetListLegendDFS:-!: DFS channel.}$CClr"
+    headerTitle+="$__legendLine"
+  fi
+  [ "$__hasClients$__hasHandshake$__hasDFS" ] && headerTitle+="\n"
+
   if [ $filteredCount -gt 0 ]; then
-    headerTitle+="${CBRed}Note: $filteredCount network(s) with existing handshakes were filtered$CClr\n\n"
+    # shellcheck disable=SC2059
+    headerTitle+="${CBRed}$(printf "${FLUXIONTargetListFilteredNotice:-%s network(s) were hidden}" "$filteredCount")$CClr\n\n"
   fi
 
-  # Add DFS legend if any candidate is on a DFS channel
-  local __hasDFS=""
-  local __chk
-  for __chk in "${candidatesChannel[@]}"; do
-    if [[ "$__chk" == *"!" ]]; then __hasDFS=1; break; fi
-  done
-  if [ "$__hasDFS" ]; then
-    headerTitle+="${CYel}! = DFS channel (rogue AP may require a non-DFS fallback)$CClr\n\n"
-  fi
+  headerTitle+="${FLUXIONTargetListColumns:-}"$'\n\n'
 
   local __essidMaxLen=5
   local __essidEntry
@@ -1940,12 +1962,35 @@ fluxion_get_target() {
     [ ${#__vendorEntry} -gt $__vendorMaxLen ] && __vendorMaxLen=${#__vendorEntry}
   done
 
+  # Drop the VENDOR column rather than let every row wrap in a narrow window:
+  # it is the least useful column when picking a target, and a wrapped table is
+  # unreadable. 56 is the fixed width of [nnn] plus the other eight columns.
+  local __terminalWidth=80
+  local __reportedWidth
+  __reportedWidth=$(tput cols 2>/dev/null) || __reportedWidth=""
+  if [ -n "$__reportedWidth" ] && [ "$__reportedWidth" -gt 40 ] 2>/dev/null; then
+    __terminalWidth=$__reportedWidth
+  fi
+  local __showVendor=1
+  if [ $(( 56 + __essidMaxLen + 1 + __vendorMaxLen )) -gt $__terminalWidth ]; then
+    __showVendor=0
+  fi
+  local __vendorHeader=""
+  local __vendorFormat=""
+  local __vendorArgs=()
+  if [ "$__showVendor" = 1 ]; then
+    __vendorHeader=" %-${__vendorMaxLen}s"
+    __vendorFormat=" %-${__vendorMaxLen}.${__vendorMaxLen}s"
+    __vendorArgs=("VENDOR")
+  fi
+
   local -r headerFields=$(
-    printf "$CRed[$CSYel ** $CClr$CRed]$CClr %2s %-${__essidMaxLen}s %4s %3s %3s %4s %-8s %-17s %-${__vendorMaxLen}s\n" \
-      "HS" "ESSID" "QLTY" "PWR" "STA" "CH" "SECURITY" "BSSID" "VENDOR"
+    # shellcheck disable=SC2059
+    printf "$CRed[$CSYel ** $CClr$CRed]$CClr %2s %-${__essidMaxLen}s %4s %3s %3s %4s %-8s %-17s${__vendorHeader}\n" \
+      "HS" "ESSID" "QLTY" "PWR" "STA" "CH" "SECURITY" "BSSID" "${__vendorArgs[@]}"
   )
 
-  local -r __dataFormat="$CRed[$CSYel%03d$CClr$CRed]%b  %2s %-${__essidMaxLen}.${__essidMaxLen}s %3s%% %3s %3d %4s %-8.8s %-17s %-${__vendorMaxLen}.${__vendorMaxLen}s\n"
+  local -r __dataFormat="$CRed[$CSYel%03d$CClr$CRed]%b  %2s %-${__essidMaxLen}.${__essidMaxLen}s %3s%% %3s %3d %4s %-8.8s %-17s${__vendorFormat}\n"
   FormatApplyAutosize="$__dataFormat"
 
   if [ "$FLUXIONAuto" ]; then
@@ -1970,18 +2015,27 @@ fluxion_get_target() {
     FluxionTargetChannel=${candidatesChannel[$autoTargetIndex]//!/}
     fluxion_status "TARGET_SELECTED ssid=$FluxionTargetSSID bssid=$FluxionTargetMAC channel=$FluxionTargetChannel"
   else
+    # The vendor column is only requested when it is being displayed, so the
+    # array list and the target indices stay in step.
+    local __listVarArgs=(
+      candidatesColor[@]
+      candidatesHandshake[@]
+      candidatesESSID[@]
+      candidatesQuality[@]
+      candidatesPower[@]
+      candidatesClientsCount[@]
+      candidatesChannel[@]
+      candidatesSecurity[@]
+      candidatesMAC[@]
+    )
+    if [ "$__showVendor" = 1 ]; then
+      __listVarArgs+=(candidatesVendor[@])
+    fi
+
+    # shellcheck disable=SC2086  # The array names are dereferenced by the callee.
     io_query_format_fields "$headerTitle$headerFields" \
-     "$FormatApplyAutosize" \
-      candidatesColor[@] \
-      candidatesHandshake[@] \
-      candidatesESSID[@] \
-      candidatesQuality[@] \
-      candidatesPower[@] \
-      candidatesClientsCount[@] \
-      candidatesChannel[@] \
-      candidatesSecurity[@] \
-      candidatesMAC[@] \
-      candidatesVendor[@]
+      "$FormatApplyAutosize" \
+      "${__listVarArgs[@]}"
 
     echo
 
@@ -1995,8 +2049,9 @@ fluxion_get_target() {
     FluxionTargetMaker=${candidatesVendor[$autoTargetIndex]}
   else
     FluxionTargetEncryption=${IOQueryFormatFields[7]}
-    # Get vendor from the selection (IOQueryFormatFields[9] is the vendor column)
-    FluxionTargetMaker=${IOQueryFormatFields[9]}
+    # Get vendor from the selection; the column is absent in narrow terminals,
+    # in which case the macchanger lookup below fills it in.
+    FluxionTargetMaker="${IOQueryFormatFields[9]:-}"
   fi
 
   # Cleanup airodump-ng output files after vendor lookup is complete
