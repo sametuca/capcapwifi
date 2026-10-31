@@ -547,6 +547,13 @@ class CapCapWifiApp(ctk.CTk):
         self._ctrl.on_environment = self._on_environment
         self._ctrl.on_dependency_install = self._on_dependency_install
 
+        # Basit mod: linset tarzı, tek akış. Detay modu bugüne kadarki panel.
+        self._mode = i18n.read_pref("mode", "basic").lower()
+        if self._mode not in ("basic", "detail"):
+            self._mode = "basic"
+        # Basit modda handshake yakalanınca portal otomatik açılır.
+        self._basic_chain = False
+
         self._state = AttackState.IDLE
         self._target: Optional[TargetCandidate] = None
         self._env_checks: List[EnvironmentCheck] = []
@@ -659,6 +666,18 @@ class CapCapWifiApp(ctk.CTk):
         self._lang_switch.pack(side="right", padx=(0, 6), pady=12)
         self._lang_switch.set("TR" if i18n.get_language() == "tr" else "EN")
 
+        # Basit / Detay geçişi: detay modu tüm ayar panellerini açar.
+        self._mode_switch = ctk.CTkSegmentedButton(
+            top, values=[t("mode.basic"), t("mode.detail")],
+            command=self._on_mode_selected, font=FONT_UI_B, height=28,
+            corner_radius=8, fg_color=CARD_BG, selected_color=ACCENT_DIM,
+            selected_hover_color=ACCENT_DIM, unselected_color=CARD_BG,
+            unselected_hover_color=CARD_HOVER, text_color=TEXT_PRI,
+        )
+        self._mode_switch.pack(side="right", padx=(0, 10), pady=12)
+        self._mode_switch.set(t("mode.basic") if self._mode == "basic"
+                              else t("mode.detail"))
+
         accent_line = ctk.CTkFrame(self, fg_color=ACCENT, height=2,
                                    corner_radius=0)
         accent_line.pack(fill="x")
@@ -671,22 +690,33 @@ class CapCapWifiApp(ctk.CTk):
         self._guide.pack(fill="x", padx=12, pady=(8, 0))
         self._guide.set_active(self._step)
 
+        basic = self._mode == "basic"
+
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True)
-        body.columnconfigure(0, weight=0, minsize=280)
-        body.columnconfigure(1, weight=5, minsize=380)
-        body.columnconfigure(2, weight=0, minsize=270)
+        if basic:
+            # Basit mod: tek geniş alan. Ayar paneli ve sağ sütun oluşturulur
+            # (kodu kırılmasın diye) ama yerleştirilmez.
+            body.columnconfigure(0, weight=0, minsize=0)
+            body.columnconfigure(1, weight=1, minsize=420)
+            body.columnconfigure(2, weight=0, minsize=0)
+        else:
+            body.columnconfigure(0, weight=0, minsize=280)
+            body.columnconfigure(1, weight=5, minsize=380)
+            body.columnconfigure(2, weight=0, minsize=270)
         body.rowconfigure(0, weight=1)
 
         # Left: configuration
         self._config_panel = AttackConfigPanel(
             body, self._ctrl, on_change=self._refresh_hint)
-        self._config_panel.grid(row=0, column=0, sticky="nsew",
-                                padx=(12, 5), pady=10)
+        if not basic:
+            self._config_panel.grid(row=0, column=0, sticky="nsew",
+                                    padx=(12, 5), pady=10)
 
         # Centre: tabs
         centre = ctk.CTkFrame(body, fg_color="transparent")
-        centre.grid(row=0, column=1, sticky="nsew", padx=5, pady=10)
+        centre.grid(row=0, column=1, sticky="nsew",
+                    padx=(12, 12) if basic else 5, pady=10)
         centre.rowconfigure(1, weight=1)
         centre.columnconfigure(0, weight=1)
 
@@ -712,13 +742,30 @@ class CapCapWifiApp(ctk.CTk):
         tab_consoles = self._tabs.add(self._tab_names["consoles"])
         tab_help = self._tabs.add(self._tab_names["help"])
 
-        self._net_table = NetworkTable(tab_nets, on_select=self._on_target_select)
+        if basic:
+            # Basit modda okunacak tek bir yönlendirme olsun: tara → ağ seç.
+            bar = ctk.CTkFrame(tab_nets, fg_color="transparent")
+            bar.pack(fill="x", padx=4, pady=(4, 6))
+            ctk.CTkButton(
+                bar, text=f"🔍  {t('app.btn.scan')}", command=self._do_scan,
+                fg_color=ACCENT, text_color=DARK_BG, hover_color=ACCENT_DK,
+                font=FONT_UI_B, height=38, width=170, corner_radius=10,
+            ).pack(side="left")
+            auto_wrap(ctk.CTkLabel(
+                bar, text=t("basic.learning"), font=FONT_UI_S,
+                text_color=MUTED, anchor="w", justify="left",
+            )).pack(side="left", fill="x", expand=True, padx=(12, 0))
+
+        self._net_table = NetworkTable(tab_nets, on_select=self._on_target_select,
+                                       compact=basic)
         self._net_table.pack(fill="both", expand=True)
 
         self._cred_panel = CredentialsPanel(
             tab_creds,
-            on_use_portal=self._start_portal_for_handshake,
-            on_crack=self._start_crack_for_handshake,
+            # Basit modda satırlarda buton yok: handshake zaten otomatik
+            # kullanılıyor, kullanıcıya seçenek sorulmuyor.
+            on_use_portal=None if basic else self._start_portal_for_handshake,
+            on_crack=None if basic else self._start_crack_for_handshake,
         )
         self._cred_panel.pack(fill="both", expand=True)
 
@@ -768,7 +815,8 @@ class CapCapWifiApp(ctk.CTk):
 
         # Right column: health card above log
         right = ctk.CTkFrame(body, fg_color="transparent")
-        right.grid(row=0, column=2, sticky="nsew", padx=(5, 12), pady=10)
+        if not basic:
+            right.grid(row=0, column=2, sticky="nsew", padx=(5, 12), pady=10)
         right.rowconfigure(1, weight=1)
         right.columnconfigure(0, weight=1)
 
@@ -819,8 +867,16 @@ class CapCapWifiApp(ctk.CTk):
             name=t("app.health.checking.name"), ok=False,
             detail=t("app.health.checking.detail"), hint="")])
 
-        self._log_panel = LogPanel(right)
-        self._log_panel.grid(row=1, column=0, sticky="nsew", pady=(8, 0))
+        if basic:
+            # Alt şerit: kullanıcı ne olduğunu görsün ama pencereyi doldurmasın.
+            strip = ctk.CTkFrame(self, fg_color="transparent", height=160)
+            strip.pack(fill="x", padx=12, pady=(0, 8))
+            strip.pack_propagate(False)
+            self._log_panel = LogPanel(strip)
+            self._log_panel.pack(fill="both", expand=True)
+        else:
+            self._log_panel = LogPanel(right)
+            self._log_panel.grid(row=1, column=0, sticky="nsew", pady=(8, 0))
 
         # Bottom hint bar
         ctk.CTkFrame(self, fg_color=BORDER, height=1,
@@ -849,8 +905,22 @@ class CapCapWifiApp(ctk.CTk):
             return
         self._apply_language(code)
 
+    def _on_mode_selected(self, value: str) -> None:
+        mode = "basic" if value == t("mode.basic") else "detail"
+        if mode == self._mode:
+            return
+        self._mode = mode
+        i18n.write_pref("mode", mode)
+        self._rebuild()
+
     def _apply_language(self, code: str) -> None:
         """Dili değiştirip pencereyi yeniden kurar; saldırı süreci etkilenmez."""
+        i18n.set_language(code)
+        i18n.save_language(code)
+        self._rebuild()
+
+    def _rebuild(self) -> None:
+        """Pencereyi (dil veya mod değişiminde) durumu koruyarak yeniden kurar."""
         snapshot = self._config_panel.snapshot()
         candidates = self._net_table.candidates
         # Eski widget'lar yıkılmadan önce callback'lerin onlara dokunmasını kes.
@@ -862,8 +932,6 @@ class CapCapWifiApp(ctk.CTk):
                 pass
             self._console_job = None
         self._console_last = ""
-        i18n.set_language(code)
-        i18n.save_language(code)
 
         for child in list(self.winfo_children()):
             child.destroy()
@@ -1104,6 +1172,9 @@ class CapCapWifiApp(ctk.CTk):
             self._log_panel.append(t("log.handshake_next"), "info")
             self._set_step(4)
             self._refresh_hint()
+            if self._mode == "basic" and self._basic_chain:
+                self._log_panel.append(t("basic.phase.portal"), "success")
+                self._start_portal_after_handshake(hf)
             try:
                 self.bell()
                 self.lift()
@@ -1111,6 +1182,22 @@ class CapCapWifiApp(ctk.CTk):
             except Exception:
                 pass
         self.after(0, _apply)
+
+    def _start_portal_after_handshake(self, hf, attempt: int = 0) -> None:
+        """Basit mod, 2. aşama: yakalanan handshake ile portalı kendiliğinden aç.
+
+        Handshake Snooper kendini kapatırken süreç hâlâ meşgul olabilir; bu
+        yüzden kısa aralıklarla boşalmasını bekleriz.
+        """
+        if not self._basic_chain:
+            return
+        if self._ctrl.is_busy:
+            if attempt < 30:
+                self.after(1000, lambda: self._start_portal_after_handshake(
+                    hf, attempt + 1))
+            return
+        self._basic_chain = False
+        self._start_portal_for_handshake(hf)
 
     def _start_portal_for_handshake(self, hf: Optional[HandshakeFile]) -> None:
         """Şifreler sekmesindeki handshake satırından tek tıkla portal başlat.
@@ -1138,14 +1225,18 @@ class CapCapWifiApp(ctk.CTk):
 
         self._show_tab("networks")
         self._set_step(3)
-        self._log_panel.append(
-            t("log.guide_portal_ready", ssid=hf.ssid, bssid=hf.bssid), "success")
+        if self._mode == "basic":
+            self._log_panel.append(t("basic.portal_ready", ssid=hf.ssid), "success")
+        else:
+            self._log_panel.append(
+                t("log.guide_portal_ready", ssid=hf.ssid, bssid=hf.bssid), "success")
 
         if self._ctrl.is_busy:
             self._log_panel.append(t("log.guide_start_hint"), "info")
         else:
             self._log_panel.append(t("log.guide_portal_autostart"), "info")
-            self.after(250, self._do_attack)
+            # _do_attack değil: basit modda o, 1. aşamaya geri dönerdi.
+            self.after(250, self._start_current_attack)
         self._refresh_hint()
 
     def _start_crack_for_handshake(self, hf: Optional[HandshakeFile]) -> None:
@@ -1180,6 +1271,46 @@ class CapCapWifiApp(ctk.CTk):
     def _do_attack(self) -> None:
         if self._ctrl.is_busy:
             return
+        if self._mode == "basic" and not self._basic_prepare_handshake():
+            return
+        self._start_current_attack()
+
+    def _basic_prepare_handshake(self) -> bool:
+        """Basit mod, 1. aşama: hedefi seç, deauth + handshake'i başlat.
+
+        Tüm ayarlar (adaptör, bant, kanal, portal, deauth yöntemi) otomatik
+        seçilir; kullanıcıya hiçbir şey sorulmaz.
+        """
+        target = self._target
+        if target is None:
+            target = self._net_table.select_first_with_clients()
+            if target is None:
+                self._net_table.set_hint(t("log.no_target_hint"), "warn")
+                self._log_panel.append(t("basic.need_target"), "warn")
+                self._show_tab("networks")
+                return False
+            self._on_target_select(target)
+
+        if target.uses_pmf:
+            # WPA3/PMF: deauth çerçeveleri yok sayılır, handshake beklemek
+            # boşa zaman. Doğrudan sahte ağ + portal açılır.
+            self._log_panel.append(
+                t("log.pmf_target", ssid=target.clean_essid), "warn")
+            self._config_panel._attack_var.set(AttackType.CAPTIVE_PORTAL.label)
+            self._config_panel._on_attack_change(None)
+            self._basic_chain = False
+            return True
+
+        self._config_panel._attack_var.set(AttackType.HANDSHAKE_SNOOPER.label)
+        self._config_panel._on_attack_change(None)
+        self._basic_chain = True
+        self._log_panel.append(t("basic.phase.handshake"), "info")
+        return True
+
+    def _start_current_attack(self) -> None:
+        """Ayarlardaki saldırıyı başlatır (basit modda 2. aşama da bunu kullanır)."""
+        if self._ctrl.is_busy:
+            return
 
         config = self._config_panel.build_config()
         if not config.target_bssid and not config.target_essid:
@@ -1201,9 +1332,10 @@ class CapCapWifiApp(ctk.CTk):
             if portal is None:
                 self._log_panel.append(t("log.no_portal"), "warn")
                 return
-            self._log_panel.append(
-                t("log.portal_info", title=portal.display_title,
-                  desc=portal.description), "info")
+            if self._mode != "basic":
+                self._log_panel.append(
+                    t("log.portal_info", title=portal.display_title,
+                      desc=portal.description), "info")
 
         self._set_step(3)
         self._console_autoswitched = False
@@ -1215,6 +1347,7 @@ class CapCapWifiApp(ctk.CTk):
         self._ctrl.start_attack(config)
 
     def _do_stop(self) -> None:
+        self._basic_chain = False
         self._ctrl.stop()
 
     def _start_install(self, auto: bool = False) -> None:
@@ -1403,7 +1536,10 @@ class CapCapWifiApp(ctk.CTk):
         elif state is AttackState.CREDENTIALS_FOUND:
             text, colour = t("hint.credentials"), ACCENT
         elif state is AttackState.HANDSHAKE_CAPTURED:
-            text, colour = t("hint.handshake"), ACCENT
+            if self._mode == "basic":
+                text, colour = t("basic.hint.captured"), ACCENT
+            else:
+                text, colour = t("hint.handshake"), ACCENT
         elif state is AttackState.ERROR:
             text, colour = t("hint.error"), DANGER
         elif state is AttackState.STOPPED:

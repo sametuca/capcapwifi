@@ -46,6 +46,22 @@ EN: Dict[str, str] = {
     "app.health.installing": "Installing – apt output appears in the log panel…",
     "app.language.label": "Language",
 
+    # ── basit / detay mod ──────────────────────────────────────
+    "mode.basic": "Basic",
+    "mode.detail": "Detail",
+    "basic.need_target": ("Pick a network from the list first – tap the row whose signal "
+                          "is strongest."),
+    "basic.phase.handshake": ("Step 1/2 – disconnecting devices and listening for a "
+                              "handshake…"),
+    "basic.phase.portal": ("Step 2/2 – handshake captured. Opening the fake network and "
+                           "the login page…"),
+    "basic.hint.captured": ("Handshake captured – opening the fake network and the "
+                            "login page, no action needed."),
+    "basic.portal_ready": ("Ready: the network \"{ssid}\" is now broadcast by this computer. "
+                           "On the phone open Wi-Fi and pick that name."),
+    "basic.learning": ("Everything is automatic: adapter, channel, portal and deauth "
+                       "method are chosen for you."),
+
     # ── workflow steps ──────────────────────────────────────────
     "step.adapter": "Adapter",
     "step.scan": "Scan",
@@ -242,6 +258,7 @@ NOTES
     "networks.filtered_count": "{visible}/{total} networks",
     "networks.clients": "{count} clients",
     "networks.no_clients": "no clients",
+    "networks.clients_short": "✓ device connected",
     "networks.handshake_badge": "✔ Handshake",
     "networks.dfs_badge": "DFS",
 
@@ -412,6 +429,21 @@ NOTES
 }
 
 TR: Dict[str, str] = {
+    # ── basit / detay mod ──────────────────────────────────────
+    "mode.basic": "Basit",
+    "mode.detail": "Detay",
+    "basic.need_target": ("Önce listeden bir ağ seç – sinyali en güçlü satıra dokun."),
+    "basic.phase.handshake": ("1/2 – cihazlar ağdan düşürülüyor ve handshake "
+                              "bekleniyor…"),
+    "basic.phase.portal": ("2/2 – handshake alındı. Sahte ağ ve giriş sayfası "
+                           "açılıyor…"),
+    "basic.hint.captured": ("Handshake alındı – sahte ağ ve giriş sayfası açılıyor, "
+                            "senin bir şey yapmana gerek yok."),
+    "basic.portal_ready": ("Hazır: \"{ssid}\" ağı artık bu bilgisayardan yayınlanıyor. "
+                           "Telefonda Wi-Fi listesini aç ve bu adı seç."),
+    "basic.learning": ("Her şey otomatik: adaptör, kanal, portal ve deauth yöntemi "
+                       "senin yerine seçilir."),
+
     "app.title": "CapCapWifi – Wi-Fi Güvenlik Denetleyicisi",
     "app.subtitle": "Wi-Fi güvenlik denetleyicisi",
     "app.tab.networks": "Ağlar",
@@ -617,6 +649,7 @@ NOTLAR
     "networks.filtered_count": "{visible}/{total} ağ",
     "networks.clients": "{count} cihaz",
     "networks.no_clients": "cihaz yok",
+    "networks.clients_short": "✓ cihaz bağlı",
     "networks.handshake_badge": "✔ Handshake",
     "networks.dfs_badge": "DFS",
 
@@ -828,28 +861,48 @@ def language_codes() -> List[str]:
     return [code for code, _neutral in LANGUAGES]
 
 
-def _read_preference() -> Optional[str]:
-    """Saved choice, or None. Unreadable/corrupt files are ignored."""
+def read_pref(key: str, default: str = "") -> str:
+    """Kayıtlı bir tercihi okur; bozuk/eksik dosya varsayılanı döndürür."""
     try:
         data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return None
-    code = str(data.get("language", "")).strip().lower()
+        return default
+    if not isinstance(data, dict):
+        return default
+    value = str(data.get(key, "")).strip()
+    return value or default
+
+
+def write_pref(key: str, value: str) -> None:
+    """Tek bir tercihi yazar; diğer anahtarlar korunur."""
+    try:
+        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            data = {}
+    except (OSError, ValueError):
+        data = {}
+    data[key] = value
+    try:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        CONFIG_FILE.write_text(
+            json.dumps(data, indent=2) + "\n", encoding="utf-8"
+        )
+    except OSError:
+        # A read-only HOME must not break the window; the choice simply is
+        # not remembered.
+        pass
+
+
+def _read_preference() -> Optional[str]:
+    """Saved choice, or None. Unreadable/corrupt files are ignored."""
+    code = read_pref("language").lower()
     return code if code in TRANSLATIONS else None
 
 
 def save_language(code: str) -> None:
     if code not in TRANSLATIONS:
         return
-    try:
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        CONFIG_FILE.write_text(
-            json.dumps({"language": code}, indent=2) + "\n", encoding="utf-8"
-        )
-    except OSError:
-        # A read-only HOME must not break the window; the choice simply is
-        # not remembered.
-        pass
+    write_pref("language", code)
 
 
 def detect_language() -> str:

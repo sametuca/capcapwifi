@@ -82,15 +82,44 @@ def step_geometry():
           f"pencere geniş açıldı (genişlik={width}px)")
     check(getattr(window, "_guide", None) is not None,
           "adım çubuğu oluştu")
+    check(getattr(window, "_mode", None) in ("basic", "detail"),
+          "basit/detay modu okundu")
     check(getattr(window, "_console_text", None) is not None,
           "gömülü konsol sekmesi oluştu")
     placeholder = window._console_text.get("1.0", "end")
     check("console.empty" not in placeholder and placeholder.strip() != "",
           "konsol sekmesi başlangıç metnini gösteriyor")
+    window.after(150, step_mode)
+
+
+def step_mode():
+    """Basit modda ayar paneli gizli, detay modda görünür olmalı."""
+    basic = window._mode == "basic"
+    # CTkScrollableFrame'in winfo_ismapped() değeri yerleştirilmese de 1
+    # dönebiliyor; gerçek ölçüt grid_info().
+    check(bool(window._config_panel.grid_info()) == (not basic),
+          "basit modda ayar paneli gizli")
+    other = "detail" if basic else "basic"
+    window._on_mode_selected(i18n.t("mode.detail") if other == "detail"
+                             else i18n.t("mode.basic"))
+    window.update_idletasks()
+    check(window._mode == other, f"mod {other} olarak değişti")
+    check(bool(window._config_panel.grid_info()) == (other == "detail"),
+          "mod değişiminde panel görünürlüğü güncellendi")
+    if window._mode != "basic":
+        window._on_mode_selected(i18n.t("mode.basic"))
+        window.update_idletasks()
     window.after(150, step_handshake)
 
 
+portal_starts = []
+
+
 def step_handshake():
+    # Basit modda handshake yakalanınca portal kendiliğinden başlamalı.
+    # Gerçek saldırı sürecini başlatmamak için çağrı kaydedilir.
+    window._basic_chain = True
+    window._start_portal_for_handshake = portal_starts.append
     hf = HandshakeFile(
         filename="TestNet-AA:BB:CC:DD:EE:FF.cap",
         filepath="/tmp/capcapspace/handshakes/TestNet-AA:BB:CC:DD:EE:FF.cap",
@@ -110,6 +139,7 @@ def step_handshake_visible(hf):
     check(window._step == 4, "adım göstergesi sonuca taşındı")
     log_text = window._log_panel._text.get("1.0", "end")
     check(hf.filepath in log_text, "kaydedilen dosya yolu log panele yazıldı")
+    check(portal_starts == [hf], "basit modda handshake sonrası portal tetiklendi")
     window.after(100, step_language_tr)
 
 

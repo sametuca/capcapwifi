@@ -290,47 +290,66 @@ class NetworkRow(ctk.CTkFrame):
     Alt satır: BSSID (MAC) · Şifreleme · Üretici · Bağlı cihaz & Handshake rozetleri
     """
 
-    def __init__(self, master, candidate, on_click: Callable, **kw):
+    def __init__(self, master, candidate, on_click: Callable, compact: bool = False,
+                 **kw):
         super().__init__(master, fg_color=CARD_BG, corner_radius=10,
                          border_width=1, border_color=BORDER, **kw)
         self.candidate = candidate
         self._on_click = on_click
         self._selected = False
+        self._compact = compact
 
         self.columnconfigure(1, weight=1)
 
         # ── 1. SATIR: Kanal Rozeti, Ağ Adı (SSID), Sinyal ──
-        badge_text = f"{candidate.channel}"
-        if candidate.is_dfs:
-            badge_text += "!"
-        badge = ctk.CTkLabel(
-            self, text=badge_text, width=40, height=26, font=FONT_UI_B,
-            text_color=ACCENT2 if not candidate.is_dfs else WARN,
-            fg_color=ACCENT2_DIM if not candidate.is_dfs else WARN_DIM,
-            corner_radius=8,
-        )
-        badge.grid(row=0, column=0, padx=(12, 10), pady=(10, 2), sticky="w")
+        if not compact:
+            badge_text = f"{candidate.channel}"
+            if candidate.is_dfs:
+                badge_text += "!"
+            badge = ctk.CTkLabel(
+                self, text=badge_text, width=40, height=26, font=FONT_UI_B,
+                text_color=ACCENT2 if not candidate.is_dfs else WARN,
+                fg_color=ACCENT2_DIM if not candidate.is_dfs else WARN_DIM,
+                corner_radius=8,
+            )
+            badge.grid(row=0, column=0, padx=(12, 10), pady=(10, 2), sticky="w")
 
         # SSID: Kalın, belirgin ve tam genişlikte ana başlık
         name = ctk.CTkLabel(
             self, text=candidate.clean_essid, font=FONT_UI_B,
             text_color=TEXT_PRI, anchor="w", justify="left"
         )
-        name.grid(row=0, column=1, sticky="ew", padx=(0, 8), pady=(10, 2))
+        name.grid(row=0, column=1, sticky="ew",
+                  padx=(0, 8) if not compact else (14, 8),
+                  pady=(12, 4) if compact else (10, 2))
 
         # Sağ taraf: Sinyal çubukları + dBm
         sig_frame = ctk.CTkFrame(self, fg_color="transparent")
-        sig_frame.grid(row=0, column=2, padx=(0, 12), pady=(10, 2), sticky="e")
+        sig_frame.grid(row=0, column=2,
+                       padx=(0, 12), pady=(12, 4) if compact else (10, 2),
+                       sticky="e")
 
         self.bars = SignalBars(sig_frame)
         self.bars.set(candidate.signal_percent)
         self.bars.pack(side="left", padx=(0, 4))
 
-        signal = ctk.CTkLabel(
-            sig_frame, text=f"{candidate.power} dBm",
-            font=FONT_MONO_S, text_color=TEXT_SEC, width=54, anchor="e"
-        )
-        signal.pack(side="left")
+        if not compact:
+            signal = ctk.CTkLabel(
+                sig_frame, text=f"{candidate.power} dBm",
+                font=FONT_MONO_S, text_color=TEXT_SEC, width=54, anchor="e"
+            )
+            signal.pack(side="left")
+
+        if compact:
+            # Basit mod: yalnızca ağ adı, sinyal ve "cihaz bağlı" bilgisi.
+            if candidate.has_clients:
+                ctk.CTkLabel(
+                    sig_frame, text=t("networks.clients_short"),
+                    font=FONT_UI_SB, height=20, padx=8, corner_radius=7,
+                    text_color=DARK_BG, fg_color=ACCENT,
+                ).pack(side="left", padx=(4, 0))
+            self._bind_events(self)
+            return
 
         # ── 2. SATIR: BSSID (MAC), Şifreleme, Üretici ve Durum Rozetleri ──
         info_parts = [candidate.bssid]
@@ -413,9 +432,11 @@ class NetworkRow(ctk.CTkFrame):
 class NetworkTable(ctk.CTkFrame):
     """Taranan ağları kart satırları hâlinde gösteren liste."""
 
-    def __init__(self, master, on_select: Callable = None, **kw):
+    def __init__(self, master, on_select: Callable = None,
+                 compact: bool = False, **kw):
         super().__init__(master, fg_color=PANEL_BG, corner_radius=12, **kw)
         self._on_select = on_select
+        self._compact = compact
         self._candidates: List = []
         self._rows: Dict[str, NetworkRow] = {}
         self._selected = None
@@ -524,7 +545,8 @@ class NetworkTable(ctk.CTkFrame):
         )
         self._ordered = ordered
         for candidate in ordered:
-            row = NetworkRow(self._list, candidate, self._select)
+            row = NetworkRow(self._list, candidate, self._select,
+                             compact=self._compact)
             row.pack(fill="x", padx=4, pady=3)
             self._rows[candidate.bssid] = row
 
@@ -726,37 +748,42 @@ class HandshakeRow(ctk.CTkFrame):
         # İkon / Rozet
         ctk.CTkLabel(
             self, text="🤝", font=("Segoe UI", 16), width=36
-        ).grid(row=0, column=0, rowspan=2, padx=(10, 6), pady=6)
+        ).grid(row=0, column=0, rowspan=2, padx=(10, 6), pady=(8, 2))
 
-        # Ağ Adı ve BSSID
-        title_text = f"{hf.ssid or t('hs.unknown_ssid')}"
+        # Ağ Adı ve alt bilgi. Butonlar alt satırda olduğu için metin
+        # sıkışmıyor: eskiden sağdaki iki buton sütun 1'i sıfır genişliğe
+        # indiriyordu ve satırlar boş görünüyordu.
         ctk.CTkLabel(
-            self, text=title_text, font=FONT_UI_B, text_color=TEXT_PRI, anchor="w"
-        ).grid(row=0, column=1, sticky="w", pady=(6, 0))
+            self, text=f"{hf.ssid or t('hs.unknown_ssid')}", font=FONT_UI_B,
+            text_color=TEXT_PRI, anchor="w", justify="left",
+        ).grid(row=0, column=1, sticky="ew", padx=(0, 10), pady=(8, 0))
 
-        sub_text = f"{hf.bssid or '-'}  ·  {Path(hf.filepath).name}  ·  {hf.size_bytes}B  ·  {hf.created_at}"
-        ctk.CTkLabel(
-            self, text=sub_text, font=FONT_MONO_S, text_color=MUTED, anchor="w"
-        ).grid(row=1, column=1, sticky="w", pady=(0, 6))
+        sub_text = (f"{hf.bssid or '-'} · {Path(hf.filepath).name} · "
+                    f"{hf.size_bytes}B · {hf.created_at}")
+        auto_wrap(ctk.CTkLabel(
+            self, text=sub_text, font=FONT_MONO_S, text_color=MUTED,
+            anchor="w", justify="left",
+        )).grid(row=1, column=1, sticky="ew", padx=(0, 10), pady=(0, 4))
 
-        # Aksiyon Butonları
-        btn_f = ctk.CTkFrame(self, fg_color="transparent")
-        btn_f.grid(row=0, column=2, rowspan=2, padx=(6, 10), pady=6, sticky="e")
+        if on_use_portal or on_crack:
+            btn_f = ctk.CTkFrame(self, fg_color="transparent")
+            btn_f.grid(row=2, column=0, columnspan=2, sticky="ew",
+                       padx=10, pady=(0, 10))
 
-        if on_use_portal:
-            ctk.CTkButton(
-                btn_f, text=t("hs.use_portal"), width=120, height=26,
-                font=FONT_UI_S, fg_color=ACCENT, text_color=DARK_BG,
-                hover_color=ACCENT_DK, command=lambda: on_use_portal(hf)
-            ).pack(side="left", padx=(0, 6))
+            if on_use_portal:
+                ctk.CTkButton(
+                    btn_f, text=t("hs.use_portal"), height=28, width=1,
+                    font=FONT_UI_S, fg_color=ACCENT, text_color=DARK_BG,
+                    hover_color=ACCENT_DK, command=lambda: on_use_portal(hf)
+                ).pack(side="left", fill="x", expand=True, padx=(0, 6))
 
-        if on_crack:
-            ctk.CTkButton(
-                btn_f, text=t("hs.crack"), width=110, height=26,
-                font=FONT_UI_S, fg_color=CARD_BG, text_color=TEXT_PRI,
-                hover_color=CARD_HOVER, border_width=1, border_color=BORDER,
-                command=lambda: on_crack(hf)
-            ).pack(side="left")
+            if on_crack:
+                ctk.CTkButton(
+                    btn_f, text=t("hs.crack"), height=28, width=1,
+                    font=FONT_UI_S, fg_color=CARD_BG, text_color=TEXT_PRI,
+                    hover_color=CARD_HOVER, border_width=1,
+                    border_color=BORDER, command=lambda: on_crack(hf)
+                ).pack(side="left", fill="x", expand=True)
 
 
 class CredentialsPanel(ctk.CTkFrame):
@@ -794,6 +821,7 @@ class CredentialsPanel(ctk.CTkFrame):
 
         self._count_value = 0
         self._handshake_count = 0
+        self._handshake_header = None
 
     def add(self, cred) -> None:
         if self._count_value == 0 and self._handshake_count == 0:
@@ -803,10 +831,12 @@ class CredentialsPanel(ctk.CTkFrame):
         self._update_counter()
 
     def load_handshakes(self, handshakes) -> None:
-        # Mevcut handshake satırlarını yenile
+        # Mevcut handshake satırlarını ve başlığı yenile. Başlık her
+        # yenilemede yeniden eklenirse aynı yazı üst üste birikiyordu.
         for child in list(self._list.winfo_children()):
-            if isinstance(child, HandshakeRow):
+            if isinstance(child, HandshakeRow) or child is self._handshake_header:
                 child.destroy()
+        self._handshake_header = None
 
         self._handshake_count = len(handshakes)
         if self._count_value == 0 and self._handshake_count == 0:
@@ -815,11 +845,13 @@ class CredentialsPanel(ctk.CTkFrame):
             self._empty.pack_forget()
 
         if handshakes:
-            hdr = ctk.CTkLabel(
+            hdr = auto_wrap(ctk.CTkLabel(
                 self._list, text=t("creds.handshake_header"),
-                font=FONT_UI_B, text_color=ACCENT2
-            )
+                font=FONT_UI_B, text_color=ACCENT2, anchor="w",
+                justify="left",
+            ))
             hdr.pack(fill="x", padx=4, pady=(6, 2))
+            self._handshake_header = hdr
 
             for hf in handshakes:
                 row = HandshakeRow(self._list, hf, self._on_use_portal, self._on_crack)
@@ -839,6 +871,7 @@ class CredentialsPanel(ctk.CTkFrame):
         for child in self._list.winfo_children():
             if child is not self._empty:
                 child.destroy()
+        self._handshake_header = None
         self._count_value = 0
         self._handshake_count = 0
         self._count.configure(text="")
