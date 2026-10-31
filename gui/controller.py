@@ -550,6 +550,11 @@ class CapCapWifiController:
             self._log(t("ctrl.attack.busy"), "warn")
             return
 
+        attack_flag = (
+            "Captive_Portal"
+            if config.attack_type is AttackType.CAPTIVE_PORTAL
+            else "Handshake_Snooper"
+        )
         args = [
             "sudo",
             "-n",
@@ -558,7 +563,7 @@ class CapCapWifiController:
             "-k",
             "-m",
             "-a",
-            config.attack_type.value,
+            attack_flag,
             "-l",
             config.language,
             "--band",

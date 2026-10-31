@@ -223,7 +223,13 @@ while [ "$1" != "" ] && [ "$1" != "--" ]; do
       CapCapTargetSSIDClean=$(echo "$CapCapTargetSSID" | sed -r 's/( |\/|\.|\~|\\)+/_/g'); shift;;
     -c|--channel) CapCapTargetChannel=$2; shift;;
     -l|--language) CapCapLanguage=$2; shift;;
-    -a|--attack) CapCapAttack=$2; shift;;
+    -a|--attack)
+      CapCapAttack=$2
+      case "${CapCapAttack,,}" in
+        captive*|*portal*) CapCapAttack="Captive Portal";;
+        handshake*|*snooper*) CapCapAttack="Handshake Snooper";;
+      esac
+      shift;;
     -i|--install) CAPCAPSkipDependencies=0; shift;;
     --ratio) CAPCAPWindowRatio=$2; shift;;
     --auto) readonly CAPCAPAuto=1;;
@@ -2873,6 +2879,10 @@ capcap_unset_attack() {
 }
 
 capcap_set_attack() {
+  case "${CapCapAttack,,}" in
+    captive*|*portal*) CapCapAttack="Captive Portal"; return 0;;
+    handshake*|*snooper*) CapCapAttack="Handshake Snooper"; return 0;;
+  esac
   if [ "$CapCapAttack" ]; then return 0; fi
 
   capcap_unset_attack

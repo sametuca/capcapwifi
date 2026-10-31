@@ -848,7 +848,8 @@ class CapCapWifiApp(ctk.CTk):
         """Dili değiştirip pencereyi yeniden kurar; saldırı süreci etkilenmez."""
         snapshot = self._config_panel.snapshot()
         candidates = self._net_table.candidates
-        guide_hf = getattr(self._next_step_guide, "_hf", None)
+        was_guide_visible = bool(getattr(self, "_next_step_guide", None) and self._next_step_guide.winfo_ismapped())
+        guide_hf = getattr(self._next_step_guide, "_hf", None) if was_guide_visible else None
 
         # Eski widget'lar yıkılmadan önce callback'lerin onlara dokunmasını kes.
         self._ui_ready = False
@@ -967,19 +968,10 @@ class CapCapWifiApp(ctk.CTk):
               bssid=target.bssid, channel=target.channel), "info")
         self._set_step(3)
         self._refresh_hint()
+        self._dismiss_guide()
 
-        # Eğer bu hedef için önceden kaydedilmiş handshake varsa kullanıcıya bildir
         if target.has_handshake:
-            hf = HandshakeFile(
-                filename=f"{target.clean_essid}-{target.bssid}.cap",
-                filepath=str(REPO_DIR / "attacks" / "Handshake Snooper" / "handshakes" / f"{target.clean_essid}-{target.bssid}.cap"),
-                ssid=target.clean_essid,
-                bssid=target.bssid,
-                size_bytes=0,
-                created_at=t("hs.previous"),
-            )
-            self._next_step_guide.set_handshake(hf)
-            self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+            self._log_panel.append(t("log.target_has_handshake"), "info")
 
     def _on_handshake(self, hf: HandshakeFile) -> None:
         def _apply():
