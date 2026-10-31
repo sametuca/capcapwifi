@@ -29,9 +29,9 @@ from models import (
     WirelessInterface,
 )
 from widgets import (
-    ACCENT, ACCENT2, CARD_BG, DANGER, DARK_BG, FONT_MONO_S, FONT_TITLE,
-    FONT_UI, FONT_UI_B, FONT_UI_S, MUTED, PANEL_BG, TEXT_PRI, TEXT_SEC, WARN,
-    BORDER,
+    ACCENT, ACCENT2, CARD_BG, CARD_HOVER, DANGER, DARK_BG, FONT_MONO_S,
+    FONT_TITLE, FONT_UI, FONT_UI_B, FONT_UI_S, MUTED, PANEL_BG, TEXT_PRI,
+    TEXT_SEC, WARN, BORDER,
     Checklist, CredentialsPanel, GuideBar, LogPanel, NetworkTable,
     SectionCard, StatusBadge,
 )
@@ -128,7 +128,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             self, "1 · ADAPTÖR",
             "Hangi kablosuz kart kullanılacak. Emin değilsen otomatik bırak.",
         )
-        sec.pack(fill="x", padx=8, pady=(8, 4))
+        sec.pack(fill="x", padx=4, pady=(4, 4))
         body = sec.body()
 
         self._iface_var = self._combo_row(body, 0, "Birincil (tarama):")
@@ -154,7 +154,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             self, "2 · TARAMA",
             "Kısa süre hızlıdır, uzun süre bağlı cihazları da görür.",
         )
-        sec.pack(fill="x", padx=8, pady=4)
+        sec.pack(fill="x", padx=4, pady=4)
         body = sec.body()
 
         ctk.CTkLabel(body, text="Süre (sn):", font=FONT_UI,
@@ -186,7 +186,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             self, "3 · HEDEF",
             "Tablo satırına tıklarsan bu alanlar kendiliğinden dolar.",
         )
-        sec.pack(fill="x", padx=8, pady=4)
+        sec.pack(fill="x", padx=4, pady=4)
         body = sec.body()
 
         ctk.CTkLabel(body, text="SSID:", font=FONT_UI,
@@ -223,7 +223,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             self, "4 · SALDIRI",
             "İki yöntem var; hangisini seçtiğinin açıklaması altında yazar.",
         )
-        sec.pack(fill="x", padx=8, pady=(4, 12))
+        sec.pack(fill="x", padx=4, pady=(4, 10))
         body = sec.body()
 
         ctk.CTkLabel(body, text="Tür:", font=FONT_UI,
@@ -482,38 +482,44 @@ class CapCapWifiApp(ctk.CTk):
     # ── UI construction ──────────────────────────────────────────
 
     def _build_ui(self) -> None:
-        top = ctk.CTkFrame(self, fg_color="#080808", height=56)
+        top = ctk.CTkFrame(self, fg_color="#08090B", height=60,
+                           corner_radius=0)
         top.pack(fill="x")
         top.pack_propagate(False)
 
-        ctk.CTkLabel(top, text="⚡ CapCapWifi", font=("Courier New", 18, "bold"),
-                     text_color=ACCENT).pack(side="left", padx=16, pady=8)
-        ctk.CTkLabel(top, text="Wi-Fi güvenlik denetleyicisi – Python arayüzü",
-                     font=FONT_UI, text_color=MUTED).pack(side="left")
+        ctk.CTkLabel(top, text="⚡", font=("Inter", 20),
+                     text_color=ACCENT).pack(side="left", padx=(18, 2), pady=8)
+        ctk.CTkLabel(top, text="CapCapWifi", font=("Inter", 18, "bold"),
+                     text_color=TEXT_PRI).pack(side="left", pady=8)
+        ctk.CTkLabel(top, text="  Wi-Fi güvenlik denetleyicisi",
+                     font=FONT_UI, text_color=MUTED).pack(side="left", pady=8)
 
         self._status_badge = StatusBadge(top)
-        self._status_badge.pack(side="right", padx=16, pady=6)
+        self._status_badge.pack(side="right", padx=18, pady=10)
+
+        ctk.CTkFrame(self, fg_color=ACCENT, height=2,
+                     corner_radius=0).pack(fill="x")
 
         self._guide = GuideBar(self, STEPS)
-        self._guide.pack(fill="x", padx=8, pady=(6, 0))
+        self._guide.pack(fill="x", padx=12, pady=(8, 0))
         self._guide.set_active(0)
 
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True)
-        body.columnconfigure(0, weight=0, minsize=310)
+        body.columnconfigure(0, weight=0, minsize=330)
         body.columnconfigure(1, weight=3)
-        body.columnconfigure(2, weight=2, minsize=340)
+        body.columnconfigure(2, weight=2, minsize=360)
         body.rowconfigure(0, weight=1)
 
         # Left: configuration
         self._config_panel = AttackConfigPanel(
             body, self._ctrl, on_change=self._refresh_hint)
         self._config_panel.grid(row=0, column=0, sticky="nsew",
-                                padx=(8, 4), pady=8)
+                                padx=(12, 5), pady=10)
 
         # Centre: tabs
         centre = ctk.CTkFrame(body, fg_color="transparent")
-        centre.grid(row=0, column=1, sticky="nsew", padx=4, pady=8)
+        centre.grid(row=0, column=1, sticky="nsew", padx=5, pady=10)
         centre.rowconfigure(0, weight=1)
         centre.columnconfigure(0, weight=1)
 
@@ -521,14 +527,16 @@ class CapCapWifiApp(ctk.CTk):
             centre, fg_color=PANEL_BG,
             segmented_button_fg_color=CARD_BG,
             segmented_button_selected_color=ACCENT,
-            segmented_button_selected_hover_color="#00b35a",
+            segmented_button_selected_hover_color="#00c86a",
             segmented_button_unselected_color=CARD_BG,
+            segmented_button_unselected_hover_color=CARD_HOVER,
             text_color=TEXT_PRI,
+            corner_radius=12,
         )
         self._tabs.grid(row=0, column=0, sticky="nsew")
-        tab_nets = self._tabs.add("📡 Ağlar")
-        tab_creds = self._tabs.add("🔑 Şifreler")
-        tab_help = self._tabs.add("❓ Nasıl kullanılır")
+        tab_nets = self._tabs.add("📡  Ağlar")
+        tab_creds = self._tabs.add("🔑  Şifreler")
+        tab_help = self._tabs.add("❓  Nasıl kullanılır")
 
         self._net_table = NetworkTable(tab_nets, on_select=self._on_target_select)
         self._net_table.pack(fill="both", expand=True)
@@ -538,64 +546,70 @@ class CapCapWifiApp(ctk.CTk):
 
         help_box = ctk.CTkFrame(tab_help, fg_color="transparent")
         help_box.pack(fill="both", expand=True)
-        help_text = ctk.CTkTextbox(help_box, fg_color=DARK_BG, text_color=TEXT_PRI,
-                                   font=FONT_MONO_S, wrap="word", corner_radius=6)
+        help_text = ctk.CTkTextbox(help_box, fg_color=DARK_BG,
+                                   text_color=TEXT_PRI, font=FONT_MONO_S,
+                                   wrap="word", corner_radius=10,
+                                   border_width=1, border_color=BORDER)
         help_text.pack(fill="both", expand=True, padx=6, pady=6)
         help_text.insert("1.0", HELP_TEXT)
         help_text.configure(state="disabled")
 
         # Action buttons
         btn_row = ctk.CTkFrame(centre, fg_color="transparent")
-        btn_row.grid(row=1, column=0, sticky="ew", pady=(6, 0))
+        btn_row.grid(row=1, column=0, sticky="ew", pady=(10, 0))
         for column in range(4):
             btn_row.columnconfigure(column, weight=1)
 
         self._btn_scan = ctk.CTkButton(
             btn_row, text="🔍  Tara", command=self._do_scan,
-            fg_color=ACCENT, text_color="#000", hover_color="#00b35a",
-            font=FONT_UI_B, height=40)
-        self._btn_scan.grid(row=0, column=0, padx=4, sticky="ew")
+            fg_color=ACCENT, text_color="#052012", hover_color="#00C86A",
+            font=FONT_UI_B, height=44, corner_radius=12)
+        self._btn_scan.grid(row=0, column=0, padx=(0, 5), sticky="ew")
 
         self._btn_attack = ctk.CTkButton(
             btn_row, text="⚡  Saldırıyı başlat", command=self._do_attack,
-            fg_color=WARN, text_color="#000", hover_color="#e65100",
-            font=FONT_UI_B, height=40)
-        self._btn_attack.grid(row=0, column=1, padx=4, sticky="ew")
+            fg_color=WARN, text_color="#201500", hover_color="#FFC44D",
+            font=FONT_UI_B, height=44, corner_radius=12)
+        self._btn_attack.grid(row=0, column=1, padx=5, sticky="ew")
 
         self._btn_stop = ctk.CTkButton(
             btn_row, text="⏹  Durdur", command=self._do_stop,
-            fg_color=DANGER, text_color="#fff", hover_color="#c62828",
-            font=FONT_UI_B, height=40, state="disabled")
-        self._btn_stop.grid(row=0, column=2, padx=4, sticky="ew")
+            fg_color="transparent", text_color=DANGER, hover_color="#2A1218",
+            border_width=1, border_color=DANGER, font=FONT_UI_B,
+            height=44, corner_radius=12, state="disabled")
+        self._btn_stop.grid(row=0, column=2, padx=5, sticky="ew")
 
         self._btn_clear = ctk.CTkButton(
             btn_row, text="🗑  Temizle", command=self._do_clear,
-            fg_color=CARD_BG, text_color=MUTED, hover_color="#2a2a2a",
-            font=FONT_UI_B, height=40, border_color=BORDER, border_width=1)
-        self._btn_clear.grid(row=0, column=3, padx=4, sticky="ew")
+            fg_color="transparent", text_color=TEXT_SEC, hover_color=CARD_HOVER,
+            font=FONT_UI_B, height=44, border_color=BORDER, border_width=1,
+            corner_radius=12)
+        self._btn_clear.grid(row=0, column=3, padx=(5, 0), sticky="ew")
 
         # Right column: health card above log
         right = ctk.CTkFrame(body, fg_color="transparent")
-        right.grid(row=0, column=2, sticky="nsew", padx=(4, 8), pady=8)
+        right.grid(row=0, column=2, sticky="nsew", padx=(5, 12), pady=10)
         right.rowconfigure(1, weight=1)
         right.columnconfigure(0, weight=1)
 
-        health = ctk.CTkFrame(right, fg_color=CARD_BG, corner_radius=8)
+        health = ctk.CTkFrame(right, fg_color=CARD_BG, corner_radius=12,
+                              border_width=1, border_color=BORDER)
         health.grid(row=0, column=0, sticky="ew")
         head = ctk.CTkFrame(health, fg_color="transparent")
-        head.pack(fill="x", padx=12, pady=(8, 2))
-        ctk.CTkLabel(head, text="🩺  ORTAM KONTROLÜ", font=FONT_UI_B,
-                     text_color=ACCENT2).pack(side="left")
-        ctk.CTkButton(head, text="🔄", width=28, height=24,
+        head.pack(fill="x", padx=14, pady=(12, 2))
+        ctk.CTkLabel(head, text="🩺  Ortam kontrolü", font=FONT_TITLE,
+                     text_color=TEXT_PRI).pack(side="left")
+        ctk.CTkButton(head, text="🔄", width=30, height=26,
                       command=lambda: self._ctrl.check_environment(),
-                      fg_color=DARK_BG, border_color=ACCENT, border_width=1,
-                      text_color=ACCENT, hover_color="#1b3a2a",
+                      fg_color="transparent", border_color=BORDER,
+                      border_width=1, text_color=TEXT_SEC,
+                      hover_color=CARD_HOVER,
                       font=FONT_UI).pack(side="right")
         self._btn_install = ctk.CTkButton(
-            head, text="📦 Eksikleri kur", width=110, height=24,
-            command=self._start_install, fg_color=DARK_BG,
+            head, text="📦 Eksikleri kur", width=118, height=26,
+            command=self._start_install, fg_color="transparent",
             border_color=WARN, border_width=1, text_color=WARN,
-            hover_color="#3a2a1a", font=FONT_UI_S)
+            hover_color="#2A2110", font=FONT_UI_S, corner_radius=10)
         self._btn_install.pack(side="right", padx=(0, 6))
 
         ctk.CTkLabel(
@@ -624,16 +638,19 @@ class CapCapWifiApp(ctk.CTk):
         self._log_panel.grid(row=1, column=0, sticky="nsew", pady=(8, 0))
 
         # Bottom hint bar
-        bar = ctk.CTkFrame(self, fg_color="#080808", height=30)
+        ctk.CTkFrame(self, fg_color=BORDER, height=1,
+                     corner_radius=0).pack(fill="x")
+        bar = ctk.CTkFrame(self, fg_color="#08090B", height=34,
+                           corner_radius=0)
         bar.pack(fill="x")
         bar.pack_propagate(False)
         self._bar_label = ctk.CTkLabel(
-            bar, text="", font=("Courier New", 10), text_color=TEXT_SEC,
-            anchor="w")
-        self._bar_label.pack(side="left", padx=12)
+            bar, text="", font=FONT_UI_S, text_color=TEXT_SEC,
+            anchor="w", justify="left")
+        self._bar_label.pack(side="left", padx=16)
         ctk.CTkLabel(bar, text="github.com/sametuca/capcapwifi",
-                     font=("Courier New", 9),
-                     text_color="#333").pack(side="right", padx=12)
+                     font=FONT_MONO_S,
+                     text_color="#2F343B").pack(side="right", padx=16)
 
         self._refresh_hint()
 

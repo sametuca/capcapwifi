@@ -49,6 +49,8 @@ cd capcapwifi
 |---|---|
 | 🧭 Adım çubuğu | Adaptör → Tara → Hedef seç → Saldır → Sonuç; hangi adımda olduğunuz vurgulanır |
 | 🩺 Ortam Kontrolü | Root, adaptör, monitor mode ve tüm araçlar ✓/✗ olarak; eksikse tek tuşla kurulum |
+| ▂▄▆█ Sinyal çubukları | Her ağ kartında görsel sinyal gücü, dBm ve bağlı cihaz rozeti |
+| 🔎 Ağ arama | SSID veya BSSID ile anında filtreleme |
 | 📡 Ağ Tarama | Belirtilen süre boyunca airodump-ng ile yakındaki WPA ağlarını tarar |
 | ⚡ Captive Portal Saldırısı | Sahte AP + phishing sayfası ile şifre yakalamak |
 | 🤝 Handshake Snooper | WPA handshake yakalamak için pasif dinleme |

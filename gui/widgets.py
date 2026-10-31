@@ -39,11 +39,6 @@ FONT_UI_B  = ("Inter", 11, "bold")
 FONT_TITLE = ("Inter", 14, "bold")
 
 
-def _font(family: str) -> tuple:
-    """Tk, kurulu olmayan yazı tipini sessizce varsayılana düşürür."""
-    return (family,)
-
-
 # ────────────────────────── sinyal çubukları ────────────────────────
 
 class SignalBars(tk.Canvas):

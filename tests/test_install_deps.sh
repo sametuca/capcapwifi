@@ -65,6 +65,7 @@ for locale in en tur; do
   file="$REPO_DIR/language/$locale.sh"
   for key in CAPCAPInstallDepsNotice CAPCAPInstallDepsDone CAPCAPInstallDepsFailed; do
     if (
+      # shellcheck source=/dev/null
       source "$file"
       [ -n "${!key-}" ]
     ); then
