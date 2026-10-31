@@ -110,6 +110,16 @@ if [ "$(id -u)" -ne 0 ]; then
     "$0" "$@"
 fi
 
+# Buraya yalnızca root gelmeli. Yine de doğruluyoruz: `sudo` PATH'te bir
+# kabuk betiğiyle gölgelenmişse ya da sudoers "runas_default" root olmayan bir
+# kullanıcıya ayarlıysa yukarıdaki `exec sudo` root OLMAYAN bir kabuğa düşer ve
+# GUI sessizce yetkisiz açılırdı – tam da engellemek istediğimiz durum. Kontrol
+# bir satırlık; yanlış başlatmayı imkânsız kılıyor.
+if [ "$(id -u)" -ne 0 ]; then
+  fail "GUI root olmadan başlatılamaz. Şu komutla çalıştırın:  sudo ./run_gui.sh"
+  exit 1
+fi
+
 echo
 info "GUI başlatılıyor…"
 warn "Eksik paketler ilk açılışta arayüz içinden otomatik kurulur (log panelinde görünür)."
