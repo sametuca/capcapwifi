@@ -58,7 +58,7 @@ from widgets import (
     FONT_UI_B, FONT_UI_S, FONT_UI_SB, MUTED, PANEL_BG, TEXT_PRI, TEXT_SEC,
     WARN, WARN_DIM, BORDER,
     Checklist, CredentialsPanel, GuideBar, LogPanel, NetworkTable,
-    NextStepGuideCard, SectionCard, StatusBadge,
+    SectionCard, StatusBadge, auto_wrap,
 )
 
 # Üst/alt çubuk gibi "çerçeve" yüzeyleri için uygulama zemininden bir tık
@@ -555,6 +555,15 @@ class CapCapWifiApp(ctk.CTk):
         self._step = 0
         self._active_tab = "networks"
         self._ui_ready = False
+        # Gömülü konsol sekmesi durumu
+        self._console_job = None
+        self._console_busy = False
+        self._console_sel: Optional[str] = None
+        self._console_windows: List[tuple] = []
+        # Saldırı başlarken sekme yalnızca bir kez otomatik değişsin.
+        self._console_autoswitched = False
+        self._console_misses = 0
+        self._console_last = ""
 
         self._build_ui()
         self._update_status(AttackState.IDLE)
@@ -681,14 +690,6 @@ class CapCapWifiApp(ctk.CTk):
         centre.rowconfigure(1, weight=1)
         centre.columnconfigure(0, weight=1)
 
-        # Handshake yakalandığında beliren dinamik rehberlik kartı
-        self._next_step_guide = NextStepGuideCard(
-            centre,
-            on_start_portal=self._start_portal_from_guide,
-            on_crack_wordlist=self._start_crack_from_guide,
-            on_dismiss=self._dismiss_guide,
-        )
-
         self._tabs = ctk.CTkTabview(
             centre, fg_color=PANEL_BG,
             segmented_button_fg_color=CARD_BG,
@@ -703,10 +704,12 @@ class CapCapWifiApp(ctk.CTk):
         self._tab_names = {
             "networks": f"📡  {t('app.tab.networks')}",
             "credentials": f"🔑  {t('app.tab.credentials')}",
+            "consoles": f"🖥  {t('app.tab.consoles')}",
             "help": f"❓  {t('app.tab.help')}",
         }
         tab_nets = self._tabs.add(self._tab_names["networks"])
         tab_creds = self._tabs.add(self._tab_names["credentials"])
+        tab_consoles = self._tabs.add(self._tab_names["consoles"])
         tab_help = self._tabs.add(self._tab_names["help"])
 
         self._net_table = NetworkTable(tab_nets, on_select=self._on_target_select)
@@ -714,10 +717,12 @@ class CapCapWifiApp(ctk.CTk):
 
         self._cred_panel = CredentialsPanel(
             tab_creds,
-            on_use_portal=self._start_portal_from_guide,
-            on_crack=self._start_crack_from_guide,
+            on_use_portal=self._start_portal_for_handshake,
+            on_crack=self._start_crack_for_handshake,
         )
         self._cred_panel.pack(fill="both", expand=True)
+
+        self._build_console_tab(tab_consoles)
 
         help_box = ctk.CTkFrame(tab_help, fg_color="transparent")
         help_box.pack(fill="both", expand=True)
@@ -848,11 +853,15 @@ class CapCapWifiApp(ctk.CTk):
         """Dili değiştirip pencereyi yeniden kurar; saldırı süreci etkilenmez."""
         snapshot = self._config_panel.snapshot()
         candidates = self._net_table.candidates
-        was_guide_visible = bool(getattr(self, "_next_step_guide", None) and self._next_step_guide.winfo_ismapped())
-        guide_hf = getattr(self._next_step_guide, "_hf", None) if was_guide_visible else None
-
         # Eski widget'lar yıkılmadan önce callback'lerin onlara dokunmasını kes.
         self._ui_ready = False
+        if self._console_job is not None:
+            try:
+                self.after_cancel(self._console_job)
+            except Exception:
+                pass
+            self._console_job = None
+        self._console_last = ""
         i18n.set_language(code)
         i18n.save_language(code)
 
@@ -872,10 +881,6 @@ class CapCapWifiApp(ctk.CTk):
             self._cred_panel.add(cred)
         self._refresh_handshake_archive()
 
-        if guide_hf is not None:
-            self._next_step_guide.set_handshake(guide_hf)
-            self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
-
         if self._upd_status is not None and getattr(self._upd_status, "behind", 0) > 0:
             self._update_bar_label.configure(
                 text="⬆  " + t("update.available", count=self._upd_status.behind))
@@ -883,12 +888,124 @@ class CapCapWifiApp(ctk.CTk):
         self._set_step(self._step)
         self._update_status(self._state)
 
+    # ── Gömülü konsollar ────────────────────────────────────────
+
+    def _build_console_tab(self, tab) -> None:
+        """Saldırının tmux pencerelerini ayrı terminallere bakmadan gösterir."""
+        head = ctk.CTkFrame(tab, fg_color="transparent")
+        head.pack(fill="x", padx=8, pady=(8, 2))
+
+        ctk.CTkLabel(head, text=t("console.title"), font=FONT_UI_B,
+                     text_color=TEXT_PRI).pack(side="left")
+
+        self._console_picker = ctk.CTkOptionMenu(
+            head, values=[t("console.waiting")],
+            command=self._on_console_pick, width=240, font=FONT_UI_S,
+            fg_color=CARD_BG, button_color=ACCENT, button_hover_color=ACCENT_DK,
+            text_color=TEXT_PRI,
+        )
+        self._console_picker.pack(side="right")
+
+        auto_wrap(ctk.CTkLabel(
+            tab, text=t("console.hint"), font=FONT_UI_S, text_color=MUTED,
+            justify="left", anchor="w",
+        )).pack(fill="x", padx=10, pady=(0, 6))
+
+        self._console_text = ctk.CTkTextbox(
+            tab, fg_color=DARK_BG, text_color="#C9F7D9", font=FONT_MONO_S,
+            wrap="none", corner_radius=10, border_width=1, border_color=BORDER,
+        )
+        self._console_text.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        self._render_console("")
+        self._console_text.configure(state="disabled")
+
+    def _on_console_pick(self, label: str) -> None:
+        for index, name in self._console_windows:
+            if label == f"{name}  (#{index})":
+                self._console_sel = index
+                self._console_last = ""
+                self._start_console_poll()
+                return
+
+    def _start_console_poll(self) -> None:
+        if self._console_job is None and getattr(self, "_ui_ready", False):
+            self._console_job = self.after(300, self._console_tick)
+
+    def _console_tick(self) -> None:
+        self._console_job = None
+        if not self._ui_ready or not hasattr(self, "_console_text"):
+            return
+        # Yavaş bir sudo çağrısı arayüzü dondurmasın: ayrı iş parçacığında oku.
+        if not self._console_busy:
+            self._console_busy = True
+            threading.Thread(target=self._fetch_consoles, daemon=True).start()
+        if self._ctrl.is_busy:
+            self._console_job = self.after(1800, self._console_tick)
+
+    def _fetch_consoles(self) -> None:
+        try:
+            windows = self._ctrl.console_windows()
+            index = self._console_sel
+            if not index and windows:
+                index = windows[0][0]
+            text = self._ctrl.capture_console(index) if index else ""
+        except Exception:
+            windows, index, text = [], None, ""
+        finally:
+            self._console_busy = False
+        try:
+            self.after(0, lambda: self._apply_consoles(windows, index, text))
+        except Exception:
+            pass
+
+    def _apply_consoles(self, windows, index, text) -> None:
+        if not getattr(self, "_ui_ready", False) or not hasattr(self, "_console_text"):
+            return
+        if windows:
+            self._console_misses = 0
+            self._console_windows = list(windows)
+            labels = [f"{name}  (#{i})" for i, name in windows]
+            if index:
+                self._console_sel = index
+            current = next((label for label, (i, _n) in zip(labels, windows)
+                            if i == self._console_sel), None)
+            try:
+                self._console_picker.configure(values=labels)
+                if current:
+                    self._console_picker.set(current)
+            except Exception:
+                pass
+        if not windows and not text:
+            # Saldırı sürerken pencere yoksa kullanıcı boş ekranla kalmasın.
+            self._console_misses += 1
+        if text != self._console_last:
+            self._console_last = text
+            self._render_console(text)
+        elif not text:
+            if self._console_misses >= 3:
+                self._render_console(t("console.not_found"))
+            else:
+                self._render_console(t("console.waiting"))
+
+    def _render_console(self, text: str) -> None:
+        if not hasattr(self, "_console_text"):
+            return
+        body = text or t("console.empty")
+        self._console_text.configure(state="normal")
+        self._console_text.delete("1.0", "end")
+        self._console_text.insert("1.0", body)
+        self._console_text.see("end")
+        self._console_text.configure(state="disabled")
+
     def _set_step(self, index: int) -> None:
         self._step = index
         self._guide.set_active(index)
 
     def _show_tab(self, key: str) -> None:
         self._active_tab = key
+        if key == "consoles":
+            # Sekme açıldığı anda akış başlasın; saldırı bitmişse son kare kalır.
+            self._start_console_poll()
         name = self._tab_names.get(key)
         if not name:
             return
@@ -968,7 +1085,6 @@ class CapCapWifiApp(ctk.CTk):
               bssid=target.bssid, channel=target.channel), "info")
         self._set_step(3)
         self._refresh_hint()
-        self._dismiss_guide()
 
         if target.has_handshake:
             self._log_panel.append(t("log.target_has_handshake"), "info")
@@ -978,15 +1094,16 @@ class CapCapWifiApp(ctk.CTk):
 
     def _on_handshake(self, hf: HandshakeFile) -> None:
         def _apply():
-            self._next_step_guide.set_handshake(hf)
-            self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
             self._refresh_handshake_archive()
-            self._show_tab("networks")
-            self._set_step(4)
-            self._refresh_hint()
+            # Kart yok: kaydedilen dosya ve "Portal'da Kullan" düğmesi
+            # Şifreler sekmesindeki handshake arşivinde. Kullanıcı oraya
+            # doğrudan getirilir; sıradaki adım böylece görünür olur.
+            self._show_tab("credentials")
             self._log_panel.append(
                 t("log.handshake_captured", file=hf.filepath), "success")
-            # Yakalama anını kaçırmasın: pencereyi öne al ve ses çıkar.
+            self._log_panel.append(t("log.handshake_next"), "info")
+            self._set_step(4)
+            self._refresh_hint()
             try:
                 self.bell()
                 self.lift()
@@ -995,19 +1112,14 @@ class CapCapWifiApp(ctk.CTk):
                 pass
         self.after(0, _apply)
 
-    def _dismiss_guide(self) -> None:
-        self._next_step_guide.grid_forget()
+    def _start_portal_for_handshake(self, hf: Optional[HandshakeFile]) -> None:
+        """Şifreler sekmesindeki handshake satırından tek tıkla portal başlat.
 
-    def _start_portal_from_guide(self, hf: Optional[HandshakeFile]) -> None:
-        """Rehberdeki tek tık: portalı hazırla ve hemen başlat.
-
-        Kullanıcı "başlat" düğmesine basıyor ama sadece form doluyordu; oysa
-        buton "Captive Portal başlat" diyor. Artık saldırı gerçekten başlıyor;
-        meşgulse eski yönlendirme metni gösterilir.
+        Satır formu doldurmakla kalmıyor, saldırıyı gerçekten başlatıyor.
+        Meşgulse yalnızca yönlendirme metni gösterilir.
         """
         if hf is None:
             return
-        self._next_step_guide.grid_forget()
         # Saldırı türünü Captive Portal'a geçir
         self._config_panel._attack_var.set(AttackType.CAPTIVE_PORTAL.label)
         self._config_panel._on_attack_change(None)
@@ -1036,7 +1148,7 @@ class CapCapWifiApp(ctk.CTk):
             self.after(250, self._do_attack)
         self._refresh_hint()
 
-    def _start_crack_from_guide(self, hf: Optional[HandshakeFile]) -> None:
+    def _start_crack_for_handshake(self, hf: Optional[HandshakeFile]) -> None:
         if hf is None:
             return
         self._show_tab("credentials")
@@ -1094,6 +1206,9 @@ class CapCapWifiApp(ctk.CTk):
                   desc=portal.description), "info")
 
         self._set_step(3)
+        self._console_autoswitched = False
+        self._console_misses = 0
+        self._console_last = ""
         self._log_panel.append(
             t("log.attack_start", attack=config.attack_type.value,
               target=(config.target_essid or config.target_bssid)), "info")
@@ -1254,6 +1369,13 @@ class CapCapWifiApp(ctk.CTk):
             self._set_step(3)
         elif state in (AttackState.HANDSHAKE_CAPTURED, AttackState.CREDENTIALS_FOUND):
             self._set_step(4)
+        if busy:
+            self._start_console_poll()
+        if state is AttackState.RUNNING and not self._console_autoswitched:
+            self._console_autoswitched = True
+            # Kullanıcı konsolları ayrı pencerelerde aramak zorunda kalmasın:
+            # saldırı başlar başlamaz gömülü konsol sekmesi açılır.
+            self._show_tab("consoles")
         self._refresh_hint()
 
     def _refresh_hint(self) -> None:

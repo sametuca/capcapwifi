@@ -76,6 +76,16 @@ ctrl._handle_handshake_captured("/tmp/nope.cap")
 check("duplicate handshake is shown once", len(handshakes) == 1,
       str(len(handshakes)))
 
+ev = parse_status_line(TS + "ATTACK_FAILED reason=The access point interface can't "
+                       "host on this band")
+check("failure reason keeps its spaces",
+      ev and ev.get("reason") == "The access point interface can't host on this band",
+      str(ev))
+
+ev = parse_status_line(TS + "AP_CHANNEL_FALLBACK from=149 to=6")
+check("channel fallback is parsed", ev and ev.get("from") == "149"
+      and ev.get("to") == "6", str(ev))
+
 # Kullanıcı "durdur" demeden süreç kapanınca rozet "Durduruldu"ya düşmemeli.
 ctrl._success_state = AttackState.HANDSHAKE_CAPTURED
 ctrl.stop()

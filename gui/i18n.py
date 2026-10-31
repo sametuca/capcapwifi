@@ -32,6 +32,7 @@ EN: Dict[str, str] = {
     "app.subtitle": "Wi-Fi security auditor",
     "app.tab.networks": "Networks",
     "app.tab.credentials": "Passwords",
+    "app.tab.consoles": "Consoles",
     "app.tab.help": "How to use",
     "app.btn.scan": "Scan",
     "app.btn.attack": "Start",
@@ -204,7 +205,10 @@ NOTES
     "log.install_first": ("[i] First install: missing packages are being fetched automatically. "
                           "This can take a few minutes; do not close the window."),
     "log.handshake_archive_error": "[!] Error scanning the handshake archive: {error}",
-    "log.handshake_captured": "[+] HANDSHAKE CAPTURED → saved to {file}. All attack processes are stopped; see the green panel for what to do next.",
+    "log.handshake_captured": "[+] HANDSHAKE CAPTURED → saved to {file}.",
+    "log.handshake_next": ("Handshake Snooper closed itself because it was done. Open the Passwords "
+                           "tab, find the handshake and press \"Use with portal\" to start the "
+                           "Captive Portal for that network."),
     "log.target_selected": "[+] Target: {ssid} ({bssid}) CH{channel}",
     "log.target_has_handshake": "ℹ️ A saved handshake already exists for this network; you can start Captive Portal directly.",
     "log.pmf_target": ("⚠️ {ssid} uses WPA3/PMF. Deauthentication is protected on this "
@@ -243,6 +247,15 @@ NOTES
 
     # ── credentials / handshakes ───────────────────────────────
     "creds.title": "Captured logins & handshake archive",
+    "console.title": "Attack consoles (embedded)",
+    "console.hint": ("Every window the attack opens (DHCP, DNS, access point, deauth, "
+                     "portal) is shown here. This is the same output that used to appear "
+                     "in separate terminal windows."),
+    "console.empty": "No console yet. Start an attack and the windows will appear here.",
+    "console.waiting": "Waiting for the attack window…",
+    "console.not_found": ("No attack console found yet. If this stays empty, the attack has not "
+                          "started yet – check the log panel on the right."),
+    "console.buffer": "{name} · live tail",
     "creds.desc": ("Passwords typed into the web portals and WPA .cap handshakes "
                    "captured by listening are archived here."),
     "creds.empty": ("No logins or handshakes yet.\n\n"
@@ -257,25 +270,6 @@ NOTES
     "hs.use_portal": "Use with portal",
     "hs.crack": "Crack with aircrack",
     "hs.previous": "Previously saved",
-
-    # ── next-step guidance card ────────────────────────────────
-    "guide.title": "WPA handshake captured successfully",
-    "guide.info": "Target: {ssid}  ·  BSSID: {bssid}  ·  File: {file}",
-    "guide.saved": "Saved file: {path}",
-    "guide.body": """WHAT SHOULD YOU DO NOW? YOU HAVE TWO OPTIONS:
-
-The handshake was saved, so the snooper closed itself: you did not stop it, and
-nothing is left running in the background. The adapter is back to normal mode.
-
-1. OPTION (RECOMMENDED): START THE CAPTIVE PORTAL
-   A fake access point with the same network name opens. Once a device joins it,
-   the portal page appears and whatever is typed there lands in the Passwords tab.
-
-2. OPTION (OFFLINE): RUN AN AIRCRACK-NG WORDLIST ATTACK
-   The handshake (.cap) file is saved. You can disconnect from the target network and
-   try to crack it offline on your machine with a wordlist (rockyou.txt etc.).""",
-    "guide.btn_portal": "Start Captive Portal for this network (recommended)",
-    "guide.btn_crack": "Try cracking with aircrack-ng",
 
     # ── environment checklist ──────────────────────────────────
     "checklist.missing": ("{count} required components missing – the install command is "
@@ -302,11 +296,11 @@ nothing is left running in the background. The adapter is back to normal mode.
                       "services are starting."),
     "hint.running.portal": ("Rogue AP is on air. When a device connects and submits the form, "
                             "a row appears on the Passwords tab."),
-    "hint.running.handshake": ("Deauth is running, waiting for a handshake. When captured, "
-                               "a green panel opens with the saved file and next steps."),
+    "hint.running.handshake": ("Deauth is running, waiting for a handshake. When it is "
+                               "captured the snooper closes itself – that is normal."),
     "hint.credentials": "Login captured! Copy it from the Passwords tab.",
-    "hint.handshake": ("Handshake captured! The green panel above shows the saved file; "
-                       "continue with the Captive Portal or crack it with aircrack there."),
+    "hint.handshake": ("Handshake captured! Open the Passwords tab: \"Use with portal\" "
+                       "starts the Captive Portal, \"Crack with aircrack\" tries the wordlist."),
     "hint.error": "Error: check the log panel and environment card on the right.",
     "hint.stopped": "Stopped. Start a new scan or change the target whenever you like.",
     "hint.env_checking": "Checking the environment…",
@@ -391,6 +385,17 @@ nothing is left running in the background. The adapter is back to normal mode.
     "ctrl.handshake.option1": ("   1. (Recommended) Start a Captive Portal attack for this "
                                "network. When the visitor types a password, the captured "
                                "handshake confirms it automatically!"),
+    "ctrl.portal.join_hint": ("On the phone open Wi-Fi settings and pick \"{ssid}\" by hand – "
+                              "a saved network does not join the open twin on its own. The "
+                              "portal page appears right after the device connects."),
+    "ctrl.attack.failed": ("Attack stopped itself: {reason}"),
+    "ctrl.ap_channel_fallback": ("The AP card cannot broadcast on channel {frm}; "
+                                 "the fake access point moved to channel {to}."),
+    "ctrl.finish.handshake": ("Handshake Snooper stopped itself because the handshake was saved. "
+                              "You did not stop it. Start the Captive Portal from the saved "
+                              "handshake in the Passwords tab."),
+    "ctrl.finish.credentials": ("Captive Portal captured a login, so it stopped itself. "
+                                "Check the Passwords tab."),
     "ctrl.handshake.autostop": ("Handshake Snooper stops itself once the handshake is saved: you did "
                                 "not stop anything, and nothing is left running. The Captive Portal "
                                 "needs a separate start."),
@@ -411,6 +416,7 @@ TR: Dict[str, str] = {
     "app.subtitle": "Wi-Fi güvenlik denetleyicisi",
     "app.tab.networks": "Ağlar",
     "app.tab.credentials": "Şifreler",
+    "app.tab.consoles": "Konsollar",
     "app.tab.help": "Nasıl kullanılır",
     "app.btn.scan": "Tara",
     "app.btn.attack": "Başlat",
@@ -575,7 +581,10 @@ NOTLAR
     "log.install_first": ("[i] İlk kurulum: eksik paketler otomatik yükleniyor. Bu işlem birkaç "
                           "dakika sürebilir, pencereyi kapatmayın."),
     "log.handshake_archive_error": "[!] Handshake arşivi taranırken hata: {error}",
-    "log.handshake_captured": "[+] HANDSHAKE YAKALANDI → {file} dosyasına kaydedildi. Tüm saldırı süreçleri durduruldu; sırada ne yapacağın yeşil panelde yazıyor.",
+    "log.handshake_captured": "[+] HANDSHAKE YAKALANDI → {file} dosyasına kaydedildi.",
+    "log.handshake_next": ("Handshake Snooper işi bitince kendini kapattı. Şifreler sekmesine geç, "
+                           "handshake satırındaki \"Portal'da Kullan\" düğmesine bas: o ağ için "
+                           "Captive Portal başlasın."),
     "log.target_selected": "[+] Hedef: {ssid} ({bssid}) CH{channel}",
     "log.target_has_handshake": "ℹ️ Bu ağ için önceden yakalanmış handshake mevcut; doğrudan Captive Portal başlatabilirsiniz.",
     "log.pmf_target": ("⚠️ {ssid} WPA3/PMF kullanıyor. Bu ağda deauth çerçeveleri "
@@ -612,6 +621,15 @@ NOTLAR
     "networks.dfs_badge": "DFS",
 
     "creds.title": "Yakalanan Girişler & Handshake Arşivi",
+    "console.title": "Saldırı konsolları (gömülü)",
+    "console.hint": ("Saldırının açtığı tüm pencereler (DHCP, DNS, sahte AP, deauth, "
+                     "portal) burada görünür. Daha önce ayrı terminal pencerelerinde "
+                     "açılan çıktının aynısı."),
+    "console.empty": "Henüz konsol yok. Saldırıyı başlatınca pencereler burada listelenir.",
+    "console.waiting": "Saldırı penceresi bekleniyor…",
+    "console.not_found": ("Henüz saldırı konsolu bulunamadı. Uzun süre boş kalırsa saldırı "
+                          "başlamamış olabilir – sağdaki log paneline bak."),
+    "console.buffer": "{name} · canlı akış",
     "creds.desc": ("Web portallarına yazılan şifreler ve dinleme ile yakalanan WPA .cap "
                    "el sıkışma dosyaları burada arşivlenir."),
     "creds.empty": ("Henüz giriş veya handshake yok.\n\n"
@@ -625,24 +643,6 @@ NOTLAR
     "hs.use_portal": "Portal'da Kullan",
     "hs.crack": "Aircrack ile Kır",
     "hs.previous": "Önceden kayıtlı",
-
-    "guide.title": "WPA handshake başarıyla yakalandı",
-    "guide.info": "Hedef Ağ: {ssid}  ·  BSSID: {bssid}  ·  Dosya: {file}",
-    "guide.saved": "Kayıt dosyası: {path}",
-    "guide.body": """ŞİMDİ NE YAPMALISINIZ? İKİ SEÇENEĞİNİZ VAR:
-
-Handshake kaydedildiği için dinleyici kendini kapattı: sen bir şey durdurmadın,
-arka planda çalışan işlem yok. Adaptör normal moda döndü.
-
-1. YOL (ÖNERİLEN): CAPTIVE PORTAL'I BAŞLAT
-   Aynı ağ adıyla sahte bir erişim noktası açılır. Bir cihaz bağlanınca portal
-   sayfası gelir ve girilen bilgiler anında Şifreler sekmesine düşer.
-
-2. YOL (OFFLINE): AIRCRACK-NG İLE SÖZLÜK (WORDLIST) SALDIRISI YAPIN
-   Handshake (.cap) dosyası kaydedildi. Hedef ağ ile bağlantıyı kesip wordlist (rockyou.txt
-   vb.) ile bilgisayarınızda internetsiz çevrimdışı kırmayı deneyebilirsiniz.""",
-    "guide.btn_portal": "Bu ağ için Captive Portal başlat (önerilen)",
-    "guide.btn_crack": "Aircrack-ng ile kırmayı dene",
 
     "checklist.missing": ("{count} zorunlu bileşen eksik – log panelinde kurulum komutu "
                           "yazıyor"),
@@ -666,11 +666,11 @@ arka planda çalışan işlem yok. Adaptör normal moda döndü.
                       "başlatılıyor."),
     "hint.running.portal": ("Sahte AP yayında. Cihaz bağlanıp formu gönderdiğinde Şifreler "
                             "sekmesine satır düşecek."),
-    "hint.running.handshake": ("Deauth atılıyor, handshake bekleniyor. Yakalanınca kayıt "
-                               "dosyasını ve sonraki adımları gösteren yeşil panel açılacak."),
+    "hint.running.handshake": ("Deauth atılıyor, handshake bekleniyor. Yakalanınca dinleyici "
+                               "kendini kapatır – bu normal."),
     "hint.credentials": "Giriş yakalandı! Şifreler sekmesinden kopyalayabilirsin.",
-    "hint.handshake": ("Handshake başarıyla yakalandı! Üstteki yeşil panel kayıt dosyasını "
-                       "gösteriyor; oradan Captive Portal'a geç veya Aircrack ile kır."),
+    "hint.handshake": ("Handshake yakalandı! Şifreler sekmesine geç: \"Portal'da Kullan\" ile "
+                       "Captive Portal başlar, \"Aircrack ile Kır\" sözlük denemesi yapar."),
     "hint.error": "Hata: sağdaki log paneli ve ortam kontrolü kartına bak.",
     "hint.stopped": ("Durduruldu. Yeni bir tarama başlatabilir ya da hedefi "
                      "değiştirebilirsin."),
@@ -755,6 +755,17 @@ arka planda çalışan işlem yok. Adaptör normal moda döndü.
     "ctrl.handshake.option1": ("   1. (Önerilen) Bu ağ için Captive Portal saldırısı başlatın. "
                                "Kurban şifre girdiğinde sistem yakalanan bu handshake ile "
                                "şifrenin doğruluğunu otomatik teyit eder!"),
+    "ctrl.portal.join_hint": ("Telefonda Wi-Fi ayarlarını aç ve \"{ssid}\" ağını elle seç – kayıtlı "
+                              "bir ağ, açık kopyasına kendiliğinden geçmez. Cihaz bağlanınca "
+                              "portal sayfası açılır."),
+    "ctrl.attack.failed": ("Saldırı kendini kapattı: {reason}"),
+    "ctrl.ap_channel_fallback": ("AP kartı {frm}. kanalda yayın yapamıyor; sahte erişim "
+                                 "noktası {to}. kanala alındı."),
+    "ctrl.finish.handshake": ("Handshake Snooper handshake kaydedildiği için kendini kapattı. "
+                              "Sen durdurmadın. Kayıtlı handshake'i Şifreler sekmesinden seçip "
+                              "Captive Portal'ı başlatabilirsin."),
+    "ctrl.finish.credentials": ("Captive Portal bir giriş yakaladığı için kendini kapattı. "
+                                "Şifreler sekmesine bak."),
     "ctrl.handshake.autostop": ("Handshake kaydedilince Handshake Snooper kendini kapatır: sen bir şey "
                                 "durdurmadın ve arkada çalışan işlem kalmadı. Captive Portal ayrıca "
                                 "başlatılır."),

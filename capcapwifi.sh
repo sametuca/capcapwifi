@@ -689,7 +689,11 @@ capcap_conditional_clear() {
 }
 
 capcap_conditional_bail() {
-  echo ${1:-"Something went wrong, whoops! (report this)"}
+  local bailReason="${1:-"Something went wrong, whoops! (report this)"}"
+  echo "$bailReason"
+  # GUI'ye nedeni söyle: kullanıcı "kendi kendine kapandı" yerine ne olduğunu
+  # görsün. Boşluklu metin sonda olduğu için ayrıştırıcı onu tek parça alır.
+  capcap_status "ATTACK_FAILED reason=$bailReason"
   sleep 5
   if [ ! $CAPCAPDebug ]; then
     capcap_handle_exit
@@ -3128,11 +3132,13 @@ capcap_run_attack() {
       # Check if attack finished (captive portal writes status.txt on success)
       if [ -f "$CAPCAPWorkspacePath/status.txt" ]; then
         echo "Auto mode: attack completed (status file found)." >> $CAPCAPOutputDevice
+        capcap_status "ATTACK_FINISHED reason=credentials"
         break
       fi
       # Check if handshake was captured
       if [ -f "$CAPCAPWorkspacePath/authenticator_success.flag" ]; then
         echo "Auto mode: attack completed (success flag found)." >> $CAPCAPOutputDevice
+        capcap_status "ATTACK_FINISHED reason=credentials"
         break
       fi
       # Check if arbiter daemon completed (handshake snooper).
@@ -3140,6 +3146,7 @@ capcap_run_attack() {
       # the SIGABRT trap before we get to check it.
       if [ "$autoArbiterPID" ] && ! kill -0 "$autoArbiterPID" 2>/dev/null; then
         echo "Auto mode: arbiter daemon exited." >> $CAPCAPOutputDevice
+        capcap_status "ATTACK_FINISHED reason=handshake"
         break
       fi
       sleep 5

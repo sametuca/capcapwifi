@@ -226,8 +226,24 @@ captive_portal_set_ap_channel() {
     interface_bands "$CaptivePortalAccessPointInterface" 2>/dev/null
     local autoBands="${InterfaceBands:-unknown}"
     if ! captive_portal_channel_supported "$autoChannel" "$autoBands"; then
-      capcap_conditional_bail "$CaptivePortalAPChannelUnsupportedAutoError"
-      return 2
+      # The target may sit on a band this card cannot serve (a 5GHz target
+      # with a 2.4GHz-only AP interface is the common case). Bailing out here
+      # used to close every service without the operator understanding why,
+      # so fall back to a channel the card really supports and keep going.
+      local fallbackChannel=""
+      if [[ "$autoBands" == *"2.4GHz"* ]]; then
+        fallbackChannel=6
+      elif [[ "$autoBands" == *"5GHz"* ]]; then
+        fallbackChannel=36
+      fi
+      if [ -z "$fallbackChannel" ]; then
+        capcap_conditional_bail "$CaptivePortalAPChannelUnsupportedAutoError"
+        return 2
+      fi
+      echo "[!] AP interface cannot host channel $autoChannel (bands: $autoBands); using $fallbackChannel instead." \
+        >> $CAPCAPOutputDevice
+      capcap_status "AP_CHANNEL_FALLBACK from=$autoChannel to=$fallbackChannel"
+      autoChannel=$fallbackChannel
     fi
 
     CaptivePortalAccessPointChannel="$autoChannel"

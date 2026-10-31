@@ -5,9 +5,10 @@ Statik testler (test_gui_imports.py) widget hatalarını yakalayamaz; bu betik
 `mainloop()` içinde çalışarak şunları kontrol eder:
 
   * pencere ekranı dolduracak kadar geniş açılıyor (küçük pencere regresyonu),
-  * adım çubuğu ve rehberlik kartı oluşuyor,
-  * handshake kartı yakalamada görünür hâle geliyor ve yol bilgisini yazıyor,
-  * EN → TR → EN dil değişimi durumu koruyarak traceback üretmeden çalışıyor.
+  * adım çubuğu ve gömülü konsol sekmesi oluşuyor,
+  * handshake yakalamada adım göstergesi sonuca taşınıyor,
+  * EN → TR → EN dil değişimi durumu koruyarak traceback üretmeden çalışıyor,
+  * konsol sekmesi dil değişiminde de doğru etiketi gösteriyor.
 
 Görüntü sunucusu yoksa testi atlar (exit 0), böylece CI'da güvenli.
 """
@@ -81,6 +82,11 @@ def step_geometry():
           f"pencere geniş açıldı (genişlik={width}px)")
     check(getattr(window, "_guide", None) is not None,
           "adım çubuğu oluştu")
+    check(getattr(window, "_console_text", None) is not None,
+          "gömülü konsol sekmesi oluştu")
+    placeholder = window._console_text.get("1.0", "end")
+    check("console.empty" not in placeholder and placeholder.strip() != "",
+          "konsol sekmesi başlangıç metnini gösteriyor")
     window.after(150, step_handshake)
 
 
@@ -99,20 +105,11 @@ def step_handshake():
 
 
 def step_handshake_visible(hf):
-    guide = getattr(window, "_next_step_guide", None)
-    check(guide is not None and guide.winfo_ismapped(),
-          "handshake rehberlik kartı göründü")
-    saved = getattr(guide, "_saved_lbl", None)
-    check(saved is not None and hf.filepath in saved.cget("text"),
-          "kaydedilen dosya yolu kartta yazıyor")
-    check(guide._btn_portal.winfo_ismapped() and guide._btn_crack.winfo_ismapped(),
-          "rehber düğmeleri görünür")
-    check(guide._btn_portal.winfo_width() <= guide.winfo_width()
-          and guide._btn_crack.winfo_width() <= guide.winfo_width(),
-          "rehber düğmeleri kartın dışına taşmıyor")
-    check(guide._info_lbl.cget("wraplength") not in (0, "0"),
-          "hedef bilgisi satırı kart genişliğine göre sarılıyor")
+    check(not hasattr(window, "_next_step_guide"),
+          "handshake rehberlik kartı kaldırıldı")
     check(window._step == 4, "adım göstergesi sonuca taşındı")
+    log_text = window._log_panel._text.get("1.0", "end")
+    check(hf.filepath in log_text, "kaydedilen dosya yolu log panele yazıldı")
     window.after(100, step_language_tr)
 
 
@@ -124,6 +121,10 @@ def step_language_tr():
     check(i18n.get_language() == "tr", "dil TR'ye geçti")
     check("Başlat" in window._btn_attack.cget("text"),
           "düğme metni Türkçeleşti")
+    check("Konsollar" in window._tab_names.get("consoles", ""),
+          "konsol sekmesi etiketi Türkçeleşti")
+    check(window._console_text.get("1.0", "end").strip() != "",
+          "dil değişiminden sonra konsol sekmesi hâlâ dolu")
     window.after(150, step_language_en)
 
 
@@ -135,6 +136,8 @@ def step_language_en():
     check(i18n.get_language() == "en", "dil EN'e döndü")
     check("Start" in window._btn_attack.cget("text"),
           "düğme metni İngilizceye döndü")
+    check("Consoles" in window._tab_names.get("consoles", ""),
+          "konsol sekmesi etiketi İngilizceye döndü")
     window.after(100, step_done)
 
 

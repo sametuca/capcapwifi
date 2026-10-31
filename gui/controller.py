@@ -609,6 +609,43 @@ class CapCapWifiController:
         )
         self._run_async(args, mode="attack")
 
+    # ── gömülü konsollar (tmux panelleri) ───────────────────────
+    CONSOLE_SESSION = "CAPCAPWIFI"
+
+    def console_windows(self) -> List[tuple]:
+        """Saldırının açtığı tmux pencereleri: [(index, name), ...]."""
+        try:
+            proc = subprocess.run(
+                ["sudo", "-n", "tmux", "list-windows", "-t",
+                 self.CONSOLE_SESSION, "-F", "#{window_index}\t#{window_name}"],
+                capture_output=True, text=True, timeout=4,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return []
+        if proc.returncode != 0:
+            return []
+        windows = []
+        for line in proc.stdout.splitlines():
+            if "\t" not in line:
+                continue
+            index, name = line.split("\t", 1)
+            windows.append((index.strip(), name.strip()))
+        return windows
+
+    def capture_console(self, index: str) -> str:
+        """Bir pencerenin son ekranını metin olarak döndürür."""
+        try:
+            proc = subprocess.run(
+                ["sudo", "-n", "tmux", "capture-pane", "-p", "-J",
+                 "-S", "-160", "-t", f"{self.CONSOLE_SESSION}:{index}"],
+                capture_output=True, text=True, timeout=4,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return ""
+        if proc.returncode != 0:
+            return ""
+        return proc.stdout.rstrip()
+
     def stop(self) -> None:
         proc = self._proc
         if proc and proc.poll() is None:
@@ -757,6 +794,29 @@ class CapCapWifiController:
             )
         elif kind == "ATTACK_STARTED":
             self._set_state(AttackState.RUNNING)
+            cfg = self._last_config
+            if cfg is not None and cfg.attack_type is AttackType.CAPTIVE_PORTAL:
+                # Telefon kayıtlı bir WPA2 ağının açık kopyasına kendiliğinden
+                # geçmez; kullanıcı SSID'yi elle seçmeli.
+                self._log(t("ctrl.portal.join_hint",
+                            ssid=cfg.target_essid or "?"), "info")
+        elif kind == "AP_CHANNEL_FALLBACK":
+            self._log(t("ctrl.ap_channel_fallback",
+                        frm=event.get("from", "?"),
+                        to=event.get("to", "?")), "warn")
+        elif kind == "ATTACK_FAILED":
+            reason = event.get("reason", "").strip()
+            self._success_state = None
+            self._log(t("ctrl.attack.failed", reason=reason or "?"), "error")
+            self._set_state(AttackState.ERROR)
+        elif kind == "ATTACK_FINISHED":
+            reason = event.get("reason", "")
+            if reason == "handshake":
+                self._success_state = AttackState.HANDSHAKE_CAPTURED
+                self._log(t("ctrl.finish.handshake"), "warn")
+            elif reason == "credentials":
+                self._success_state = AttackState.CREDENTIALS_FOUND
+                self._log(t("ctrl.finish.credentials"), "success")
         elif kind == "TIMEOUT":
             self._log(t("ctrl.timeout", minutes=event.get("minutes", "?")), "warn")
         elif kind == "HANDSHAKE_CAPTURED":
