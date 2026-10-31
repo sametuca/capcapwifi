@@ -19,6 +19,9 @@ tests=(
   "$SCRIPT_DIR/test_gui_i18n.sh"
   "$SCRIPT_DIR/test_gui_status.sh"
   "$SCRIPT_DIR/test_gui_theme.sh"
+  "$SCRIPT_DIR/test_gui_settings.sh"
+  "$SCRIPT_DIR/test_gui_single_view.sh"
+  "$SCRIPT_DIR/test_gui_scan_flow.sh"
   "$SCRIPT_DIR/test_target_pmf.sh"
 )
 

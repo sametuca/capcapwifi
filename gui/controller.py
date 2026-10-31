@@ -716,6 +716,13 @@ class CapCapWifiController:
         with self._lock:
             self._proc = proc
 
+        # Süreç anında ölmüşse (ör. `sudo -n` parola istiyor ve hemen
+        # çıkıyor) döngüye girip sonsuza kadar beklemeyelim: hiç satır
+        # gelmezse durum SCANNING'de kilitli kalıyordu.
+        early = self._detect_immediate_exit(proc, mode)
+        if early:
+            return
+
         # Yapılandırılmış olaylar ve yakalanan girdiler için dosya izleyici.
         self._stop_watching.clear()
         self._watcher = threading.Thread(
@@ -723,6 +730,7 @@ class CapCapWifiController:
         )
         self._watcher.start()
 
+        failure: Optional[BaseException] = None
         try:
             for raw in proc.stdout:  # type: ignore[union-attr]
                 line = clean_log_line(raw.rstrip())
@@ -731,36 +739,63 @@ class CapCapWifiController:
                 self._pending_output.append(line)
                 h_line, h_level = humanize_log(line)
                 self._log(h_line, h_level)
-                self._handle_status_line(line, mode)
+                # Tek bir bozuk satır taramanın tamamını düşürmemeli:
+                # ayrıştırma hatasını loglayıp sonraki satıra geçiyoruz.
+                try:
+                    self._handle_status_line(line, mode)
+                except Exception as exc:  # noqa: BLE001 - satır bazlı koruma
+                    self._log(t("ctrl.error.parse", error=exc), "warn")
+        except Exception as exc:  # noqa: BLE001 - süreç okuma hatası
+            failure = exc
+            self._log(t("ctrl.error.read", error=exc), "error")
         finally:
             proc.wait()
             self._stop_watching.set()
             if self._watcher:
                 self._watcher.join(timeout=2)
 
+        # Aşağıdaki bitirme adımları HER durumda çalışmalı. Daha önce bu blok
+        # `finally` dışındaydı: döngüde bir istisna olursa durum SCANNING'de
+        # kalıyor, düğmeler kilitli kalıyor ve arayüz "Tara hiçbir şey
+        # yapmıyor" hâline geliyordu.
+        try:
+            self._finish(mode, proc, failure)
+        except Exception as exc:  # noqa: BLE001 - arayüzü asla kilitleme
+            self._log(t("ctrl.error.finalize", error=exc), "error")
+            self._set_state(AttackState.ERROR)
+
+    def _finish(self, mode: str, proc, failure: Optional[BaseException]) -> None:
+        """Süreç bittikten sonra durumu kesin bir sonuca bağlar.
+
+        Buradaki tek kural: arayüz asla belirsiz durumda bırakılmaz. Döngüde
+        bir istisna olduysa (``failure`` doluysa) sonuç hata sayılır, çünkü
+        başarı iddiası doğrulanamamıştır.
+        """
         if mode == "scan":
             self._finish_scan()
+            if failure is not None:
+                self._set_state(AttackState.ERROR)
         elif mode == "install":
             self._drain_workspace(mode)
             ok = self._install_result
             if ok is None:
-                ok = proc.returncode == 0
+                ok = proc.returncode == 0 and failure is None
             self._install_result = ok
             self._set_state(AttackState.IDLE if ok else AttackState.ERROR)
             self.on_dependency_install(bool(ok))
         else:
             # Süreç bittiğinde dosyada kalan satırları bir kez daha oku.
             self._drain_workspace(mode)
-            if self._state in (AttackState.RUNNING, AttackState.STARTING):
+            if self._state in (AttackState.RUNNING, AttackState.STARTING,
+                               AttackState.SCANNING):
                 # Süreç, başarı durumu işlenmeden önce kapanabilir (yarış);
                 # o zaman kullanıcıya "durduruldu" demek yanıltıcı olur.
                 if self._success_state is not None:
                     self._set_state(self._success_state)
+                elif failure is not None or proc.returncode != 0:
+                    self._set_state(AttackState.ERROR)
                 else:
-                    self._set_state(
-                        AttackState.STOPPED if proc.returncode == 0
-                        else AttackState.ERROR
-                    )
+                    self._set_state(AttackState.STOPPED)
 
     def _handle_status_line(self, line: str, mode: str) -> None:
         event = parse_status_line(line)
@@ -895,33 +930,97 @@ class CapCapWifiController:
         elif handshake:
             self._handle_handshake_captured(handshake)
 
+    def _detect_immediate_exit(self, proc, mode: str) -> bool:
+        """Süreç daha ilk satır gelmeden ölmüşse True döner ve durumu kapatır.
+
+        En sık nedeni ``sudo -n`` parola istemesidir: komut hemen hata verip
+        çıkar, çıktı boştur ve GUI "taranıyor" ekranında kilitli kalır.
+        Kullanıcı için bu, "Tara'ya bastım hiçbir şey olmuyor" demektir.
+        """
+        code = proc.poll()
+        if code is None:
+            return False
+        # Çıktısı olan süreçler normal yoldan işlenir (aşağıdaki döngü
+        # boşaltır). Burada yalnızca hiçbir şey yazmayan süreç ele alınır.
+        try:
+            has_output = bool(proc.stdout and proc.stdout.peek(1))
+        except Exception:
+            has_output = False
+        if has_output:
+            return False
+
+        self._stop_watching.set()
+        if code == 0:
+            self._finish(mode, proc, None)
+            return True
+
+        self._log(t("ctrl.error.early_exit", code=code), "error")
+        self._log(t("ctrl.error.needs_root"), "warn")
+        if mode == "install":
+            self._install_result = False
+            self._set_state(AttackState.ERROR)
+            self.on_dependency_install(False)
+        else:
+            self._set_state(AttackState.ERROR)
+        return True
+
     def _watch_workspace(self, mode: str) -> None:
-        """Süreç çalışırken status ve kimlik dosyalarını izler."""
+        """Süreç çalışırken status ve kimlik dosyalarını izler.
+
+        Bu thread arka planda sessizce çalışır; bir kez istisna atarsa
+        yakalanmaz ve süreç boyunca hiçbir olay iletilmez. Bu yüzden her tur
+        korunuyor: çalışma alanı root'a aitse (GUI root değilken) okuma
+        ``PermissionError`` verebilir, bu da kullanıcıya ancak konsolda
+        "Exception in thread" olarak görünürdü.
+        """
         # Script her çalışmanın başında capcap.status'u sıfırlar; eski
         # offset'i taşımak yeni satırları yutardı.
         self._status_offset = 0
         cred_offset = self._file_size(CREDENTIAL_LOG)
+        warned = False
 
         while not self._stop_watching.is_set():
-            if STATUS_FILE.exists():
-                self._status_offset = self._read_new_lines(
-                    STATUS_FILE, self._status_offset, self._handle_status_line, mode
-                )
+            try:
+                if self._safe_exists(STATUS_FILE):
+                    self._status_offset = self._read_new_lines(
+                        STATUS_FILE, self._status_offset,
+                        self._handle_status_line, mode)
 
-            if CREDENTIAL_LOG.exists():
-                cred_offset = self._read_new_lines(
-                    CREDENTIAL_LOG, cred_offset, self._handle_credential_line, mode
-                )
+                if self._safe_exists(CREDENTIAL_LOG):
+                    cred_offset = self._read_new_lines(
+                        CREDENTIAL_LOG, cred_offset,
+                        self._handle_credential_line, mode)
 
-            # Handshake Snooper flag kontrolü
-            flag_file = WORKSPACE / "handshake_success.flag"
-            if flag_file.exists() and not self._handshake_detected:
-                folder = REPO_DIR / "attacks" / "Handshake Snooper" / "handshakes"
-                caps = sorted(folder.glob("*.cap"), key=lambda x: x.stat().st_mtime, reverse=True) if folder.is_dir() else []
-                recent_cap = str(caps[0]) if caps else str(WORKSPACE / "capture" / "recent.cap")
-                self._handle_handshake_captured(recent_cap)
+                flag_file = WORKSPACE / "handshake_success.flag"
+                if self._safe_exists(flag_file) and not self._handshake_detected:
+                    folder = (REPO_DIR / "attacks" / "Handshake Snooper"
+                              / "handshakes")
+                    caps = (sorted(folder.glob("*.cap"),
+                                   key=lambda x: x.stat().st_mtime,
+                                   reverse=True)
+                            if folder.is_dir() else [])
+                    recent_cap = (str(caps[0]) if caps
+                                  else str(WORKSPACE / "capture" / "recent.cap"))
+                    self._handle_handshake_captured(recent_cap)
+            except OSError as exc:
+                # İzin/erişim hatası: bir kez uyar, izlemeye devam et.
+                # (Döngüyü öldürmek, süreç bitene kadar hiçbir olayın
+                # gelmemesi demekti.)
+                if not warned:
+                    warned = True
+                    self._log(t("ctrl.watch.error", error=exc), "warn")
+            except Exception as exc:  # noqa: BLE001 - thread asla ölmesin
+                self._log(t("ctrl.watch.error", error=exc), "warn")
 
             self._stop_watching.wait(0.4)
+
+    @staticmethod
+    def _safe_exists(path: Path) -> bool:
+        """``Path.exists()`` erişim hatasını yutar; izleyiciyi düşürmez."""
+        try:
+            return path.exists()
+        except OSError:
+            return False
 
     def _drain_workspace(self, mode: str) -> None:
         """Süreç bittikten sonra son satırları kaçırmamak için bir kez daha oku."""
@@ -947,8 +1046,13 @@ class CapCapWifiController:
                 handle.seek(offset)
                 for line in handle:
                     line = line.rstrip("\n")
-                    if line:
+                    if not line:
+                        continue
+                    # Tek bir bozuk satır kalanların okunmasını engellemesin.
+                    try:
                         handler(line, mode)
+                    except Exception as exc:  # noqa: BLE001
+                        self._log(t("ctrl.error.parse", error=exc), "warn")
                 return handle.tell()
         except OSError:
             return offset
@@ -980,5 +1084,11 @@ class CapCapWifiController:
             self.on_candidates(candidates)
             self._log(t("ctrl.scan.found", count=len(candidates)), "success")
         else:
+            # Boş sonuç da bir sonuçtur: arayüze bildirilmezse kullanıcı
+            # "Tara'ya bastım, hiçbir şey olmadı" der. Boş liste göndermek
+            # tabloyu temizler ve yönlendirme metnini devreye alır.
+            self._candidates = []
+            self.on_candidates([])
             self._log(t("ctrl.scan.empty"), "warn")
+            self._log(t("ctrl.scan.empty_next"), "info")
         self._set_state(AttackState.STOPPED)
