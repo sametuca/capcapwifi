@@ -13,6 +13,7 @@ tests=(
   "$SCRIPT_DIR/test_mac_brand_lookup.sh"
   "$SCRIPT_DIR/test_ap_channel.sh"
   "$SCRIPT_DIR/test_sandbox_utils.sh"
+  "$SCRIPT_DIR/test_instagram_portal.sh"
 )
 
 failures=0

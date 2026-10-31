@@ -18,8 +18,11 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install --yes \
             bash \
             ca-certificates \
+            curl \
             git \
+            php-cli \
             procps \
+            python3 \
             shellcheck
 
       - name: Check out repository
@@ -32,6 +35,11 @@ jobs:
 
       - name: Run tests
         run: bash tests/run_safe_suite.sh
+
+      # The Instagram portals are generated from scripts/instagram_portal/.
+      # Failing here means a template was edited without regenerating.
+      - name: Check generated portals are current
+        run: python3 scripts/build_instagram_portals.py --check
 
       # The gate lints every script, not just tests/, and compares against the
       # committed baseline so the existing backlog is frozen while new code
