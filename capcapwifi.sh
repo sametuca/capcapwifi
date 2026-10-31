@@ -544,12 +544,14 @@ capcap_shutdown() {
     capcap_window_cleanup
   fi
 
-  # Show the header if the subroutine has already been loaded.
-  if type -t capcap_header &> /dev/null; then
-    capcap_header
-  fi
+  # Show the header if the subroutine has already been loaded (CLI only).
+  if [ -z "$CAPCAPAuto" ]; then
+    if type -t capcap_header &> /dev/null; then
+      capcap_header
+    fi
 
-  echo -e "$CWht[$CRed-$CWht]$CRed $CAPCAPCleanupAndClosingNotice$CClr"
+    echo -e "$CWht[$CRed-$CWht]$CRed $CAPCAPCleanupAndClosingNotice$CClr"
+  fi
 
   # Get running processes we might have to kill before exiting.
   local processes
@@ -630,11 +632,12 @@ capcap_shutdown() {
   fi
 
   echo -e "$CWht[$CGrn+$CWht] $CGrn$CAPCAPCleanupSuccessNotice$CClr"
-  echo -e "$CWht[$CGrn+$CWht] $CGry$CAPCAPThanksSupportersNotice$CClr"
 
-  sleep 3
-
-  clear
+  if [ -z "$CAPCAPAuto" ]; then
+    echo -e "$CWht[$CGrn+$CWht] $CGry$CAPCAPThanksSupportersNotice$CClr"
+    sleep 3
+    clear
+  fi
 
   exit 0
 }

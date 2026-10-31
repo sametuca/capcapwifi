@@ -394,6 +394,7 @@ adapter were closed and restored. Nothing is running in the background.
     "humanize.tracker": "🎯 Target tracker active: following channel changes.",
     "humanize.aireplay": "⚡ [Deauth] aireplay-ng is briefly disconnecting the target devices…",
     "humanize.airodump": "📡 airodump-ng started listening on the target channel…",
+    "humanize.cleanup": "✓ Background attack stopped, adapter returned to normal mode.",
 }
 
 TR: Dict[str, str] = {
@@ -749,6 +750,7 @@ döndürüldü. Arka planda çalışan bir işlem yok.
     "humanize.aireplay": ("⚡ [Deauth] Aireplay-ng ile hedef cihazların bağlantısı geçici "
                           "kesiliyor…"),
     "humanize.airodump": "📡 Airodump-ng hedef kanalda dinlemeye başladı…",
+    "humanize.cleanup": "✓ Arka plan saldırısı durduruldu, adaptör normal moda döndürüldü.",
 }
 
 TRANSLATIONS: Dict[str, Dict[str, str]] = {"en": EN, "tr": TR}

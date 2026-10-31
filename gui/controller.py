@@ -102,6 +102,9 @@ def clean_log_line(raw: str) -> str:
     # Terminal escape kırıntıları
     if line.startswith(("\033", "(B", "[?12l", "[?25h", "[?25l")):
         return ""
+    # CLI veda/kapanış banner'ı ve teşekkür satırlarını GUI logundan filtrele
+    if any(k in line for k in ("CAPCAPWIFI 6.", "Capture The WiFi", "~~~~~", "tercih ettiğiniz için teşekkürler", "Thank you for using")):
+        return ""
     return line
 
 
@@ -115,6 +118,8 @@ def humanize_log(line: str) -> tuple[str, str]:
         return t("humanize.aireplay"), "warn"
     if "airodump-ng" in line:
         return t("humanize.airodump"), "info"
+    if "Temizlik başarıyla tamamlandı" in line or "Cleanup completed successfully" in line:
+        return t("humanize.cleanup"), "success"
     return line, "raw"
 
 
