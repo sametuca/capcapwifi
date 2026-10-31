@@ -19,6 +19,22 @@ from typing import Dict, List, Optional
 
 import customtkinter as ctk
 
+# ── Çizim yöntemi uyumluluğu ────────────────────────────────────
+# CustomTkinter varsayılan olarak yuvarlak köşeleri özel bir TTF fontuyla
+# ("font_shapes") çizer. Python 3.14 altında bu yol, kaydırma çubuğu her
+# güncellendiğinde (scrollbar.set → draw_rounded_scrollbar → canvas.coords)
+# "Exception in Tkinter callback" hatası veriyor. Fonta ihtiyaç duymayan
+# "circle_shapes" yöntemine geçmek sorunu giderir; köşeler yine yuvarlak
+# kalır, yalnızca çizim arka ucu değişir. Her widget kurulmadan ÖNCE,
+# uygulama başlatılmadan çalışması gerektiği için modül en üstünde yapılır.
+try:
+    from customtkinter.windows.widgets.core_rendering.draw_engine import (
+        DrawEngine,
+    )
+    DrawEngine.preferred_drawing_method = "circle_shapes"
+except Exception:
+    pass
+
 # Local modules
 import i18n
 from i18n import t
