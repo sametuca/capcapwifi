@@ -729,9 +729,16 @@ class FxButton(ctk.CTkButton):
     def _watch_pointer(self) -> None:
         """Hover/basılı geri bildirimini metin ve görsel katmanına da bağlar.
 
-        CTkButton yalnızca kendi canvas'ını dinler; metin etiketi canvas'ın
-        üzerinde durduğu için imleç yazının üzerine gelince olay canvas'a
-        ulaşmaz ve düğme tepkisiz kalırdı.
+        İki incelik var, ikisi de bir kez üretimde kırıldı:
+
+        1. CTkButton yalnızca kendi canvas'ını dinler. Metin etiketi canvas'ın
+           ÜZERİNDE durduğu için imleç yazıya geldiğinde olay canvas'a ulaşmaz;
+           bu yüzden etikete de bağlanıyoruz.
+        2. Handler adları ``CTkButton._on_enter/_on_leave/_on_release`` ile
+           çakışmamalı. Daha önce aynı adları kullanıyordum ve taban sınıfın
+           metotlarını eziyordum; CTkButton'ın **tıklama komutunu çağıran kod
+           tam o metotların içinde** olduğu için düğmeler hiçbir iş yapmıyordu
+           (``invoke()`` çalışıyor, gerçek fare tıklaması çalışmıyordu).
         """
         parts = [self._canvas]
         for attribute in ("_text_label", "_image_label"):
@@ -743,22 +750,22 @@ class FxButton(ctk.CTkButton):
             if key in self._pointer_targets:
                 continue
             self._pointer_targets.add(key)
-            part.bind("<Enter>", self._on_enter, add="+")
-            part.bind("<Leave>", self._on_leave, add="+")
-            part.bind("<ButtonPress-1>", self._on_press, add="+")
-            part.bind("<ButtonRelease-1>", self._on_release, add="+")
+            part.bind("<Enter>", self._pointer_enter, add="+")
+            part.bind("<Leave>", self._pointer_leave, add="+")
+            part.bind("<ButtonPress-1>", self._pointer_press, add="+")
+            part.bind("<ButtonRelease-1>", self._pointer_release, add="+")
 
-    def _on_enter(self, _event=None) -> None:
+    def _pointer_enter(self, _event=None) -> None:
         self._hovered = True
         if self._interactive():
             self._style(animate=True)
 
-    def _on_leave(self, _event=None) -> None:
+    def _pointer_leave(self, _event=None) -> None:
         self._hovered = False
         if self._interactive():
             self._style(animate=True)
 
-    def _on_press(self, _event=None) -> None:
+    def _pointer_press(self, _event=None) -> None:
         if not self._interactive():
             return
         fill, _border = self._resting()
@@ -767,7 +774,7 @@ class FxButton(ctk.CTkButton):
         self._animator.colour("press", self, "fg_color",
                               base, mix_colour(base, DARK_BG, 0.28), 70)
 
-    def _on_release(self, _event=None) -> None:
+    def _pointer_release(self, _event=None) -> None:
         if self._interactive():
             self._style(animate=True)
 
