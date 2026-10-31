@@ -557,6 +557,20 @@ captive_portal_set_authenticator() {
 
   captive_portal_unset_authenticator
 
+  # A portal that ships its own submit.php records what the visitor typed and
+  # picks its own error/success page. Verifying a password against a handshake
+  # would add two prompts (the method, then a path to a .cap that usually does
+  # not exist yet) and change nothing the visitor sees, so those portals skip
+  # the whole step.
+  local -r __portalDir="$FLUXIONPath/attacks/Captive Portal/sites/$CaptivePortalUserInterface.portal"
+  if [ -f "$__portalDir/submit.php" ]; then
+    CaptivePortalAuthenticatorMode="$CaptivePortalVerificationMethodNoneOption"
+    echo
+    echo -e "$FLUXIONVLine ${CaptivePortalVerificationMethodNoneNotice}"
+    sleep 1
+    return 0
+  fi
+
   if [ "$FLUXIONAuto" ]; then
     CaptivePortalAuthenticatorMode="$CaptivePortalVerificationMethodCowpattyOption"
   else
@@ -1763,10 +1777,12 @@ prep_attack() {
     "set_deauth_target"
     "set_ap_channel"
     "set_ap_service"
+    # The portal is chosen before the authenticator, because a portal that
+    # records submissions itself does not need one.
+    "set_user_interface"
     "set_authenticator"
     "set_certificate"
     "set_connectivity"
-    "set_user_interface"
     "set_attack"
   )
 

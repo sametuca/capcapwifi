@@ -22,6 +22,8 @@ CaptivePortalVerificationMethodQuery="Parola doğrulama yöntemi seçin"
 CaptivePortalVerificationMethodPyritOption="hash - pyrit"
 CaptivePortalVerificationMethodCowpattyOption="hash - cowpatty (${CGrn}varsayılan${CClr})"
 CaptivePortalVerificationMethodAircrackNG="hash - aircrack-ng (${CYel}tutarsız${CClr})"
+CaptivePortalVerificationMethodNoneOption="yok - sadece gönderimleri kaydet"
+CaptivePortalVerificationMethodNoneNotice="${CGrn}Bu portal ziyaretçinin girdiklerini kendisi kaydediyor$CClr; şifre doğrulaması atlandı."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CaptivePortalCertificateSourceQuery="Captive Portal için SSL sertifikası kaynağı seçin"
 CaptivePortalCertificateSourceGenerateOption="SSL sertifikası oluştur"

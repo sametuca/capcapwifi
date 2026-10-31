@@ -33,6 +33,8 @@ CaptivePortalVerificationMethodQuery="Select a password verification method"
 CaptivePortalVerificationMethodPyritOption="hash - pyrit"
 CaptivePortalVerificationMethodCowpattyOption="hash - cowpatty (${CGrn}default${CClr})"
 CaptivePortalVerificationMethodAircrackNG="hash - aircrack-ng (${CYel}unreliable${CClr})"
+CaptivePortalVerificationMethodNoneOption="none - record submissions only"
+CaptivePortalVerificationMethodNoneNotice="${CGrn}This portal records what visitors submit$CClr; password verification is skipped."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CaptivePortalCertificateSourceQuery="Select SSL certificate source for captive portal."
 CaptivePortalCertificateSourceGenerateOption="Create an SSL certificate"

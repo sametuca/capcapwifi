@@ -83,6 +83,11 @@ check_required_variables \
   FLUXIONDeauthMethodOverrideTip \
   FLUXIONDeauthMethodUnknown
 
+check_required_variables \
+  "$REPO_DIR/attacks/Captive Portal/language/en.sh" \
+  CaptivePortalVerificationMethodNoneOption \
+  CaptivePortalVerificationMethodNoneNotice
+
 finish_tests
 
 # FLUXSCRIPT END

@@ -89,6 +89,12 @@ The deauthentication method is not a question any more: `aireplay-ng` is used,
 because it behaves the same on every adapter. If your setup works better with
 `mdk4`, start with `--deauth-method mdk4` and the tool uses that instead.
 
+Portals that carry their own `submit.php` — the `Instagram_*` ones — also skip
+the password-verification step and its "path to a handshake" prompt. They record
+what the visitor types directly, so asking for a `.cap` file first would only
+add two prompts and change nothing. Stock portals still ask, because they verify
+submitted passwords against a handshake.
+
 **5. Watch the result.** Both modules write into `/tmp/fluxspace`, which is
 wiped on exit:
 
