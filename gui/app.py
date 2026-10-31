@@ -792,7 +792,15 @@ class CapCapWifiApp(ctk.CTk):
 
     def _show_tab(self, key: str) -> None:
         self._active_tab = key
-        self._tabs.set(self._tab_names[key])
+        name = self._tab_names.get(key)
+        if not name:
+            return
+        try:
+            self._tabs.set(name)
+        except ValueError:
+            # A stray callback from before a language re-render must not dump a
+            # traceback into the console; the next event selects the tab again.
+            pass
 
     # ── Callbacks (background threads → GUI thread) ──────────────
 
