@@ -12,6 +12,7 @@ saldırı etkilenmez.
 """
 from __future__ import annotations
 
+import sys
 import threading
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -34,12 +35,18 @@ from models import (
     WirelessInterface,
 )
 from widgets import (
-    ACCENT, ACCENT2, CARD_BG, CARD_HOVER, DANGER, DARK_BG, FONT_MONO_S,
-    FONT_TITLE, FONT_UI, FONT_UI_B, FONT_UI_S, MUTED, PANEL_BG, TEXT_PRI,
-    TEXT_SEC, WARN, BORDER,
+    ACCENT, ACCENT_DK, ACCENT_DIM, ACCENT2, ACCENT2_DIM, CARD_BG, CARD_HOVER,
+    DANGER, DANGER_DIM, DARK_BG, ELEV_BG, FONT_MONO_S, FONT_TITLE, FONT_UI,
+    FONT_UI_B, FONT_UI_S, FONT_UI_SB, MUTED, PANEL_BG, TEXT_PRI, TEXT_SEC,
+    WARN, WARN_DIM, BORDER,
     Checklist, CredentialsPanel, GuideBar, LogPanel, NetworkTable,
     NextStepGuideCard, SectionCard, StatusBadge,
 )
+
+# Üst/alt çubuk gibi "çerçeve" yüzeyleri için uygulama zemininden bir tık
+# daha koyu ton; pencereye çerçeve hissi verir.
+CHROME_BG = "#06080B"
+FOOTER_FG = "#333A45"
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -109,7 +116,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
         ctk.CTkButton(body, text=f"🔄 {t('config.adapter.refresh')}",
                       command=self._refresh_ifaces,
                       fg_color=DARK_BG, border_color=ACCENT, border_width=1,
-                      text_color=ACCENT, hover_color="#1b3a2a", font=FONT_UI,
+                      text_color=ACCENT, hover_color=ACCENT_DIM, font=FONT_UI,
                       height=26).grid(row=4, column=0, columnspan=2,
                                       sticky="ew", pady=(6, 0))
 
@@ -507,8 +514,7 @@ class CapCapWifiApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title(t("app.title"))
-        self.geometry("1360x860")
-        self.minsize(1100, 720)
+        self._apply_window_geometry()
         self.configure(fg_color=DARK_BG)
         self.iconname("CapCapWifi")
 
@@ -532,8 +538,60 @@ class CapCapWifiApp(ctk.CTk):
 
         self._build_ui()
         self._update_status(AttackState.IDLE)
+        self._fade_in()
+        self.after(150, self._maximize)
         self.after(200, lambda: self._ctrl.check_environment())
         self.after(500, self._refresh_handshake_archive)
+
+    # ── Pencere yerleşimi / efektler ────────────────────────────
+
+    def _apply_window_geometry(self) -> None:
+        """Pencereyi ekrana sığdır ve büyük aç.
+
+        Sabit 1360x860, 1024x768 bir ekranda pencerenin sağ/alt kısmını
+        ekran dışında bırakıyordu: adım çubuğu ve eylem düğmeleri kesiliyordu.
+        """
+        screen_w = self.winfo_screenwidth()
+        screen_h = self.winfo_screenheight()
+        width = min(1360, max(900, screen_w - 40))
+        height = min(880, max(600, screen_h - 90))
+        x = max(0, (screen_w - width) // 2)
+        y = max(0, (screen_h - height) // 2 - 20)
+        self.geometry(f"{width}x{height}+{x}+{y}")
+        self.minsize(min(980, width), min(620, height))
+        self.bind("<F11>", self._toggle_fullscreen)
+        self.bind("<Escape>", lambda _e: self._set_fullscreen(False))
+
+    def _maximize(self) -> None:
+        """Açılışta ekranı doldur; küçük pencerede panel düzeni sıkışıyor."""
+        try:
+            if sys.platform.startswith("linux"):
+                self.attributes("-zoomed", True)
+            else:
+                self.state("zoomed")
+        except Exception:
+            pass
+
+    def _set_fullscreen(self, enabled: bool) -> None:
+        try:
+            self.attributes("-fullscreen", enabled)
+        except Exception:
+            pass
+
+    def _toggle_fullscreen(self, _event=None) -> None:
+        try:
+            self._set_fullscreen(not self.attributes("-fullscreen"))
+        except Exception:
+            pass
+
+    def _fade_in(self, step: int = 0) -> None:
+        """Kısa açılış geçişi; alfa desteklenmiyorsa sessizce atlanır."""
+        try:
+            self.attributes("-alpha", min(1.0, 0.45 + step * 0.09))
+        except Exception:
+            return
+        if step < 6:
+            self.after(18, self._fade_in, step + 1)
 
     # ── UI construction ──────────────────────────────────────────
 
@@ -541,30 +599,33 @@ class CapCapWifiApp(ctk.CTk):
         self._ui_ready = False
         self.title(t("app.title"))
 
-        top = ctk.CTkFrame(self, fg_color="#08090B", height=60,
+        top = ctk.CTkFrame(self, fg_color=CHROME_BG, height=64,
                            corner_radius=0)
         top.pack(fill="x")
         top.pack_propagate(False)
 
-        ctk.CTkLabel(top, text="⚡", font=("Inter", 20),
-                     text_color=ACCENT).pack(side="left", padx=(18, 2), pady=8)
+        # Logo: yuvarlak köşeli yeşil rozet içinde şimşek — markaya kimlik.
+        logo = ctk.CTkLabel(top, text="⚡", font=("Inter", 18),
+                            text_color=DARK_BG, fg_color=ACCENT,
+                            corner_radius=9, width=32, height=32)
+        logo.pack(side="left", padx=(18, 10), pady=16)
         ctk.CTkLabel(top, text="CapCapWifi", font=("Inter", 18, "bold"),
                      text_color=TEXT_PRI).pack(side="left", pady=8)
         ctk.CTkLabel(top, text=f"  {t('app.subtitle')}",
                      font=FONT_UI, text_color=MUTED).pack(side="left", pady=8)
 
         self._status_badge = StatusBadge(top)
-        self._status_badge.pack(side="right", padx=(8, 18), pady=10)
+        self._status_badge.pack(side="right", padx=(8, 18), pady=12)
 
         # Dil değiştirici: EN / TR, anında yeniden çizer.
         self._lang_switch = ctk.CTkSegmentedButton(
             top, values=["EN", "TR"], command=self._on_language_selected,
-            font=FONT_UI_B, height=26, corner_radius=8,
-            fg_color=CARD_BG, selected_color=CARD_HOVER,
-            selected_hover_color=CARD_HOVER, unselected_color=CARD_BG,
+            font=FONT_UI_B, height=28, corner_radius=8,
+            fg_color=CARD_BG, selected_color=ACCENT_DIM,
+            selected_hover_color=ACCENT_DIM, unselected_color=CARD_BG,
             unselected_hover_color=CARD_HOVER, text_color=TEXT_PRI,
         )
-        self._lang_switch.pack(side="right", padx=(0, 4), pady=10)
+        self._lang_switch.pack(side="right", padx=(0, 6), pady=12)
         self._lang_switch.set("TR" if i18n.get_language() == "tr" else "EN")
 
         ctk.CTkFrame(self, fg_color=ACCENT, height=2,
@@ -578,9 +639,9 @@ class CapCapWifiApp(ctk.CTk):
 
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True)
-        body.columnconfigure(0, weight=0, minsize=290)
-        body.columnconfigure(1, weight=5, minsize=420)
-        body.columnconfigure(2, weight=0, minsize=300)
+        body.columnconfigure(0, weight=0, minsize=280)
+        body.columnconfigure(1, weight=5, minsize=380)
+        body.columnconfigure(2, weight=0, minsize=270)
         body.rowconfigure(0, weight=1)
 
         # Left: configuration
@@ -606,8 +667,8 @@ class CapCapWifiApp(ctk.CTk):
         self._tabs = ctk.CTkTabview(
             centre, fg_color=PANEL_BG,
             segmented_button_fg_color=CARD_BG,
-            segmented_button_selected_color=ACCENT,
-            segmented_button_selected_hover_color="#00c86a",
+            segmented_button_selected_color=ACCENT_DIM,
+            segmented_button_selected_hover_color=ACCENT_DIM,
             segmented_button_unselected_color=CARD_BG,
             segmented_button_unselected_hover_color=CARD_HOVER,
             text_color=TEXT_PRI,
@@ -651,28 +712,28 @@ class CapCapWifiApp(ctk.CTk):
 
         self._btn_scan = ctk.CTkButton(
             btn_row, text=f"🔍  {t('app.btn.scan')}", command=self._do_scan,
-            fg_color=ACCENT, text_color="#052012", hover_color="#00C86A",
-            font=FONT_UI_B, height=44, corner_radius=12)
+            fg_color=ACCENT, text_color="#052012", hover_color=ACCENT_DK,
+            font=FONT_UI_B, height=42, width=1, corner_radius=12)
         self._btn_scan.grid(row=0, column=0, padx=(0, 5), sticky="ew")
 
         self._btn_attack = ctk.CTkButton(
             btn_row, text=f"⚡  {t('app.btn.attack')}", command=self._do_attack,
             fg_color=WARN, text_color="#201500", hover_color="#FFC44D",
-            font=FONT_UI_B, height=44, corner_radius=12)
+            font=FONT_UI_B, height=42, width=1, corner_radius=12)
         self._btn_attack.grid(row=0, column=1, padx=5, sticky="ew")
 
         self._btn_stop = ctk.CTkButton(
             btn_row, text=f"⏹  {t('app.btn.stop')}", command=self._do_stop,
-            fg_color="transparent", text_color=DANGER, hover_color="#2A1218",
+            fg_color="transparent", text_color=DANGER, hover_color=DANGER_DIM,
             border_width=1, border_color=DANGER, font=FONT_UI_B,
-            height=44, corner_radius=12, state="disabled")
+            height=42, width=1, corner_radius=12, state="disabled")
         self._btn_stop.grid(row=0, column=2, padx=5, sticky="ew")
 
         self._btn_clear = ctk.CTkButton(
             btn_row, text=f"🗑  {t('app.btn.clear')}", command=self._do_clear,
             fg_color="transparent", text_color=TEXT_SEC, hover_color=CARD_HOVER,
-            font=FONT_UI_B, height=44, border_color=BORDER, border_width=1,
-            corner_radius=12)
+            font=FONT_UI_B, height=42, width=1, border_color=BORDER,
+            border_width=1, corner_radius=12)
         self._btn_clear.grid(row=0, column=3, padx=(5, 0), sticky="ew")
 
         # Right column: health card above log
@@ -698,7 +759,7 @@ class CapCapWifiApp(ctk.CTk):
             head, text=f"📦 {t('app.health.install')}", width=118, height=26,
             command=self._start_install, fg_color="transparent",
             border_color=WARN, border_width=1, text_color=WARN,
-            hover_color="#2A2110", font=FONT_UI_S, corner_radius=10)
+            hover_color=WARN_DIM, font=FONT_UI_S, corner_radius=10)
         self._btn_install.pack(side="right", padx=(0, 6))
 
         ctk.CTkLabel(
@@ -728,7 +789,7 @@ class CapCapWifiApp(ctk.CTk):
         # Bottom hint bar
         ctk.CTkFrame(self, fg_color=BORDER, height=1,
                      corner_radius=0).pack(fill="x")
-        bar = ctk.CTkFrame(self, fg_color="#08090B", height=34,
+        bar = ctk.CTkFrame(self, fg_color=CHROME_BG, height=34,
                            corner_radius=0)
         bar.pack(fill="x")
         bar.pack_propagate(False)
@@ -738,7 +799,7 @@ class CapCapWifiApp(ctk.CTk):
         self._bar_label.pack(side="left", padx=16)
         ctk.CTkLabel(bar, text="github.com/sametuca/capcapwifi",
                      font=FONT_MONO_S,
-                     text_color="#2F343B").pack(side="right", padx=16)
+                     text_color=FOOTER_FG).pack(side="right", padx=16)
 
         self._tabs.set(self._tab_names[self._active_tab])
         self._ui_ready = True

@@ -20,37 +20,69 @@ from i18n import t
 
 
 # ────────────────────────── renk paleti ─────────────────────────────
+# Katmanlı koyu zemin — en koyudan açığa: DARK_BG < PANEL_BG < CARD_BG <
+# CARD_HOVER < ELEV_BG. Böylece derinlik gölge olmadan, yalnızca ton farkıyla
+# okunur. Tek güçlü vurgu neon yeşil (ACCENT), ikincil camgöbeği (ACCENT2);
+# her vurgunun yanında yumuşak dolgu (…_DIM) ve koyu hover (…_DK) tonu var, bu
+# sayede rozet ve butonlarda dağınık hex kodu yerine tutarlı tema kullanılır.
 
-DARK_BG    = "#0A0B0D"
-PANEL_BG   = "#101216"
-CARD_BG    = "#171A1F"
-CARD_HOVER = "#1D2127"
-CARD_SEL   = "#12261B"
-ACCENT     = "#00E676"
-ACCENT2    = "#22D3EE"
-WARN       = "#FFB020"
-DANGER     = "#FF5370"
-MUTED      = "#6B7280"
-TEXT_PRI   = "#EDF0F4"
-TEXT_SEC   = "#9AA3AF"
-BORDER     = "#242830"
+DARK_BG     = "#090B0F"   # uygulama zemini – en derin kat
+PANEL_BG    = "#0F1218"   # panel / sütun zemini
+CARD_BG     = "#161A22"   # kart yüzeyi
+CARD_HOVER  = "#1E232D"   # kart hover
+CARD_SEL    = "#0E2619"   # seçili kart (yeşil tint)
+ELEV_BG     = "#1F2630"   # yükseltilmiş küçük yüzeyler (rozet içi vb.)
 
-FONT_MONO  = ("JetBrains Mono", 11)
-FONT_MONO_S= ("JetBrains Mono", 10)
-FONT_UI    = ("Inter", 11)
-FONT_UI_S  = ("Inter", 10)
-FONT_UI_B  = ("Inter", 11, "bold")
-FONT_TITLE = ("Inter", 14, "bold")
+ACCENT      = "#00E676"   # neon yeşil – birincil vurgu
+ACCENT_DK   = "#00C46A"   # yeşil hover / basılı
+ACCENT_DIM  = "#123324"   # yeşil yumuşak dolgu
+ACCENT2     = "#38BDF8"   # gökyüzü camgöbeği – ikincil vurgu
+ACCENT2_DIM = "#0C2A3C"   # camgöbeği yumuşak dolgu
+WARN        = "#FBBF24"   # amber
+WARN_DIM    = "#2E2611"   # amber yumuşak dolgu
+DANGER      = "#FB7185"   # yumuşak kırmızı
+DANGER_DIM  = "#2B1419"   # kırmızı yumuşak dolgu
+MUTED       = "#6B7483"
+TEXT_PRI    = "#F2F5F9"   # birincil metin
+TEXT_SEC    = "#9AA4B2"   # ikincil metin
+BORDER      = "#232935"   # ince kenarlık
+
+FONT_MONO   = ("JetBrains Mono", 12)
+FONT_MONO_S = ("JetBrains Mono", 11)
+FONT_UI     = ("Inter", 12)
+FONT_UI_S   = ("Inter", 11)
+FONT_UI_B   = ("Inter", 12, "bold")
+FONT_UI_SB  = ("Inter", 11, "bold")
+FONT_TITLE  = ("Inter", 15, "bold")
+
+
+def auto_wrap(label: "ctk.CTkLabel", minimum: int = 220,
+              slack: int = 10) -> "ctk.CTkLabel":
+    """Etiketi bulunduğu genişliğe göre sar.
+
+    Sabit `wraplength` dar pencerede satırı kırpmıyor, taşırıyordu; geniş
+    ekranda da gereksiz erken satır kırıyordu.
+    """
+    def _resize(event) -> None:
+        label.configure(wraplength=max(minimum, event.width - slack))
+    label.bind("<Configure>", _resize, add="+")
+    return label
 
 
 # ────────────────────────── sinyal çubukları ────────────────────────
 
 class SignalBars(tk.Canvas):
-    """4 çubuklu sinyal göstergesi – rakam yerine görsel güç."""
+    """4 çubuklu sinyal göstergesi – rakam yerine görsel güç.
 
-    BAR_STEPS = (4, 7, 10, 13)   # her çubuğun yüksekliği
+    Dolu çubuklar güce göre renklenir; boş çubuklar silinmek yerine soluk bir
+    "ray" olarak kalır, böylece gösterge her zaman dört çubuk genişliğinde ve
+    hizalı durur.
+    """
 
-    def __init__(self, master, width: int = 34, height: int = 15,
+    BAR_STEPS = (5, 8, 11, 14)   # her çubuğun yüksekliği
+    BASELINE  = 15               # çubukların oturduğu taban
+
+    def __init__(self, master, width: int = 36, height: int = 16,
                  bg: str = CARD_BG, **kw):
         super().__init__(master, width=width, height=height, bg=bg,
                          highlightthickness=0, bd=0, **kw)
@@ -78,13 +110,13 @@ class SignalBars(tk.Canvas):
 
         x = 2
         for index, bar_height in enumerate(self.BAR_STEPS):
-            top = 14 - bar_height
+            top = self.BASELINE - bar_height
             self.create_rectangle(
-                x, top, x + 5, 14,
-                fill=colour if index < active else BORDER,
+                x, top, x + 6, self.BASELINE,
+                fill=colour if index < active else ELEV_BG,
                 outline="",
             )
-            x += 7
+            x += 8
 
 
 # ────────────────────────── Log Paneli ──────────────────────────────
@@ -106,16 +138,18 @@ class LogPanel(ctk.CTkFrame):
 
         head = ctk.CTkFrame(self, fg_color="transparent")
         head.pack(fill="x", padx=14, pady=(12, 6))
+        ctk.CTkLabel(head, text="●", font=("Inter", 10),
+                     text_color=ACCENT).pack(side="left", padx=(0, 6))
         ctk.CTkLabel(head, text=t("log.title"), font=FONT_TITLE,
                      text_color=TEXT_PRI).pack(side="left")
         self._count = ctk.CTkLabel(head, text=t("log.lines", count=0),
                                    font=FONT_UI_S, text_color=MUTED)
         self._count.pack(side="left", padx=(8, 0))
-        ctk.CTkButton(head, text=t("log.clear"), width=64, height=24,
+        ctk.CTkButton(head, text=t("log.clear"), width=64, height=26,
                       command=self.clear, fg_color="transparent",
-                      hover_color=CARD_HOVER, border_width=1,
+                      hover_color=ELEV_BG, border_width=1,
                       border_color=BORDER, text_color=TEXT_SEC,
-                      font=FONT_UI_S).pack(side="right")
+                      corner_radius=8, font=FONT_UI_SB).pack(side="right")
 
         wrap = ctk.CTkFrame(self, fg_color=DARK_BG, corner_radius=10)
         wrap.pack(fill="both", expand=True, padx=12, pady=(0, 12))
@@ -179,30 +213,33 @@ class GuideBar(ctk.CTkFrame):
 
         for index, step in enumerate(self._steps):
             if index:
-                sep = ctk.CTkLabel(inner, text="──", font=FONT_UI_S,
+                sep = ctk.CTkLabel(inner, text="───", font=FONT_UI_S,
                                    text_color=BORDER)
-                sep.pack(side="left", padx=2)
+                sep.pack(side="left", padx=3)
                 self._separators.append(sep)
 
             label = ctk.CTkLabel(
-                inner, text=f"  {index + 1}  {step}  ", font=FONT_UI_S,
-                text_color=TEXT_SEC, fg_color=CARD_BG, corner_radius=14,
-                height=26,
+                inner, text=f"  {index + 1}   {step}  ", font=FONT_UI_SB,
+                text_color=TEXT_SEC, fg_color=CARD_BG, corner_radius=15,
+                height=30,
             )
-            label.pack(side="left", padx=2, pady=6)
+            label.pack(side="left", padx=3, pady=8)
             self._labels.append(label)
 
     def set_active(self, index: int) -> None:
         for i, label in enumerate(self._labels):
             if i == index:
+                # Aktif adım: dolu neon kapsül, belirgin.
                 label.configure(text_color=DARK_BG, fg_color=ACCENT,
                                 font=FONT_UI_B)
             elif i < index:
-                label.configure(text_color=ACCENT2, fg_color=CARD_BG,
-                                font=FONT_UI_S)
+                # Tamamlanan adım: soluk camgöbeği dolgu.
+                label.configure(text_color=ACCENT2, fg_color=ACCENT2_DIM,
+                                font=FONT_UI_SB)
             else:
+                # Sıradaki adımlar: sakin, geri planda.
                 label.configure(text_color=MUTED, fg_color=CARD_BG,
-                                font=FONT_UI_S)
+                                font=FONT_UI_SB)
 
         for i, sep in enumerate(self._separators):
             sep.configure(text_color=ACCENT2 if i < index else BORDER)
@@ -231,22 +268,23 @@ class NetworkRow(ctk.CTkFrame):
         if candidate.is_dfs:
             badge_text += "!"
         badge = ctk.CTkLabel(
-            self, text=badge_text, width=38, height=24, font=FONT_UI_B,
+            self, text=badge_text, width=40, height=26, font=FONT_UI_B,
             text_color=ACCENT2 if not candidate.is_dfs else WARN,
-            fg_color=DARK_BG, corner_radius=6,
+            fg_color=ACCENT2_DIM if not candidate.is_dfs else WARN_DIM,
+            corner_radius=8,
         )
-        badge.grid(row=0, column=0, padx=(10, 8), pady=(8, 2), sticky="w")
+        badge.grid(row=0, column=0, padx=(12, 10), pady=(10, 2), sticky="w")
 
         # SSID: Kalın, belirgin ve tam genişlikte ana başlık
         name = ctk.CTkLabel(
             self, text=candidate.clean_essid, font=FONT_UI_B,
             text_color=TEXT_PRI, anchor="w", justify="left"
         )
-        name.grid(row=0, column=1, sticky="ew", padx=(0, 8), pady=(8, 2))
+        name.grid(row=0, column=1, sticky="ew", padx=(0, 8), pady=(10, 2))
 
         # Sağ taraf: Sinyal çubukları + dBm
         sig_frame = ctk.CTkFrame(self, fg_color="transparent")
-        sig_frame.grid(row=0, column=2, padx=(0, 10), pady=(8, 2), sticky="e")
+        sig_frame.grid(row=0, column=2, padx=(0, 12), pady=(10, 2), sticky="e")
 
         self.bars = SignalBars(sig_frame)
         self.bars.set(candidate.signal_percent)
@@ -270,36 +308,36 @@ class NetworkRow(ctk.CTkFrame):
             self, text=sub_text, font=FONT_MONO_S,
             text_color=MUTED, anchor="w", justify="left"
         )
-        sub.grid(row=1, column=1, sticky="w", padx=(0, 8), pady=(0, 8))
+        sub.grid(row=1, column=1, sticky="w", padx=(0, 8), pady=(0, 10))
 
         # Alt sağ: Bağlı cihaz rozeti, Handshake rozeti ve DFS etiketi
         extra_frame = ctk.CTkFrame(self, fg_color="transparent")
-        extra_frame.grid(row=1, column=2, padx=(0, 10), pady=(0, 8), sticky="e")
+        extra_frame.grid(row=1, column=2, padx=(0, 12), pady=(0, 10), sticky="e")
 
         if candidate.clients:
             clients_text = t("networks.clients", count=candidate.clients)
         else:
             clients_text = t("networks.no_clients")
         clients_badge = ctk.CTkLabel(
-            extra_frame, text=clients_text, font=FONT_UI_S, width=64, height=20,
-            corner_radius=6,
+            extra_frame, text=clients_text, font=FONT_UI_SB, width=66, height=22,
+            corner_radius=7,
             text_color=DARK_BG if candidate.has_clients else MUTED,
-            fg_color=ACCENT if candidate.has_clients else DARK_BG,
+            fg_color=ACCENT if candidate.has_clients else ELEV_BG,
         )
-        clients_badge.pack(side="left", padx=(0, 4))
+        clients_badge.pack(side="left", padx=(0, 5))
 
         if candidate.has_handshake:
             ctk.CTkLabel(
-                extra_frame, text=t("networks.handshake_badge"), font=FONT_UI_S,
-                text_color=ACCENT, fg_color="#102A1E", corner_radius=6,
-                height=20, padx=6
-            ).pack(side="left", padx=(0, 4))
+                extra_frame, text=t("networks.handshake_badge"), font=FONT_UI_SB,
+                text_color=ACCENT, fg_color=ACCENT_DIM, corner_radius=7,
+                height=22, padx=8
+            ).pack(side="left", padx=(0, 5))
 
         if candidate.is_dfs:
             ctk.CTkLabel(
-                extra_frame, text=t("networks.dfs_badge"), font=FONT_UI_S,
-                text_color=WARN, fg_color="#33260F", corner_radius=6,
-                height=20, padx=6
+                extra_frame, text=t("networks.dfs_badge"), font=FONT_UI_SB,
+                text_color=WARN, fg_color=WARN_DIM, corner_radius=7,
+                height=22, padx=8
             ).pack(side="left")
 
         self._bind_events(self)
@@ -363,12 +401,11 @@ class NetworkTable(ctk.CTkFrame):
 
         legend = ctk.CTkFrame(self, fg_color="transparent")
         legend.pack(fill="x", padx=14, pady=(2, 8))
-        ctk.CTkLabel(
+        auto_wrap(ctk.CTkLabel(
             legend,
             text=t("networks.legend"),
             font=FONT_UI_S, text_color=MUTED, anchor="w", justify="left",
-            wraplength=760,
-        ).pack(side="left")
+        )).pack(side="left", fill="x", expand=True)
 
         self._list = ctk.CTkScrollableFrame(self, fg_color=DARK_BG,
                                             corner_radius=10)
@@ -390,10 +427,10 @@ class NetworkTable(ctk.CTkFrame):
         )
         self._empty.pack(pady=40)
 
-        self._hint = ctk.CTkLabel(
+        self._hint = auto_wrap(ctk.CTkLabel(
             self, text=t("networks.hint_initial"), font=FONT_UI_S,
-            text_color=MUTED, anchor="w", justify="left", wraplength=760,
-        )
+            text_color=MUTED, anchor="w", justify="left",
+        ))
         self._hint.pack(fill="x", padx=14, pady=(0, 12))
 
     # ── public ──────────────────────────────────────────────────
@@ -548,20 +585,24 @@ class SectionCard(ctk.CTkFrame):
 
     def __init__(self, master, title: str, subtitle: str = "",
                  accent: str = ACCENT2, **kw):
-        super().__init__(master, fg_color=CARD_BG, corner_radius=12, **kw)
+        super().__init__(master, fg_color=CARD_BG, corner_radius=12,
+                         border_width=1, border_color=BORDER, **kw)
 
         head = ctk.CTkFrame(self, fg_color="transparent")
-        head.pack(fill="x", padx=14, pady=(12, 0))
+        head.pack(fill="x", padx=14, pady=(13, 0))
+        # Başlığın solunda ince renk çubuğu — kartlara kimlik verir.
+        ctk.CTkFrame(head, fg_color=accent, width=3, height=15,
+                     corner_radius=2).pack(side="left", padx=(0, 8))
         ctk.CTkLabel(head, text=title, font=FONT_UI_B, text_color=accent,
                      anchor="w").pack(side="left")
 
         if subtitle:
             ctk.CTkLabel(self, text=subtitle, font=FONT_UI_S, text_color=MUTED,
                          anchor="w", justify="left", wraplength=260).pack(
-                fill="x", padx=14, pady=(2, 0))
+                fill="x", padx=14, pady=(3, 0))
 
         ctk.CTkFrame(self, fg_color=BORDER, height=1).pack(
-            fill="x", padx=14, pady=(8, 0))
+            fill="x", padx=14, pady=(9, 0))
 
     def body(self) -> ctk.CTkFrame:
         frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -587,8 +628,8 @@ class CredentialRow(ctk.CTkFrame):
 
         ctk.CTkLabel(
             self, text=str(cred.client_ip or "-"), font=FONT_MONO_S,
-            text_color=ACCENT2, fg_color=DARK_BG, corner_radius=6,
-            width=118, height=22,
+            text_color=ACCENT2, fg_color=ACCENT2_DIM, corner_radius=7,
+            width=118, height=24,
         ).grid(row=0, column=1, rowspan=2, padx=(0, 10))
 
         ctk.CTkLabel(self, text=cred.display_username, font=FONT_UI_B,
@@ -648,7 +689,7 @@ class HandshakeRow(ctk.CTkFrame):
             ctk.CTkButton(
                 btn_f, text=t("hs.use_portal"), width=120, height=26,
                 font=FONT_UI_S, fg_color=ACCENT, text_color=DARK_BG,
-                hover_color="#00C86A", command=lambda: on_use_portal(hf)
+                hover_color=ACCENT_DK, command=lambda: on_use_portal(hf)
             ).pack(side="left", padx=(0, 6))
 
         if on_crack:
@@ -665,7 +706,7 @@ class NextStepGuideCard(ctk.CTkFrame):
     ve tek tıkla Captive Portal veya Aircrack başlatan rehberlik kartı."""
 
     def __init__(self, master, on_start_portal: Callable = None, on_crack_wordlist: Callable = None, on_dismiss: Callable = None, **kw):
-        super().__init__(master, fg_color="#0C2417", corner_radius=12,
+        super().__init__(master, fg_color=CARD_SEL, corner_radius=12,
                          border_width=2, border_color=ACCENT, **kw)
         self._on_start_portal = on_start_portal
         self._on_crack_wordlist = on_crack_wordlist
@@ -686,7 +727,7 @@ class NextStepGuideCard(ctk.CTkFrame):
             ctk.CTkButton(
                 head, text="✕", width=26, height=22,
                 command=on_dismiss, fg_color="transparent",
-                hover_color="#1E3E2E", text_color=TEXT_SEC, font=FONT_UI_B
+                hover_color=ACCENT_DIM, text_color=TEXT_SEC, font=FONT_UI_B
             ).pack(side="right")
 
         # Hedef Ağ & Dosya Bilgisi Banner
@@ -698,20 +739,20 @@ class NextStepGuideCard(ctk.CTkFrame):
 
         # Kaydedilen dosyanın tam yolu — kullanıcı dosyayı nerede bulacağını
         # aramadan görsün.
-        self._saved_lbl = ctk.CTkLabel(
+        self._saved_lbl = auto_wrap(ctk.CTkLabel(
             self, text="", font=FONT_UI_S, text_color=ACCENT2,
-            anchor="w", justify="left", wraplength=760,
-        )
+            anchor="w", justify="left",
+        ))
         self._saved_lbl.pack(fill="x", padx=14, pady=(0, 8))
 
         # Açıklama
         guide_box = ctk.CTkFrame(self, fg_color=DARK_BG, corner_radius=10, border_width=1, border_color=BORDER)
         guide_box.pack(fill="x", padx=14, pady=(0, 8))
 
-        ctk.CTkLabel(
+        auto_wrap(ctk.CTkLabel(
             guide_box, text=t("guide.body"), font=FONT_UI_S, text_color=TEXT_SEC,
             justify="left", anchor="w", padx=12, pady=8
-        ).pack(fill="x")
+        )).pack(fill="x")
 
         # Aksiyon Butonları
         btn_bar = ctk.CTkFrame(self, fg_color="transparent")
@@ -720,7 +761,7 @@ class NextStepGuideCard(ctk.CTkFrame):
         self._btn_portal = ctk.CTkButton(
             btn_bar, text=t("guide.btn_portal"),
             command=self._portal_clicked, fg_color=ACCENT, text_color=DARK_BG,
-            hover_color="#00C86A", font=FONT_UI_B, height=36
+            hover_color=ACCENT_DK, font=FONT_UI_B, height=36
         )
         self._btn_portal.pack(side="left", padx=(0, 8), expand=True, fill="x")
 
@@ -768,12 +809,11 @@ class CredentialsPanel(ctk.CTkFrame):
                                    text_color=MUTED)
         self._count.pack(side="left", padx=(8, 0))
 
-        ctk.CTkLabel(
+        auto_wrap(ctk.CTkLabel(
             self,
             text=t("creds.desc"),
             font=FONT_UI_S, text_color=MUTED, anchor="w", justify="left",
-            wraplength=760,
-        ).pack(fill="x", padx=14, pady=(0, 8))
+        )).pack(fill="x", padx=14, pady=(0, 8))
 
         self._list = ctk.CTkScrollableFrame(self, fg_color=DARK_BG,
                                             corner_radius=10)
