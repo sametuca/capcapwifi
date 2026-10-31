@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
-# capcapwifi cleanup script — kills any lingering state from a forced termination.
-# Run as root from anywhere: sudo bash /path/to/capcapwifi/scripts/cleanup.sh
+# capwifi cleanup script — kills any lingering state from a forced termination.
+# Run as root from anywhere: sudo bash /path/to/capwifi/scripts/cleanup.sh
 
 if [ "$(id -u)" -ne 0 ]; then
 	echo "cleanup.sh must be run as root." >&2
 	exit 1
 fi
 
-echo "[*] Killing capcapwifi processes..."
-pkill -SIGINT -f "capcapwifi.sh" 2>/dev/null
+echo "[*] Killing capwifi processes..."
+pkill -SIGINT -f "capwifi.sh" 2>/dev/null
 sleep 2
-pkill -9 -f "capcapwifi.sh" 2>/dev/null
+pkill -9 -f "capwifi.sh" 2>/dev/null
 
 echo "[*] Killing attack service processes..."
 for proc in hostapd dnsmasq lighttpd kea-dhcp4 php-cgi airodump-ng aireplay-ng mdk4 airbase-ng; do
 	pkill -9 "$proc" 2>/dev/null && echo "    killed $proc"
 done
 
-echo "[*] Killing CAPCAPWIFI tmux sessions..."
+echo "[*] Killing CAPWIFI tmux sessions..."
 for session in $(tmux ls 2>/dev/null | grep -oE '^CAPCAP[^:]*'); do
 	tmux kill-session -t "$session" 2>/dev/null && echo "    killed tmux session $session"
 done
@@ -60,7 +60,7 @@ echo "[*] Cleaning up workspace..."
 rm -rf /tmp/capcapspace/ 2>/dev/null && echo "    /tmp/capcapspace/ removed"
 
 echo "[*] Restoring iptables..."
-# capcapwifi saves iptables backup at <capcap_dir>/iptables-rules
+# capwifi saves iptables backup at <capcap_dir>/iptables-rules
 _script_dir="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 _iptables_bak="$_script_dir/iptables-rules"
 if [ -f "$_iptables_bak" ]; then

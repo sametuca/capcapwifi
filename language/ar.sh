@@ -53,7 +53,7 @@ CAPCAPScannerChannelSingleTip="قناة واحدة"
 CAPCAPScannerChannelMiltipleTip="قنوات متعددة"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CAPCAPScannerHeader="ماسح فلاكسيون"
-CAPCAPClientScannerHeader="CAPCAPWIFI Client Scanner"
+CAPCAPClientScannerHeader="CAPWIFI Client Scanner"
 CAPCAPTargetClientsListNotice="Clients associated with the target access point:"
 CAPCAPTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 CAPCAPTargetClientsAllOption="All observed clients (directed)"

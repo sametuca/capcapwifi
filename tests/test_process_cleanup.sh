@@ -34,20 +34,20 @@ echo "\$*" >> "$KILLALL_LOG"
 EOF
 chmod +x "$FAKEBIN_DIR/killall"
 
-# Extract the conflicting-process cleanup loop straight out of capcapwifi.sh so
+# Extract the conflicting-process cleanup loop straight out of capwifi.sh so
 # this test tracks the real implementation instead of a hand-copied stand-in.
 extract_cleanup_loop() {
   awk '
     /while IFS= read -r program; do/ { capture=1 }
     capture { print }
     capture && /done < <\(timeout 5 airmon-ng check/ { exit }
-  ' "$REPO_DIR/capcapwifi.sh"
+  ' "$REPO_DIR/capwifi.sh"
 }
 
 CLEANUP_LOOP=$(extract_cleanup_loop)
 
 if [ -z "$CLEANUP_LOOP" ]; then
-  fail "Could not locate the conflicting-process cleanup loop in capcapwifi.sh"
+  fail "Could not locate the conflicting-process cleanup loop in capwifi.sh"
   finish_tests
   exit $?
 fi

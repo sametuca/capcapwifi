@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 
 # ============================================================ #
-# ================== < CAPCAPWIFI Parameters > ================== #
+# ================== < CAPWIFI Parameters > ================== #
 # ============================================================ #
-# Path to the CAPCAPWIFI executable script itself, and the directory containing it.
+# Path to the CAPWIFI executable script itself, and the directory containing it.
 # Resolved once, up front, so it stays valid after the cd below and after any
 # re-exec that relies on invoking this same script again.
 readonly CAPCAPSelf=$(readlink -f "$0")
 readonly CAPCAPPath=$(dirname "$CAPCAPSelf")
 
-# Always run from the CAPCAPWIFI directory; relative lookups (e.g. `ls language`) depend on it.
+# Always run from the CAPWIFI directory; relative lookups (e.g. `ls language`) depend on it.
 cd "$CAPCAPPath" || exit 1
 
-# Path to directory containing the CAPCAPWIFI library (scripts).
+# Path to directory containing the CAPWIFI library (scripts).
 readonly CAPCAPLibPath="$CAPCAPPath/lib"
 
-# Path to the temp. directory available to CAPCAPWIFI & subscripts.
+# Path to the temp. directory available to CAPWIFI & subscripts.
 readonly CAPCAPWorkspacePath="${CAPCAPWorkspacePath:-/tmp/capcapspace}"
 readonly CAPCAPIPTablesBackup="$CAPCAPPath/iptables-rules"
 
@@ -71,7 +71,7 @@ fi
 # dnsspoof, aircrack-ng). Failing here beats a confusing error from a missing
 # package or from the BSD userland further down.
 if [ "$(uname -s)" != "Linux" ]; then
-  echo -e "\\033[31mAborted, capcapwifi requires Linux (Kali rolling is supported).\\033[0m"
+  echo -e "\\033[31mAborted, capwifi requires Linux (Kali rolling is supported).\\033[0m"
   echo "Run it on a Linux host, or in a Kali VM/container."
   exit 1
 fi
@@ -122,9 +122,9 @@ fi
 
 # =============== < Working Directory Check > ================ #
 # The workspace holds the AP and DHCP configs, the captured credentials and
-# the lighttpd document root, and CAPCAPWIFI runs as root. A fixed path under
+# the lighttpd document root, and CAPWIFI runs as root. A fixed path under
 # /tmp is predictable: any local user can create it (or plant a symlink in
-# its place) before CAPCAPWIFI starts and end up controlling where root writes.
+# its place) before CAPWIFI starts and end up controlling where root writes.
 # Refuse symlinks, refuse a directory owned by somebody else, and force
 # owner-only permissions.
 if [ -L "$CAPCAPWorkspacePath" ]; then
@@ -187,7 +187,7 @@ capcap_status() {
 if ! CAPCAPCLIArguments=$(
     getopt --options="vdkrinmthb:e:c:l:a:r" \
       --longoptions="debug,debug-log:,version,killer,installer,reloader,help,airmon-ng,multiplexer,target,test,auto,bssid:,essid:,channel:,language:,attack:,ratio,skip-dependencies,scan-time:,scan-only,list-interfaces,install-deps,interface:,jammer-interface:,ap-interface:,ap-channel:,tracker-interface:,ap-service:,deauth-method:,site:,kill-exclude:,timeout:,reg-domain:,band:" \
-      --name="CAPCAPWIFI V$CAPCAPVersion.$CAPCAPRevision" -- "$@"
+      --name="CAPWIFI V$CAPCAPVersion.$CAPCAPRevision" -- "$@"
   ); then
   echo -e "${CRed}Aborted$CClr, parameter error detected..."; exit 5
 fi
@@ -209,7 +209,7 @@ eval set -- "$CAPCAPCLIArguments" # Set environment parameters.
 #[ "$1" != "--" ] && readonly CAPCAPAuto=1 # Auto-mode if using CLI.
 while [ "$1" != "" ] && [ "$1" != "--" ]; do
   case "$1" in
-    -v|--version) echo "CAPCAPWIFI V$CAPCAPVersion.$CAPCAPRevision"; exit;;
+    -v|--version) echo "CAPWIFI V$CAPCAPVersion.$CAPCAPRevision"; exit;;
     -h|--help) capcap_help; exit;;
     -d|--debug) readonly CAPCAPDebug=1;;
     --debug-log) CAPCAPDebugLog="$2"; shift;;
@@ -425,12 +425,12 @@ capcap_startup() {
   echo # Do not remove.
 
   sleep 0.1
-  local -r projectRepository="https://github.com/sametuca/capcapwifi"
+  local -r projectRepository="https://github.com/sametuca/capwifi"
   format_center_literals "${CGrn}Site: ${CRed}$projectRepository$CClr"
   echo -e "$FormatCenterLiterals"
 
   sleep 0.1
-  local -r versionInfo="${CSRed}CAPCAPWIFI $CAPCAPVersion$CClr"
+  local -r versionInfo="${CSRed}CAPWIFI $CAPCAPVersion$CClr"
   local -r revisionInfo="(rev. $CSBlu$CAPCAPRevision$CClr)"
   local -r credits="by$CCyn sametuca$CClr"
   format_center_literals "$versionInfo $revisionInfo $credits"
@@ -439,14 +439,14 @@ capcap_startup() {
   sleep 0.1
   if [ ! "$CAPCAPAuto" ]; then
     local -r updateRawDomain="raw.githubusercontent.com"
-    local -r updateRawPath="sametuca/capcapwifi/master/capcapwifi.sh"
+    local -r updateRawPath="sametuca/capwifi/master/capwifi.sh"
     local -r updateZipDomain="github.com"
-    local -r updateZipPath="sametuca/capcapwifi/archive/master.zip"
+    local -r updateZipPath="sametuca/capwifi/archive/master.zip"
     if installer_utils_check_update "https://$updateRawDomain/$updateRawPath" \
       "CAPCAPVersion=" "CAPCAPRevision=" \
       $CAPCAPVersion $CAPCAPRevision; then
       if installer_utils_run_update "https://$updateZipDomain/$updateZipPath" \
-        "CAPCAPWIFI-V$CAPCAPVersion.$CAPCAPRevision" "$CAPCAPPath"; then
+        "CAPWIFI-V$CAPCAPVersion.$CAPCAPRevision" "$CAPCAPPath"; then
         capcap_shutdown
       fi
     fi
@@ -530,7 +530,7 @@ capcap_configure_dependencies() {
 
   if [ $CAPCAPMissingDependencies -eq 1 ] && [ $CAPCAPSkipDependencies -eq 1 ]; then
     echo -e "\n\n"
-    format_center_literals "[ ${CSRed}Missing dependencies: try to install using ./capcapwifi.sh -i${CClr} ]"
+    format_center_literals "[ ${CSRed}Missing dependencies: try to install using ./capwifi.sh -i${CClr} ]"
     echo -e "$FormatCenterLiterals"; sleep 3
 
     capcap_status "DEP_FAILED"
@@ -1074,7 +1074,7 @@ capcap_header() {
   format_apply_autosize "[%*s]\n"
   local verticalBorder=$FormatApplyAutosize
 
-  format_apply_autosize "[%*s${CSRed}CAPCAPWIFI $CAPCAPVersion${CSWht}.${CSBlu}$CAPCAPRevision$CSRed    <$CIRed C${CIYel}apture$CIRed T${CIYel}he$CIRed W${CIYel}iFi$CClr$CSYel >%*s$CSBlu]\n"
+  format_apply_autosize "[%*s${CSRed}CAPWIFI $CAPCAPVersion${CSWht}.${CSBlu}$CAPCAPRevision$CSRed    <$CIRed C${CIYel}apture$CIRed T${CIYel}he$CIRed W${CIYel}iFi$CClr$CSYel >%*s$CSBlu]\n"
   local headerTextFormat="$FormatApplyAutosize"
 
   capcap_conditional_clear
@@ -2350,7 +2350,7 @@ capcap_target_tracker_daemon() {
   readonly capturePath="$CAPCAPWorkspacePath/tracker_capture"
 
   echo "[T-Tracker] === DAEMON STARTED ===" >> $CAPCAPOutputDevice
-  echo "[T-Tracker] CapCapWifi PID: $capcapPID" >> $CAPCAPOutputDevice
+  echo "[T-Tracker] CapWifi PID: $capcapPID" >> $CAPCAPOutputDevice
   echo "[T-Tracker] Tracker Interface: $CapCapTargetTrackerInterface" >> $CAPCAPOutputDevice
   echo "[T-Tracker] Target MAC: $CapCapTargetMAC" >> $CAPCAPOutputDevice
   echo "[T-Tracker] Target SSID: $CapCapTargetSSID" >> $CAPCAPOutputDevice
@@ -3503,7 +3503,7 @@ capcap_scan_only() {
 }
 
 # ============================================================ #
-# ===================== < CAPCAPWIFI Loop > ===================== #
+# ===================== < CAPWIFI Loop > ===================== #
 # ============================================================ #
 capcap_main() {
   # If scan-only mode, run the scan and exit.

@@ -28,11 +28,11 @@ if sys.platform.startswith("linux") and not os.environ.get("DISPLAY") \
 
 import controller  # noqa: E402
 
-controller.CapCapWifiController.check_environment = lambda self, *a, **k: None
-controller.CapCapWifiController.list_handshakes = lambda self: []
-controller.CapCapWifiController.list_interfaces = lambda self: []
-controller.CapCapWifiController.console_windows = lambda self: []
-controller.CapCapWifiController.capture_console = lambda self, i: ""
+controller.CapWifiController.check_environment = lambda self, *a, **k: None
+controller.CapWifiController.list_handshakes = lambda self: []
+controller.CapWifiController.list_interfaces = lambda self: []
+controller.CapWifiController.console_windows = lambda self: []
+controller.CapWifiController.capture_console = lambda self, i: ""
 
 
 class Portal:
@@ -55,7 +55,7 @@ PORTALS = [
     Portal("Instagram_tur", "Instagram", "tur", "Kendi kayıt sayfası."),
     Portal("Facebook_en", "Facebook", "en", "Stok portal."),
 ]
-controller.CapCapWifiController.list_portals = lambda self: list(PORTALS)
+controller.CapWifiController.list_portals = lambda self: list(PORTALS)
 
 import updater  # noqa: E402
 updater.check_for_update = lambda *a, **k: None
@@ -64,7 +64,7 @@ import i18n  # noqa: E402
 from models import AttackState, EnvironmentCheck, TargetCandidate  # noqa: E402
 
 i18n.set_language("tr")
-window = app_module.CapCapWifiApp()
+window = app_module.CapWifiApp()
 
 CANDS = [
     TargetCandidate("AA:BB:CC:DD:EE:01", "6", -42, 3, "86%", "WPA2",

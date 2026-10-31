@@ -57,14 +57,14 @@ try:
         original_pref = pref_file.read_text(encoding="utf-8")
 
     # Ortam taraması gerçek komut çalıştırır; bu test yalnızca arayüzü sınar.
-    controller.CapCapWifiController.check_environment = lambda self: None
-    controller.CapCapWifiController.list_handshakes = lambda self: []
-    controller.CapCapWifiController.check_for_updates = (
+    controller.CapWifiController.check_environment = lambda self: None
+    controller.CapWifiController.list_handshakes = lambda self: []
+    controller.CapWifiController.check_for_updates = (
         lambda self, *a, **k: None)
 
     import app as app_module
 
-    window = app_module.CapCapWifiApp()
+    window = app_module.CapWifiApp()
 except Exception:
     traceback.print_exc()
     print("  [FAIL] uygulama oluşturulamadı")

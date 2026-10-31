@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# capcapwifi diagnostics script
+# capwifi diagnostics script
 # Collects system, tool, and wireless adapter information for troubleshooting.
 # Usage: sudo bash scripts/diagnostics.sh [wireless_interface]
 # If no interface is given, all wireless interfaces are diagnosed.
@@ -29,14 +29,14 @@ cmd_version() {
 	fi
 }
 
-# Resolve the capcapwifi root directory.
+# Resolve the capwifi root directory.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/../capcapwifi.sh" ]; then
+if [ -f "$SCRIPT_DIR/../capwifi.sh" ]; then
 	CAPCAP_ROOT="$SCRIPT_DIR/.."
-elif [ -f "./capcapwifi.sh" ]; then
+elif [ -f "./capwifi.sh" ]; then
 	CAPCAP_ROOT="."
 else
-	echo "Error: cannot find capcapwifi.sh. Run from the capcapwifi directory or scripts/." >&2
+	echo "Error: cannot find capwifi.sh. Run from the capwifi directory or scripts/." >&2
 	exit 1
 fi
 
@@ -46,10 +46,10 @@ if source "$CAPCAP_ROOT/lib/InterfaceUtils.sh" 2>/dev/null; then
 	HAS_IFACE_UTILS=1
 fi
 
-# ── CapCapWifi ──────────────────────────────────────────────────────────────────
-section "CapCapWifi"
-capcap_version=$(grep -oP 'CAPCAPVersion=\K[0-9]+' "$CAPCAP_ROOT/capcapwifi.sh" 2>/dev/null)
-capcap_revision=$(grep -oP 'CAPCAPRevision=\K[0-9]+' "$CAPCAP_ROOT/capcapwifi.sh" 2>/dev/null)
+# ── CapWifi ──────────────────────────────────────────────────────────────────
+section "CapWifi"
+capcap_version=$(grep -oP 'CAPCAPVersion=\K[0-9]+' "$CAPCAP_ROOT/capwifi.sh" 2>/dev/null)
+capcap_revision=$(grep -oP 'CAPCAPRevision=\K[0-9]+' "$CAPCAP_ROOT/capwifi.sh" 2>/dev/null)
 item "Version" "${capcap_version:-?}.${capcap_revision:-?}"
 item "Path" "$(cd "$CAPCAP_ROOT" && pwd)"
 if command -v git &>/dev/null && [ -d "$CAPCAP_ROOT/.git" ]; then

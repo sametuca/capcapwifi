@@ -1,19 +1,19 @@
 CAPCAP(1)                        User Manuals                       CAPCAP(1)
 
 NAME
-       capcapwifi - CapCapWifi is a security auditing and social-engineering research
+       capwifi - CapWifi is a security auditing and social-engineering research
        tool
 
 SYNOPSIS
-       capcapwifi  [-m]  [--auto]  [--scan-time N ] [-l language ] [-b bssid ] [-c
+       capwifi  [-m]  [--auto]  [--scan-time N ] [-l language ] [-b bssid ] [-c
        channel ] [--band bg|a|abg ] [--timeout minutes ] ...
 
 DESCRIPTION
-       capcapwifi is a security auditing and social-engineering research tool.  It
+       capwifi is a security auditing and social-engineering research tool.  It
        is a remake of linset by vk496 with less bugs  and  more  functionality.
        The  script  attempts  to retrieve the WPA/WPA2 key from a target access
        point by means of a social engineering (phishing) attack. It's  compati‐
-       ble  with the latest release of Kali (rolling). CapCapWifi's attacks' setup
+       ble  with the latest release of Kali (rolling). CapWifi's attacks' setup
        is mostly manual, but auto-mode handles some of the attacks' setup para‐
        meters.
 
@@ -24,12 +24,12 @@ OPTIONS
 
        -m     Use tmux multiplexer instead of xterm. Enables headless operation
               without an X11/graphical session. If not already  inside  a  tmux
-              session,  capcapwifi will re-exec itself inside one. All sub-windows
+              session,  capwifi will re-exec itself inside one. All sub-windows
               are opened as tmux windows instead of xterm terminals.
 
-       --auto Run capcapwifi in fully non-interactive auto mode. Every interactive
+       --auto Run capwifi in fully non-interactive auto mode. Every interactive
               prompt auto-selects a sensible default. Implies --killer (-k). In
-              auto mode, capcapwifi runs one attack cycle and exits (no  looping).
+              auto mode, capwifi runs one attack cycle and exits (no  looping).
               Best combined with -m for headless operation.
 
        --scan-time <seconds>
@@ -87,14 +87,14 @@ OPTIONS
 
        --timeout <minutes>
               Maximum  duration  in minutes for the attack in auto mode.  After
-              this time the attack is stopped and capcapwifi exits.  Default is no
+              this time the attack is stopped and capwifi exits.  Default is no
               timeout (runs indefinitely until the attack succeeds or is inter‐
               rupted).
 
        -k     Kill interfering wireless processes (NetworkManager,  etc.)   be‐
               fore allocating interfaces. Implied by --auto.
 
-       -d     Run capcapwifi in debug mode.
+       -d     Run capwifi in debug mode.
 
        -r     Reload driver.
 
@@ -131,19 +131,19 @@ OPTIONS
 
 EXAMPLES
        List all nearby WPA networks (60-second scan):
-              sudo ./capcapwifi.sh -m --scan-only --scan-time 60
+              sudo ./capwifi.sh -m --scan-only --scan-time 60
 
        List networks on channel 6 only:
-              sudo ./capcapwifi.sh -m --scan-only --scan-time 30 -c 6
+              sudo ./capwifi.sh -m --scan-only --scan-time 30 -c 6
 
        Scan both 2.4 GHz and 5 GHz bands:
-              sudo ./capcapwifi.sh --scan-only --scan-time 30 --band abg
+              sudo ./capwifi.sh --scan-only --scan-time 30 --band abg
 
        Headless, non-interactive, 15-second scan:
-              sudo ./capcapwifi.sh -m --auto -l en --scan-time 15
+              sudo ./capwifi.sh -m --auto -l en --scan-time 15
 
        Headless with specific target:
-              sudo ./capcapwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
+              sudo ./capwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
 
 FILES
        /tmp/capcapspace/
@@ -153,10 +153,10 @@ FILES
 
 ENVIRONMENT
        CAPCAPAuto
-              Automatically run capcapwifi in auto mode if exported.
+              Automatically run capwifi in auto mode if exported.
 
        CAPCAPDebug
-              Automatically run capcapwifi in debug mode if exported.
+              Automatically run capwifi in debug mode if exported.
 
        CAPCAPWIKillProcesses
               Automatically kill any interfering process(es).
@@ -165,7 +165,7 @@ DIAGNOSTICS
        Please checkout the other log files or use the debug mode.
 
 BUGS
-       sues
+       Please  report  any  bugs  at:  https://github.com/sametuca/capwifi/issues
 
 AUTHOR
        Cyberfee, l3op, dlinkproto, vk496, MPX4132

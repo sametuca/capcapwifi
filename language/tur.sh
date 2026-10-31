@@ -28,7 +28,7 @@ CAPCAPTargetTrackerInterfaceQueryTip="${CSYel}Ayrı bir kablosuz arabirimi seçm
 CAPCAPTargetTrackerInterfaceQueryTip2="${CBRed}Eğer emin değilseniz, \"${CBYel}Atla${CBRed}\" seçin!$CClr"
 CAPCAPTargetTrackerInterfaceUnsupportedError="The target tracker interface can't see the target's band (5GHz). Pass --tracker-interface with a 5GHz-capable card, or omit it to skip tracking."
 CAPCAPIncompleteTargettingInfoNotice="ESSID, BSSID veya kanal bilgisi kayıp!"
-CAPCAPTargettingAccessPointAboveNotice="CapCapWifi yukarıdaki access point'i hedefliyor."
+CAPCAPTargettingAccessPointAboveNotice="CapWifi yukarıdaki access point'i hedefliyor."
 CAPCAPContinueWithTargetQuery="Bu hedefle devam edilsin mi?"
 
 CAPCAPTargetListTitle="KABLOSUZ AĞLAR"
@@ -48,7 +48,7 @@ CAPCAPDeauthMethodOverrideTip="Diğerini istersen: --deauth-method %s ile başla
 CAPCAPDeauthMethodUnknown="Bilinmeyen --deauth-method değeri '%s', aireplay-ng kullanılıyor."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CAPCAPStartingScannerNotice="Tarayıcı başlatılıyor, lütfen bekleyiniz..."
-CAPCAPStartingScannerTip="Tarayıcı penceresi yakındaki ağlarla doluyor. Hedef ağınız listede göründüğünde, bağlı cihazların da kaydedilmesi için yaklaşık 5 saniye bekleyin ve pencereyi Ctrl+C ile kapatın. CapCapWifi sonuçları okuyup ağ listesini gösterecek."
+CAPCAPStartingScannerTip="Tarayıcı penceresi yakındaki ağlarla doluyor. Hedef ağınız listede göründüğünde, bağlı cihazların da kaydedilmesi için yaklaşık 5 saniye bekleyin ve pencereyi Ctrl+C ile kapatın. CapWifi sonuçları okuyup ağ listesini gösterecek."
 CAPCAPPreparingScannerResultsNotice="Tarama sonuçları sentezleniyor, lütfen bekleyiniz..."
 CAPCAPScannerFailedNotice="Kullandığınız kablosuz cihaz desteklenmiyor olabilir(Hiçbir access point bulunamadı)."
 CAPCAPScannerDetectedNothingNotice="Hiç access point bulunamadı, geri dönülüyor..."
@@ -68,8 +68,8 @@ CAPCAPScannerChannelOptionSpecific="Spesifik kanalda ara"
 CAPCAPScannerChannelSingleTip="Tek Kanal"
 CAPCAPScannerChannelMiltipleTip="Birden fazla kanal"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-CAPCAPScannerHeader="CAPCAPWIFI Tarayıcısı"
-CAPCAPClientScannerHeader="CAPCAPWIFI Client Scanner"
+CAPCAPScannerHeader="CAPWIFI Tarayıcısı"
+CAPCAPClientScannerHeader="CAPWIFI Client Scanner"
 CAPCAPTargetClientsListNotice="Clients associated with the target access point:"
 CAPCAPTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
 CAPCAPTargetClientsAllOption="All observed clients (directed)"
@@ -131,7 +131,7 @@ CAPCAPRestoringTputNotice="${CGry}tput$CClr restore ediliyor"
 CAPCAPDeletingFilesNotice="Gereksiz ${CGry}dosyalar$CClr siliniyor"
 CAPCAPRestartingNetworkManagerNotice="${CGry}Network-Manager$CClr tekrar başlatılıyor"
 CAPCAPCleanupSuccessNotice="Temizlik başarıyla tamamlandı"
-CAPCAPThanksSupportersNotice="CapCapWifi'ı tercih ettiğiniz için teşekkürler!"
+CAPCAPThanksSupportersNotice="CapWifi'ı tercih ettiğiniz için teşekkürler!"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # FLUXSCRIPT END

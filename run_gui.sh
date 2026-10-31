@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CapCapWifi GUI başlatıcı
+# CapWifi GUI başlatıcı
 # Kullanım: ./run_gui.sh
 #
 # Gereksinim: Python 3.9+ ve venv. Eksik sistem paketleri (python3-tk,
@@ -21,7 +21,7 @@ fail()  { echo -e "${RED}[x]${NC} $*" >&2; }
 step()  { echo -e "${CYAN}[*]${NC} $*"; }
 
 echo -e "${GREEN}╔══════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   CapCapWifi GUI  Başlatıcı       ║${NC}"
+echo -e "${GREEN}║   CapWifi GUI  Başlatıcı       ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════╝${NC}"
 
 # ── 1. Python ───────────────────────────────────────────────────────

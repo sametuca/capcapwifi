@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "gui"))
 
 from controller import (  # noqa: E402
-    CapCapWifiController,
+    CapWifiController,
     parse_status_line,
 )
 from models import AttackState  # noqa: E402
@@ -60,7 +60,7 @@ check("empty line is ignored", parse_status_line("") is None)
 
 # The same capture arrives through the flag file, the status event and the
 # final RESULT line; the user must see it once.
-ctrl = CapCapWifiController()
+ctrl = CapWifiController()
 shown = []
 ctrl.on_credential = shown.append
 ctrl._handle_result({"type": "RESULT", "password": "sifre123",

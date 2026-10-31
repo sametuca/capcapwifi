@@ -24,7 +24,7 @@ HandshakeSnooperSnoopingForNSecondsNotice="ελεγχος για \$HandshakeSnoo
 HandshakeSnooperStoppingForVerifierNotice="τερματισμος ανιχνευτη & ελεγχος για hashes."
 HandshakeSnooperSearchingForHashesNotice="ψαχνω για hashes στο προσληφθεν αρχειο."
 HandshakeSnooperArbiterAbortedWarning="${CYel}τερματιστηκε${CClr}: Η διαδικασια τερματιστηκε, δε βρεθηκε εγκυρο hash."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Επιτυχες${CClr}: Ενα εγκυρο hash βρεθηκε και αποθηκευτηκε στη βαση δεδομενων του CapCapWifi."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Επιτυχες${CClr}: Ενα εγκυρο hash βρεθηκε και αποθηκευτηκε στη βαση δεδομενων του CapWifi."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Ελεγκτης$CBYel η επιθεση ολοκληρωθηκε,κλειστε αυτο το παραθυρο και ξεκινηστε μια αλλη επιθεση.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

@@ -138,7 +138,7 @@ function ap_service_start() {
   ap_service_stop
 
   capcap_window_open APServiceXtermPID \
-    "CAPCAPWIFI AP Service [hostapd]" "$TOP" "#000000" "#FFFFFF" \
+    "CAPWIFI AP Service [hostapd]" "$TOP" "#000000" "#FFFFFF" \
     "hostapd \"$APServiceConfigDirectory/$APServiceMAC-hostapd.conf\""
 
   # Wait till hostapd has started and its virtual interface is ready.

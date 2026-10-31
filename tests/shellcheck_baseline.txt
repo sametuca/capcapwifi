@@ -90,22 +90,22 @@ attacks/Handshake Snooper/language/tur.sh:SC2034
 attacks/Handshake Snooper/language/tur.sh:SC2154
 attacks/Handshake Snooper/language/zh.sh:SC2034
 attacks/Handshake Snooper/language/zh.sh:SC2154
-capcapwifi.sh:SC1087
-capcapwifi.sh:SC1090
-capcapwifi.sh:SC2027
-capcapwifi.sh:SC2034
-capcapwifi.sh:SC2046
-capcapwifi.sh:SC2090
-capcapwifi.sh:SC2128
-capcapwifi.sh:SC2145
-capcapwifi.sh:SC2152
-capcapwifi.sh:SC2154
-capcapwifi.sh:SC2155
-capcapwifi.sh:SC2166
-capcapwifi.sh:SC2174
-capcapwifi.sh:SC2178
-capcapwifi.sh:SC2184
-capcapwifi.sh:SC2294
+capwifi.sh:SC1087
+capwifi.sh:SC1090
+capwifi.sh:SC2027
+capwifi.sh:SC2034
+capwifi.sh:SC2046
+capwifi.sh:SC2090
+capwifi.sh:SC2128
+capwifi.sh:SC2145
+capwifi.sh:SC2152
+capwifi.sh:SC2154
+capwifi.sh:SC2155
+capwifi.sh:SC2166
+capwifi.sh:SC2174
+capwifi.sh:SC2178
+capwifi.sh:SC2184
+capwifi.sh:SC2294
 language/ar.sh:SC2034
 language/ar.sh:SC2154
 language/cs.sh:SC2034

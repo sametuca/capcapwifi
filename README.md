@@ -1,14 +1,14 @@
-# CapCapWifi
+# CapWifi
 
 A Wi-Fi security auditing toolkit for Kali Linux, with two ways to drive it: a guided
 Python desktop application for everyday use, and a non-interactive CLI for scripts,
 CI and headless boxes.
 
-CapCapWifi audits WPA/WPA2 networks by capturing handshakes and by running a captive
+CapWifi audits WPA/WPA2 networks by capturing handshakes and by running a captive
 portal (evil twin) against networks you own or have written permission to test.
 
 ```
-sudo ./capcapwifi.sh        # interactive terminal UI
+sudo ./capwifi.sh        # interactive terminal UI
 ./run_gui.sh                # desktop application (installs what it needs)
 ```
 
@@ -69,9 +69,9 @@ You do not need to install them by hand.
 ## Installation
 
 ```bash
-git clone https://github.com/sametuca/capcapwifi.git
-cd capcapwifi
-sudo ./capcapwifi.sh --install-deps
+git clone https://github.com/sametuca/capwifi.git
+cd capwifi
+sudo ./capwifi.sh --install-deps
 ```
 
 `--install-deps` checks every required tool, installs whatever is missing with `apt`,
@@ -103,7 +103,7 @@ install finishes. The same check can be triggered by hand with the install butto
 that card, or from a terminal with:
 
 ```bash
-sudo ./capcapwifi.sh --install-deps --auto
+sudo ./capwifi.sh --install-deps --auto
 ```
 
 This mode needs no X display and no tmux: it only installs the missing packages and
@@ -151,8 +151,8 @@ a language for one run. The CLI language is independent of it and is set with `-
 ## Command line
 
 ```bash
-sudo ./capcapwifi.sh              # interactive, prompt-driven
-sudo ./capcapwifi.sh --help        # full manual page
+sudo ./capwifi.sh              # interactive, prompt-driven
+sudo ./capwifi.sh --help        # full manual page
 ```
 
 ### Common flags
@@ -187,17 +187,17 @@ sudo ./capcapwifi.sh --help        # full manual page
 
 ```bash
 # See what the adapter can do
-sudo ./capcapwifi.sh --list-interfaces
+sudo ./capwifi.sh --list-interfaces
 
 # Survey nearby networks for a minute
-sudo ./capcapwifi.sh --scan-only --scan-time 60 --band abg
+sudo ./capwifi.sh --scan-only --scan-time 60 --band abg
 
 # Headless handshake capture against a specific AP, 20 minute limit
-sudo ./capcapwifi.sh -m --auto -a "Handshake Snooper" \
+sudo ./capwifi.sh -m --auto -a "Handshake Snooper" \
      -b AA:BB:CC:DD:EE:FF -c 6 --timeout 20
 
 # Captive portal with the Turkish Instagram template, two adapters
-sudo ./capcapwifi.sh -m --auto -a "Captive Portal" -l tur \
+sudo ./capwifi.sh -m --auto -a "Captive Portal" -l tur \
      -b AA:BB:CC:DD:EE:FF --ap-interface wlan1 --jammer-interface wlan0
 ```
 
@@ -220,7 +220,7 @@ scan → select target → prepare (monitor mode, services, firewall)
      → run attack → collect result → restore system state
 ```
 
-`capcapwifi.sh` orchestrates the attacks under `attacks/`. Each attack owns its
+`capwifi.sh` orchestrates the attacks under `attacks/`. Each attack owns its
 preparation, its windows and its teardown. Progress is written to a status file so a
 front-end (the GUI, a script, a CI job) can follow along without parsing terminal art.
 
@@ -257,7 +257,7 @@ to the guest instead of bridging the host card.
 
 **Monitor mode fails or injection tests fail.**
 Not every card supports it. `airmon-ng check kill` (or `-k`) first, then retry. On
-macOS hosts the driver is the usual culprit, not CapCapWifi.
+macOS hosts the driver is the usual culprit, not CapWifi.
 
 **Portal is up but nothing is captured.**
 The target AP must have at least one connected client, otherwise there is no traffic
@@ -277,8 +277,8 @@ Start it through `./run_gui.sh`; it escalates once and reuses that session. Runn
 ## Project layout
 
 ```
-capcapwifi/
-├── capcapwifi.sh            # entry point, orchestration and CLI
+capwifi/
+├── capwifi.sh            # entry point, orchestration and CLI
 ├── run_gui.sh               # desktop application launcher (installs, escalates)
 ├── gui/
 │   ├── app.py               # window layout, workflow, guidance
@@ -321,10 +321,10 @@ Portal templates are generated from `scripts/instagram_portal/`; edit the source
 
 ## Intended use
 
-CapCapWifi is an auditing tool. Use it on networks you own or have explicit written
+CapWifi is an auditing tool. Use it on networks you own or have explicit written
 permission to test. Running it against third-party networks is illegal in most
 jurisdictions and outside the scope of what this project supports.
 
-Maintained by [sametuca](https://github.com/sametuca). The attack engine descends
-from the original linset by vk496, with a rewritten CLI, portal set and desktop
-application.
+Maintained by [sametuca](https://github.com/sametuca). Bug reports and feature
+requests belong in this repository's issue tracker:
+https://github.com/sametuca/capwifi/issues
