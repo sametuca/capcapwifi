@@ -16,6 +16,7 @@ gerçek işaretçi tıklaması üretir (mümkünse xdotool ile, değilse Tk'nin 
   * hover durumu güncelleniyor mu,
   * uygulamadaki "Scan" düğmesi taramayı gerçekten başlatıyor mu.
 """
+import contextlib
 import os
 import shutil
 import subprocess
@@ -38,6 +39,11 @@ if sys.platform.startswith("linux") and not os.environ.get("DISPLAY") \
     print("  [SKIP] Görüntü sunucusu yok (DISPLAY boş)")
     sys.exit(0)
 
+# Uygulama artık root olmadan açılmıyor (gui/root_gate.py). Bu testler root
+# gerektirmeyen arayüz davranışını sınadığı için kaçış kapısını açıyoruz;
+# gerçek kullanıcı akışında bu değişken yoktur.
+os.environ.setdefault("CAPCAP_ALLOW_NONROOT", "1")
+
 import customtkinter as ctk  # noqa: E402
 
 ctk.set_appearance_mode("dark")
@@ -54,6 +60,53 @@ from theme import DARK_BG  # noqa: E402
 XDOTOOL = shutil.which("xdotool")
 failures = 0
 
+#: Gerçek işaretçiyi kullanan testler bu kilit dosyasıyla sıraya girer.
+POINTER_LOCK = "/tmp/capwifi-pointer-test.lock"
+_lock_state = {"depth": 0, "handle": None}
+
+
+@contextlib.contextmanager
+def _pointer_lock():
+    """Tüm testi süreçler arası kilitle korur.
+
+    Testin tamamı global fareyi ve en üstteki pencereyi sahiplenir:
+    ``xdotool`` tek bir işaretçi kullanır ve tıklama **en üstteki** pencereye
+    gider. İki test aynı anda açıkken biri diğerinin penceresine tıklar ve
+    "düğme çalışmıyor" diye yanlış alarm verir.
+
+    Kilit **yeniden girilebilir**: dıştaki kilit testi sarar, ``real_click``
+    de aynı kilidi ister. ``flock`` ayrı bir dosya tanıtıcısıyla ikinci kez
+    çağrıldığında kendini bekletir (deadlock), bu yüzden derinlik sayacıyla
+    iç içe çağrılar geçirilir.
+    """
+    if _lock_state["depth"]:
+        _lock_state["depth"] += 1
+        try:
+            yield
+        finally:
+            _lock_state["depth"] -= 1
+        return
+
+    handle = open(POINTER_LOCK, "w")
+    _lock_state["depth"] = 1
+    _lock_state["handle"] = handle
+    try:
+        try:
+            import fcntl
+            fcntl.flock(handle, fcntl.LOCK_EX)
+        except (ImportError, OSError):
+            pass  # kilit desteklenmiyorsa eski davranışa dön
+        yield
+    finally:
+        _lock_state["depth"] = 0
+        try:
+            import fcntl
+            fcntl.flock(handle, fcntl.LOCK_UN)
+        except (ImportError, OSError):
+            pass
+        handle.close()
+        _lock_state["handle"] = None
+
 
 def check(label, ok, detail=""):
     global failures
@@ -64,24 +117,36 @@ def check(label, ok, detail=""):
 
 
 def real_click(widget, settle=0.45):
-    """Widget'ın ortasına gerçek bir tıklama gönder."""
+    """Widget'ın ortasına gerçek bir tıklama gönder.
+
+    Neden kilit: ``xdotool`` tek bir **global** işaretçiyi hareket ettirir.
+    İki test aynı anda çalışırsa biri diğerinin fare konumunu çalar ve
+    tıklama yanlış pencereye gider — test "düğme çalışmıyor" diye yanlış
+    alarm verir. Bu yüzden tıklama bölümü dosya kilidiyle sıraya alınır;
+    süreçler arası geçerli olsun diye ``fcntl.flock`` kullanılıyor.
+    """
     cx = widget.winfo_rootx() + widget.winfo_width() // 2
     cy = widget.winfo_rooty() + widget.winfo_height() // 2
     if XDOTOOL:
-        subprocess.run([XDOTOOL, "mousemove", str(cx), str(cy)],
-                       capture_output=True)
-        time.sleep(0.25)
-        widget.update()
-        subprocess.run([XDOTOOL, "click", "1"], capture_output=True)
-    else:
-        # xdotool yok: sentetik olaylar. Handler'ları çağırdığı için
-        # yöntem çakışması hatasını yakalamaya yeter.
-        part = getattr(widget, "_text_label", None) or widget._canvas
-        x = part.winfo_width() // 2
-        y = part.winfo_height() // 2
-        part.event_generate("<Enter>", x=x, y=y)
-        part.event_generate("<ButtonPress-1>", x=x, y=y)
-        part.event_generate("<ButtonRelease-1>", x=x, y=y)
+        with _pointer_lock():
+            subprocess.run([XDOTOOL, "mousemove", str(cx), str(cy)],
+                           capture_output=True)
+            time.sleep(0.25)
+            widget.update()
+            subprocess.run([XDOTOOL, "click", "1"], capture_output=True)
+            time.sleep(settle)
+            widget.update()
+        return
+    # xdotool yok: sentetik olaylar. Handler'ları çağırdığı için
+    # yöntem çakışması hatasını yakalamaya yeter.
+    part = getattr(widget, "_text_label", None) or widget._canvas
+    x = part.winfo_width() // 2
+    y = part.winfo_height() // 2
+    part.event_generate("<Enter>", x=x, y=y)
+    part.event_generate("<ButtonPress-1>", x=x, y=y)
+    part.event_generate("<ButtonRelease-1>", x=x, y=y)
+    time.sleep(settle)
+    widget.update()
     time.sleep(settle)
     widget.update()
 
@@ -100,41 +165,45 @@ for name in ("_on_enter", "_on_leave", "_on_press", "_on_release"):
 check("FxButton, CTkButton'ın tıklama metotlarını ezmiyor", not clashing,
       f"ezilen: {clashing}")
 
-root = ctk.CTk()
-root.configure(fg_color=DARK_BG)
-root.geometry("460x180+140+140")
-hits = []
-btn = make_button(root, "Scan", "primary", width=240, height=40,
-                  command=lambda: hits.append("fx"))
-plain = ctk.CTkButton(root, text="plain", width=240, height=40,
-                      command=lambda: hits.append("plain"))
-btn.pack(pady=(18, 10))
-plain.pack(pady=(0, 12))
-root.update_idletasks()
-root.update()
-time.sleep(0.4)
-root.update()
-
-# ── 2. izole düğme: gerçek tıklama komutu çalıştırıyor mu ───────────
-real_click(btn)
-check("FxButton gerçek tıklamayı alıyor", "fx" in hits, str(hits))
-check("FxButton hover durumu güncellendi", getattr(btn, "_hovered", None) is True,
-      str(getattr(btn, "_hovered", None)))
-
-hits.clear()
-real_click(plain)
-check("referans CTkButton de tıklamayı alıyor", "plain" in hits, str(hits))
-
-# Programatik invoke hâlâ çalışmalı (regresyon değil).
-hits.clear()
-btn.invoke()
-check("FxButton.invoke() çalışmaya devam ediyor", hits == ["fx"], str(hits))
-
-# İzole penceriyi de bekleyen işler boşalttıktan sonra kapat.
-for _ in range(5):
+with _pointer_lock():
+    root = ctk.CTk()
+    root.configure(fg_color=DARK_BG)
+    root.geometry("460x180+140+140")
+    hits = []
+    btn = make_button(root, "Scan", "primary", width=240, height=40,
+                      command=lambda: hits.append("fx"))
+    plain = ctk.CTkButton(root, text="plain", width=240, height=40,
+                          command=lambda: hits.append("plain"))
+    btn.pack(pady=(18, 10))
+    plain.pack(pady=(0, 12))
+    root.update_idletasks()
     root.update()
-    time.sleep(0.1)
-root.destroy()
+    root.lift()
+    root.focus_force()
+    time.sleep(0.4)
+    root.update()
+
+    # ── 2. izole düğme: gerçek tıklama komutu çalıştırıyor mu ───────────
+    real_click(btn)
+    check("FxButton gerçek tıklamayı alıyor", "fx" in hits, str(hits))
+    check("FxButton hover durumu güncellendi",
+          getattr(btn, "_hovered", None) is True,
+          str(getattr(btn, "_hovered", None)))
+
+    hits.clear()
+    real_click(plain)
+    check("referans CTkButton de tıklamayı alıyor", "plain" in hits, str(hits))
+
+    # Programatik invoke hâlâ çalışmalı (regresyon değil).
+    hits.clear()
+    btn.invoke()
+    check("FxButton.invoke() çalışmaya devam ediyor", hits == ["fx"], str(hits))
+
+    # İzole penceriyi de bekleyen işler boşalttıktan sonra kapat.
+    for _ in range(5):
+        root.update()
+        time.sleep(0.1)
+    root.destroy()
 
 # ── 3. gerçek uygulamada Scan düğmesi ───────────────────────────────
 from pathlib import Path  # noqa: E402
@@ -153,74 +222,76 @@ controller.CapWifiController.list_portals = lambda self: []
 updater.check_for_update = lambda *a, **k: None
 
 i18n.set_language("en")
-window = app_module.CapWifiApp()
-app_errors = []
-window.report_callback_exception = (
-    lambda t, v, tb: app_errors.append(f"{t.__name__}: {v}"))
 
+with _pointer_lock():
+    window = app_module.CapWifiApp()
+    app_errors = []
+    window.report_callback_exception = (
+        lambda t, v, tb: app_errors.append(f"{t.__name__}: {v}"))
 
-def drive():
-    try:
-        window.update_idletasks()
-        window.update()
-        time.sleep(0.4)
-        window.update()
-
-        check("uygulama açılışta boşta",
-              window._state is AttackState.IDLE, window._state.value)
-
-        real_click(window._btn_scan, settle=0.6)
-        check("Scan'e gerçek tıklama taramayı başlattı",
-              window._state is not AttackState.IDLE, window._state.value)
-
-        # Tarama bitene kadar bekle.
-        for _ in range(24):
-            window.update()
-            if window._state is not AttackState.SCANNING:
-                break
-            time.sleep(0.3)
-            window.update()
-        check("tarama kendini kapattı",
-              window._state is not AttackState.SCANNING, window._state.value)
-
-        log = window._log_panel._text.get("1.0", "end")
-        check("log'da tarama satırı var",
-              "Scan starting" in log or "Scan started" in log, log[-140:])
-
-        # Aynı şey Başlat için de geçerli olmalı: hedef yoksa uyarı verir,
-        # ama düğme en azından komutu çalıştırmalı.
-        window._state = AttackState.IDLE
-        window._update_status(AttackState.IDLE)
-        before = window._log_panel._text.get("1.0", "end")
-        real_click(window._btn_attack, settle=0.6)
-        after = window._log_panel._text.get("1.0", "end")
-        check("Start düğmesi de komutu çalıştırdı", after != before,
-              "log değişmedi")
-        check("tıklamalar Tk hatası sızdırmadı", not app_errors,
-              "; ".join(app_errors[:3]))
-    finally:
-        # Kapanıştan önce bekleyen Tk işlerini boşalt: aksi hâlde
-        # customtkinter'ın kendi _click_animation/check_dpi_scaling
-        # zamanlayıcıları yıkılan pencereye ateş edip "invalid command name"
-        # basıyor ve test çıktısını kirletiyor.
+    def drive():
         try:
-            for _ in range(6):
+            window.update_idletasks()
+            window.update()
+            time.sleep(0.4)
+            window.update()
+
+            check("uygulama açılışta boşta",
+                  window._state is AttackState.IDLE, window._state.value)
+
+            real_click(window._btn_scan, settle=0.6)
+            check("Scan'e gerçek tıklama taramayı başlattı",
+                  window._state is not AttackState.IDLE, window._state.value)
+
+            # Tarama bitene kadar bekle.
+            for _ in range(24):
                 window.update()
-                time.sleep(0.1)
-        except Exception:
-            pass
-        try:
-            window.destroy()
-        except Exception:
-            pass
-        try:
-            fake.unlink()
-        except OSError:
-            pass
+                if window._state is not AttackState.SCANNING:
+                    break
+                time.sleep(0.3)
+                window.update()
+            check("tarama kendini kapattı",
+                  window._state is not AttackState.SCANNING,
+                  window._state.value)
 
+            log = window._log_panel._text.get("1.0", "end")
+            check("log'da tarama satırı var",
+                  "Scan starting" in log or "Scan started" in log,
+                  log[-140:])
 
-window.after(900, drive)
-window.mainloop()
+            # Aynı şey Başlat için de geçerli olmalı: hedef yoksa uyarı
+            # verir, ama düğme en azından komutu çalıştırmalı.
+            window._state = AttackState.IDLE
+            window._update_status(AttackState.IDLE)
+            before = window._log_panel._text.get("1.0", "end")
+            real_click(window._btn_attack, settle=0.6)
+            after = window._log_panel._text.get("1.0", "end")
+            check("Start düğmesi de komutu çalıştırdı", after != before,
+                  "log değişmedi")
+            check("tıklamalar Tk hatası sızdırmadı", not app_errors,
+                  "; ".join(app_errors[:3]))
+        finally:
+            # Kapanıştan önce bekleyen Tk işlerini boşalt: aksi hâlde
+            # customtkinter'ın kendi _click_animation/check_dpi_scaling
+            # zamanlayıcıları yıkılan pencereye ateş edip "invalid command
+            # name" basıyor ve test çıktısını kirletiyor.
+            try:
+                for _ in range(6):
+                    window.update()
+                    time.sleep(0.1)
+            except Exception:
+                pass
+            try:
+                window.destroy()
+            except Exception:
+                pass
+            try:
+                fake.unlink()
+            except OSError:
+                pass
+
+    window.after(900, drive)
+    window.mainloop()
 
 if not XDOTOOL:
     print("  [i] xdotool yok; sentetik olaylarla test edildi")

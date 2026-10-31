@@ -26,6 +26,11 @@ if sys.platform.startswith("linux") and not os.environ.get("DISPLAY") \
     print("  [SKIP] Görüntü sunucusu yok (DISPLAY boş)")
     sys.exit(0)
 
+# Uygulama artık root olmadan açılmıyor (gui/root_gate.py). Bu test root
+# gerektirmeyen arayüz davranışını sınadığı için kaçış kapısını açıyoruz;
+# gerçek kullanıcı akışında bu değişken yoktur.
+os.environ.setdefault("CAPCAP_ALLOW_NONROOT", "1")
+
 import controller  # noqa: E402
 
 controller.CapWifiController.check_environment = lambda self, *a, **k: None

@@ -24,6 +24,9 @@ tests=(
   "$SCRIPT_DIR/test_gui_single_view.sh"
   "$SCRIPT_DIR/test_gui_scan_flow.sh"
   "$SCRIPT_DIR/test_gui_buttons.sh"
+  "$SCRIPT_DIR/test_gui_update_modal.sh"
+  "$SCRIPT_DIR/test_gui_root_gate.sh"
+  "$SCRIPT_DIR/test_gui_consoles.sh"
   "$SCRIPT_DIR/test_target_pmf.sh"
 )
 
