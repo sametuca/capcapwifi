@@ -28,17 +28,33 @@ CLI komutlarını bilmenize gerek kalmadan tüm işlemleri grafik arayüzden yö
 
 ```bash
 cd capcapwifi
-./run_gui.sh          # bağımlılıkları otomatik kurar ve GUI'yi açar
+./run_gui.sh          # eksik sistem paketlerini kurar, venv hazırlar, GUI'yi root olarak açar
 ```
+
+İlk açılışta olanlar (hepsi ekranda görünür, hiçbir şeyi elle kurmanız gerekmez):
+
+1. `run_gui.sh` `python3`, `python3-tk` ve `python3-venv` paketlerini kontrol eder,
+   eksikse `apt` ile kurar ve satır satır ilerlemeyi basar.
+2. Python paketleri (`customtkinter`, `pillow`) sanal ortama indirilir.
+3. Script kendini `sudo` ile yeniden başlatır (monitor mode + hostapd root ister).
+4. GUI açılır, sağdaki **Ortam Kontrolü** kartı tüm araçları ✓/✗ olarak listeler.
+   Zorunlu bir araç eksikse kurulum kendiliğinden başlar: ilerleme çubuğu döner,
+   `apt` çıktısı canlı log paneline akar, bitince kontrol otomatik yenilenir.
+   Aynı işi elle tetiklemek için karttaki **📦 Eksikleri kur** düğmesi,
+   terminalden yapmak için `sudo ./capcapwifi.sh --install-deps --auto -m`.
 
 ### GUI Özellikleri
 
 | Özellik | Açıklama |
 |---|---|
+| 🧭 Adım çubuğu | Adaptör → Tara → Hedef seç → Saldır → Sonuç; hangi adımda olduğunuz vurgulanır |
+| 🩺 Ortam Kontrolü | Root, adaptör, monitor mode ve tüm araçlar ✓/✗ olarak; eksikse tek tuşla kurulum |
 | 📡 Ağ Tarama | Belirtilen süre boyunca airodump-ng ile yakındaki WPA ağlarını tarar |
 | ⚡ Captive Portal Saldırısı | Sahte AP + phishing sayfası ile şifre yakalamak |
 | 🤝 Handshake Snooper | WPA handshake yakalamak için pasif dinleme |
 | 🔍 61+ Portal Şablonu | ARRIS, TP-Link, Instagram, HUAWEI ve daha fazlası |
+| 💬 "Şimdi ne yapmalıyım" satırı | Alt barda her durumda sıradaki tek adım yazar |
+| ❓ Nasıl kullanılır sekmesi | 5 adımlık kullanım rehberi ve dosya yolları |
 | 🎨 Canlı Log | Renkli gerçek zamanlı log akışı |
 | 🔑 Şifre Paneli | Yakalanan şifreler anında ekranda gösterilir |
 

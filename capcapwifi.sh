@@ -39,6 +39,9 @@ CAPCAPSkipDependencies=1
 # Check if there are any missing dependencies
 CAPCAPMissingDependencies=0
 
+# Install only the required packages and exit (used by the GUI on first run)
+CAPCAPInstallDeps=0
+
 
 # ============================================================ #
 # ================= < Script Sanity Checks > ================= #
@@ -47,12 +50,14 @@ CAPCAPMissingDependencies=0
 CAPCAPPreParseTMux=""
 CAPCAPPreParseScanOnly=""
 CAPCAPPreParseListIfaces=""
+CAPCAPPreParseInstallDeps=""
 CAPCAPPreParseHelp=""
 for arg in "$@"; do
   case "$arg" in
     -m|--multiplexer) CAPCAPPreParseTMux=1;;
     --scan-only) CAPCAPPreParseScanOnly=1;;
     --list-interfaces) CAPCAPPreParseListIfaces=1;;
+    --install-deps) CAPCAPPreParseInstallDeps=1;;
     -h|--help|-v|--version) CAPCAPPreParseHelp=1;;
   esac
 done
@@ -83,7 +88,7 @@ if [ ! -t 0 ] && [ -z "$CAPCAP_HAS_PTY" ] && [ "$CAPCAPPreParseTMux" ]; then
 fi
 
 # ===================== < Display Checks > ===================== #
-if [ "$CAPCAPPreParseScanOnly" ] || [ "$CAPCAPPreParseListIfaces" ] || [ "$CAPCAPPreParseHelp" ]; then
+if [ "$CAPCAPPreParseScanOnly" ] || [ "$CAPCAPPreParseListIfaces" ] || [ "$CAPCAPPreParseInstallDeps" ] || [ "$CAPCAPPreParseHelp" ]; then
   # These modes don't need a display at all.
   :
 elif [ "$CAPCAPPreParseTMux" ]; then
@@ -179,7 +184,7 @@ capcap_status() {
 # ============================================================ #
 if ! CAPCAPCLIArguments=$(
     getopt --options="vdkrinmthb:e:c:l:a:r" \
-      --longoptions="debug,debug-log:,version,killer,installer,reloader,help,airmon-ng,multiplexer,target,test,auto,bssid:,essid:,channel:,language:,attack:,ratio,skip-dependencies,scan-time:,scan-only,list-interfaces,interface:,jammer-interface:,ap-interface:,ap-channel:,tracker-interface:,ap-service:,deauth-method:,kill-exclude:,timeout:,reg-domain:,band:" \
+      --longoptions="debug,debug-log:,version,killer,installer,reloader,help,airmon-ng,multiplexer,target,test,auto,bssid:,essid:,channel:,language:,attack:,ratio,skip-dependencies,scan-time:,scan-only,list-interfaces,install-deps,interface:,jammer-interface:,ap-interface:,ap-channel:,tracker-interface:,ap-service:,deauth-method:,kill-exclude:,timeout:,reg-domain:,band:" \
       --name="CAPCAPWIFI V$CAPCAPVersion.$CAPCAPRevision" -- "$@"
   ); then
   echo -e "${CRed}Aborted$CClr, parameter error detected..."; exit 5
@@ -223,6 +228,7 @@ while [ "$1" != "" ] && [ "$1" != "--" ]; do
     --scan-time) CAPCAPScanTime=$2; shift;;
     --scan-only) readonly CAPCAPScanOnly=1;;
     --list-interfaces) CAPCAPListInterfaces=1;;
+    --install-deps) CAPCAPInstallDeps=1;;
     --interface) CAPCAPInterface=$2; shift;;
     --skip-dependencies) readonly CAPCAPSkipDependencies=1;;
     --jammer-interface) CAPCAPJammerInterface=$2; shift;;
@@ -439,6 +445,28 @@ capcap_startup() {
 
   echo # Do not remove.
 
+  if ! capcap_configure_dependencies; then
+    echo -e "${CRed}Required packages are missing; cannot continue.$CClr}"
+    exit 7
+  fi
+
+  # lighttpd's package auto-enables the system service on install; disable it
+  # so it doesn't occupy port 80 or conflict with capcap's own instance.
+  if hash lighttpd 2>/dev/null && hash systemctl 2>/dev/null; then
+    systemctl stop lighttpd &>/dev/null || true
+    systemctl disable lighttpd &>/dev/null || true
+  fi
+
+  capcap_configure_apparmor
+
+  echo -e "\\n\\n" # This echo is for spacing
+}
+
+# Check every tool the attacks need and install whatever is missing.
+# Runs both from capcap_startup and from `--install-deps` (the GUI's first
+# launch), so it must not depend on the banner or on any attack state.
+# Emits DEP_* status lines in --auto mode so a front-end can show progress.
+capcap_configure_dependencies() {
   local requiredCLITools=(
     "aircrack-ng" "bc" "awk:awk|gawk|mawk"
     "curl" "cowpatty" "kea-dhcp4:kea-dhcp4-server|kea" "7zr:7zip-reduced|p7zip" "hostapd" "lighttpd"
@@ -455,44 +483,49 @@ capcap_startup() {
     requiredCLITools+=("xterm")
   fi
 
+  capcap_status "DEP_CHECK start"
 
-    local depRetryCount=0
-    while ! installer_utils_check_dependencies requiredCLITools[@]; do
-        if ! installer_utils_run_dependencies InstallerUtilsCheckDependencies[@]; then
-            echo
-            echo -e "${CRed}Dependency installation failed!$CClr"
-            if [ "$CAPCAPAuto" ]; then
-                depRetryCount=$((depRetryCount + 1))
-                if [ $depRetryCount -ge 2 ]; then
-                    echo -e "${CRed}Auto mode: dependency install failed after retry, exiting.$CClr"
-                    exit 7
-                fi
-                echo "Auto mode: retrying dependency install..."
-                sleep 2
-            else
-                echo    "Press enter to retry, ctrl+c to exit..."
-                read -r bullshit
-            fi
-        fi
-    done
-    if [ $CAPCAPMissingDependencies -eq 1 ]  && [ $CAPCAPSkipDependencies -eq 1 ];then
-        echo -e "\n\n"
-        format_center_literals "[ ${CSRed}Missing dependencies: try to install using ./capcapwifi.sh -i${CClr} ]"
-        echo -e "$FormatCenterLiterals"; sleep 3
-
-        exit 7
+  local depRetryCount=0
+  while ! installer_utils_check_dependencies requiredCLITools[@]; do
+    if [ ${#InstallerUtilsCheckDependencies[@]} -gt 0 ]; then
+      local missingList=""
+      local missingItem
+      for missingItem in "${InstallerUtilsCheckDependencies[@]}"; do
+        missingList+="${missingItem/:*/} "
+      done
+      capcap_status "DEP_MISSING tools=${missingList% }"
     fi
 
-  # lighttpd's package auto-enables the system service on install; disable it
-  # so it doesn't occupy port 80 or conflict with capcap's own instance.
-  if hash lighttpd 2>/dev/null && hash systemctl 2>/dev/null; then
-    systemctl stop lighttpd &>/dev/null || true
-    systemctl disable lighttpd &>/dev/null || true
+    if ! installer_utils_run_dependencies InstallerUtilsCheckDependencies[@]; then
+      echo
+      echo -e "${CRed}Dependency installation failed!$CClr"
+      capcap_status "DEP_FAILED"
+      if [ "$CAPCAPAuto" ]; then
+        depRetryCount=$((depRetryCount + 1))
+        if [ $depRetryCount -ge 2 ]; then
+          echo -e "${CRed}Auto mode: dependency install failed after retry, exiting.$CClr"
+          return 1
+        fi
+        echo "Auto mode: retrying dependency install..."
+        sleep 2
+      else
+        echo "Press enter to retry, ctrl+c to exit..."
+        read -r bullshit
+      fi
+    fi
+  done
+
+  if [ $CAPCAPMissingDependencies -eq 1 ] && [ $CAPCAPSkipDependencies -eq 1 ]; then
+    echo -e "\n\n"
+    format_center_literals "[ ${CSRed}Missing dependencies: try to install using ./capcapwifi.sh -i${CClr} ]"
+    echo -e "$FormatCenterLiterals"; sleep 3
+
+    capcap_status "DEP_FAILED"
+    return 1
   fi
 
-  capcap_configure_apparmor
-
-  echo -e "\\n\\n" # This echo is for spacing
+  capcap_status "DEP_OK"
+  return 0
 }
 
 capcap_shutdown() {
@@ -3169,10 +3202,31 @@ while [ "$1" != "" -a "$1" != "--" ]; do
 done
 
 # ============================================================ #
+# ================ < Install Dependencies Mode > ============= #
+# ============================================================ #
+# `--install-deps` yalnızca eksik paketleri kurar ve çıkar. GUI ilk açılışta
+# bunu çağırır; böylece kullanıcı saldırı başlatmadan önce kurulumu görür.
+if [ "$CAPCAPInstallDeps" = "1" ]; then
+  capcap_set_resolution
+  CapCapLanguage="${CapCapLanguage:-tur}"
+  # Önce İngilizce, sonra seçilen dil: eksik çeviri anahtarları boş kalmasın.
+  source "$CAPCAPPath/language/en.sh"
+  if [ "$CapCapLanguage" != "en" ] && [ -f "$CAPCAPPath/language/$CapCapLanguage.sh" ]; then
+    source "$CAPCAPPath/language/$CapCapLanguage.sh"
+  fi
+  echo "$CAPCAPInstallDepsNotice"
+  if capcap_configure_dependencies; then
+    echo "$CAPCAPInstallDepsDone"
+    exit 0
+  fi
+  echo "$CAPCAPInstallDepsFailed" >&2
+  exit 7
+fi
+
+# ============================================================ #
 # ============== < List Interfaces Mode > =================== #
 # ============================================================ #
-if [ "$CAPCAPListInterfaces" ]; then
-  interface_list_wireless
+if [ "$CAPCAPListInterfaces" ]; then  interface_list_wireless
   if [ ${#InterfaceListWireless[@]} -eq 0 ]; then
     echo "No wireless interfaces detected."
     exit 1

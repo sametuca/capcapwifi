@@ -54,6 +54,13 @@ capcap_help(){
                 List all detected wireless network interfaces with their
                 supported bands, driver, chipset, bus type, and state, then exit.
 
+         --install-deps
+                Check every tool the attacks need and install whatever is
+                missing (apt -y), then exit. Used by the GUI on first launch
+                so the user watches the installation instead of hitting a
+                missing-dependency error mid-attack.
+                Example: sudo ./capcapwifi.sh --install-deps --auto -m
+
          --interface <iface>
                 Use the specified wireless interface for scanning and
                 operations. If not given, the first available wireless
@@ -167,6 +174,9 @@ capcap_help(){
 
          # Headless, non-interactive, 15-second scan:
          sudo ./capcapwifi.sh -m --auto -l en --scan-time 15
+
+         # Install every missing dependency and exit:
+         sudo ./capcapwifi.sh --install-deps --auto -m
 
          # Headless with specific target:
          sudo ./capcapwifi.sh -m --auto -b AA:BB:CC:DD:EE:FF -c 6
