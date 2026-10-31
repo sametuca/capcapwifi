@@ -81,4 +81,4 @@ assert_empty_file "$UNEXPECTED_LOG" "Smoke modes did not invoke stubbed wireless
 
 finish_tests
 
-# FLUXSCRIPT END
+# CAPWIFI END

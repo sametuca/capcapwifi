@@ -20,4 +20,4 @@ if [ -f "/etc/gentoo-release" ]; then
   }
 fi
 
-# FLUXSCRIPT END
+# CAPWIFI END

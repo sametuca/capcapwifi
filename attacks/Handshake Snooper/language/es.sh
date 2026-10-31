@@ -28,4 +28,4 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}Success${CClr}: Hash correcto dete
 HandshakeSnooperArbiterCompletedTip="Ataque ${CBCyn}Handshake Snooper$CBYel completado, cierra esta ventana e inicia otro ataque.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

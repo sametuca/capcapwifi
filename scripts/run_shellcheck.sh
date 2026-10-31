@@ -93,4 +93,4 @@ fi
 
 echo "ShellCheck clean against the baseline ($(wc -l <"$__known" | tr -d ' ') known finding key(s))."
 
-# FLUXSCRIPT END
+# CAPWIFI END

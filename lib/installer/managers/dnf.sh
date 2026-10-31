@@ -26,4 +26,4 @@ if [ -f "/etc/redhat-release" ]; then
   }
 fi
 
-# FLUXSCRIPT END
+# CAPWIFI END

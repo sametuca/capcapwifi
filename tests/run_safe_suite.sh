@@ -43,4 +43,4 @@ fi
 
 echo "All safe test scripts passed."
 
-# FLUXSCRIPT END
+# CAPWIFI END

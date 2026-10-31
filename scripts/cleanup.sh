@@ -34,7 +34,7 @@ if [ -x "$_iw" ]; then
 fi
 
 echo "[*] Restoring wireless interfaces..."
-for iface in $(ip link show | grep -oE 'fluxwl[^ :@]+'); do
+for iface in $(ip link show | grep -oE 'capwl[^ :@]+'); do
 	# Derive original name from MAC: wlx + mac without colons
 	mac=$(ip link show "$iface" 2>/dev/null | awk '/link\//{print $2}')
 	original="wlx${mac//:/}"
@@ -77,4 +77,4 @@ fi
 
 echo "[+] Done."
 
-# FLUXSCRIPT END
+# CAPWIFI END

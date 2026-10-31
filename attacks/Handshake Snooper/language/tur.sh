@@ -33,4 +33,4 @@ HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel saldırıs�
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 HandshakeSnooperChannelSetWarning="Jammer arabirimi hedef kanala sabitlenemedi; deauth cihazlara ulaşmayabilir. Durdurup adaptörü kontrol edin."
-# FLUXSCRIPT END
+# CAPWIFI END

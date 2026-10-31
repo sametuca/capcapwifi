@@ -43,4 +43,4 @@ if [ -f "/etc/debian_version" ]; then
   }
 fi
 
-# FLUXSCRIPT END
+# CAPWIFI END

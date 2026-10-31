@@ -103,4 +103,4 @@ CAPCAPCleanupSuccessNotice="Bereinigung erfolgreich abgeschlossen!"
 CAPCAPThanksSupportersNotice="Vielen Dank für die Nutzung von CAPCAP"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

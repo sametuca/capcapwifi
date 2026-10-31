@@ -82,4 +82,4 @@ echo "=== Results: $PASS passed, $FAIL failed ==="
 
 finish_tests
 
-# FLUXSCRIPT END
+# CAPWIFI END

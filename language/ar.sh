@@ -12,7 +12,7 @@ CAPCAPUnblockingWINotice="إلغاء الإعترا على جميع بطاقات
 CAPCAPRemovingExtraWINotice="إزالة بطاقات الشبكات اللاسلكية الخارجية..."
 CAPCAPFindingWINotice="بحث عن بطاقات الشبكات اللاسلكية المتوفرة..."
 CAPCAPSelectedBusyWIError="بطاقة الشبكة اللاسلكية المحددة قيد الاستخدام حاليا على ما يبدو!"
-CAPCAPSelectedBusyWITip="يحدث هذا عادةً بسبب استخدام مدير الشبكة لبطاقة الشبكة المحددة. ننصحك ب $CGrn بايقاف مدير الشبكة$CClr أو إعداده لتجاهل بطاقة الشبكة هته. حل آخر وهو, تشغيل الأمر \"export CAPCAPWIKillProcesses=1\" قبل تشغيل فلاكسيون لكن نقترح عليك$CRed تجنب استخدام أمر الإنهاء${CClr}."
+CAPCAPSelectedBusyWITip="يحدث هذا عادةً بسبب استخدام مدير الشبكة لبطاقة الشبكة المحددة. ننصحك ب $CGrn بايقاف مدير الشبكة$CClr أو إعداده لتجاهل بطاقة الشبكة هته. حل آخر وهو, تشغيل الأمر \"export CAPCAPWIKillProcesses=1\" قبل تشغيل CapWifi لكن نقترح عليك$CRed تجنب استخدام أمر الإنهاء${CClr}."
 CAPCAPGatheringWIInfoNotice="جمع المعلومات حول بطاقة الشبكة..."
 CAPCAPUnknownWIDriverError="ﻻ يمكن ايجاد مشغل بطاقة الشبكة!"
 CAPCAPUnloadingWIDriverNotice="جاري إنتظار بطاقة الشبكة \"\$interface\" لكي تنهي التحميل..."
@@ -28,7 +28,7 @@ CAPCAPTargetTrackerInterfaceQueryTip="${CSYel}Choosing a dedicated interface may
 CAPCAPTargetTrackerInterfaceQueryTip2="${CBRed}If you're unsure, choose \"${CBYel}Skip${CBRed}\"!$CClr"
 CAPCAPTargetTrackerInterfaceUnsupportedError="The target tracker interface can't see the target's band (5GHz). Pass --tracker-interface with a 5GHz-capable card, or omit it to skip tracking."
 CAPCAPIncompleteTargettingInfoNotice="الـ ESSID أو BSSID أو معلومات القناة مفقوة!"
-CAPCAPTargettingAccessPointAboveNotice="فلاكسيون يستهدف نقطة الوصول أعلاه."
+CAPCAPTargettingAccessPointAboveNotice="CapWifi يستهدف نقطة الوصول أعلاه."
 CAPCAPContinueWithTargetQuery="واصل مع هذا الهدف؟"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CAPCAPStartingScannerNotice="بدء تشغيل الماسح ، يرجى الانتظار ..."
@@ -52,7 +52,7 @@ CAPCAPScannerChannelOptionSpecific="قناة محددة"
 CAPCAPScannerChannelSingleTip="قناة واحدة"
 CAPCAPScannerChannelMiltipleTip="قنوات متعددة"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-CAPCAPScannerHeader="ماسح فلاكسيون"
+CAPCAPScannerHeader="ماسح CapWifi"
 CAPCAPClientScannerHeader="CAPWIFI Client Scanner"
 CAPCAPTargetClientsListNotice="Clients associated with the target access point:"
 CAPCAPTargetClientsQuery="Select client(s) to deauthenticate (e.g. 1,3), a / Enter for all observed, * for broadcast, 0 to go back"
@@ -100,7 +100,7 @@ CAPCAPRestoringTputNotice="استعادة ${CGry}tput"
 CAPCAPDeletingFilesNotice="حذف ${CGry}ملفات"
 CAPCAPRestartingNetworkManagerNotice="جاري اعادة تشغيل ${CGry}مدير الشبكة"
 CAPCAPCleanupSuccessNotice="تم التنظيف بنجاح!"
-CAPCAPThanksSupportersNotice="شكرا لاستخدامك فلاكسيون"
+CAPCAPThanksSupportersNotice="شكرا لاستخدامك CapWifi"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

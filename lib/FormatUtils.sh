@@ -192,4 +192,4 @@ function format_center_dynamic() {
   FormatCenterDynamic=$(printf "$(echo "$FormatApplyAutosize" | sed -r 's/%[0-9]+s/%s/2')" "" "$1" "")
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

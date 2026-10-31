@@ -48,4 +48,4 @@ CaptivePortalVerificationMethodPyritOption="hash - pyrit"
 CaptivePortalVerificationMethodCowpattyOption="hash - cowpatty (${CGrn}default${CClr})"
 CaptivePortalVerificationMethodAircrackNG="hash - aircrack-ng (${CYel}unreliable${CClr})"
 
-# FLUXSCRIPT END
+# CAPWIFI END

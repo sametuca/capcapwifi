@@ -103,4 +103,4 @@ CAPCAPCleanupSuccessNotice="Membersihkan performa sukses!"
 CAPCAPThanksSupportersNotice="Terima kasih telah menggunakan CAPCAP"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

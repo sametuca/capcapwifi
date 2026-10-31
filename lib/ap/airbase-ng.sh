@@ -126,4 +126,4 @@ function ap_service_start() {
   ap_service_route
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

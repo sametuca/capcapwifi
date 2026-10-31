@@ -21,7 +21,7 @@ fail()  { echo -e "${RED}[x]${NC} $*" >&2; }
 step()  { echo -e "${CYAN}[*]${NC} $*"; }
 
 echo -e "${GREEN}╔══════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   CapWifi GUI  Başlatıcı       ║${NC}"
+echo -e "${GREEN}║    CapWifi GUI  Başlatıcı        ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════╝${NC}"
 
 # ── 1. Python ───────────────────────────────────────────────────────

@@ -103,4 +103,5 @@ CAPCAPCleanupSuccessNotice="Ο Καθαρισμός εκτελέστηκε με 
 CAPCAPThanksSupportersNotice="Ευχαριστούμε που χρησιμοποιήσατε το capcap"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END Zartaz edit :P
+# Greek translation: Ζαρτας (Zartaz)
+# CAPWIFI END

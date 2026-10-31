@@ -20,4 +20,4 @@ if [ -f "/etc/SuSE-release" ]; then
   }
 fi
 
-# FLUXSCRIPT END
+# CAPWIFI END

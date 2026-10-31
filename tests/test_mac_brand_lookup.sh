@@ -57,4 +57,4 @@ assert_empty_file "$TEST_RUNTIME_DIR/stderr.log" \
 
 finish_tests
 
-# FLUXSCRIPT END
+# CAPWIFI END

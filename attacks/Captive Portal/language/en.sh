@@ -48,4 +48,4 @@ CaptivePortalConnectivityDisconnectedOption="disconnected (${CGrn}recommended$CC
 CaptivePortalConnectivityEmulatedOption="emulated"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

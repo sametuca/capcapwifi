@@ -28,4 +28,4 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}Úspěch${CClr}: Platný hash byl 
 HandshakeSnooperArbiterCompletedTip="Útok ${CBCyn}Handshake Snooper$CBYel dokončen, zavřete toto okno a začněte další útok.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

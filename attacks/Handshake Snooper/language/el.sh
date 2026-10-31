@@ -28,4 +28,5 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}Επιτυχες${CClr}: Ενα ε
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Ελεγκτης$CBYel η επιθεση ολοκληρωθηκε,κλειστε αυτο το παραθυρο και ξεκινηστε μια αλλη επιθεση.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END Ζαρτας
+# Greek translation: Ζαρτας
+# CAPWIFI END

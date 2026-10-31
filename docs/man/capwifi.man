@@ -1,4 +1,4 @@
-CAPCAP(1)                        User Manuals                       CAPCAP(1)
+CAPWIFI(1)                       User Manuals                      CAPWIFI(1)
 
 NAME
        capwifi - CapWifi is a security auditing and social-engineering research
@@ -9,10 +9,9 @@ SYNOPSIS
        channel ] [--band bg|a|abg ] [--timeout minutes ] ...
 
 DESCRIPTION
-       capwifi is a security auditing and social-engineering research tool.  It
-       is a remake of linset by vk496 with less bugs  and  more  functionality.
-       The  script  attempts  to retrieve the WPA/WPA2 key from a target access
-       point by means of a social engineering (phishing) attack. It's  compati‐
+       capwifi is a security auditing and social-engineering research tool.  The
+       script  attempts  to retrieve the WPA/WPA2 key from a target access point
+       by means of a social engineering (phishing) attack. It's  compati‐
        ble  with the latest release of Kali (rolling). CapWifi's attacks' setup
        is mostly manual, but auto-mode handles some of the attacks' setup para‐
        meters.
@@ -168,9 +167,9 @@ BUGS
        Please  report  any  bugs  at:  https://github.com/sametuca/capwifi/issues
 
 AUTHOR
-       Cyberfee, l3op, dlinkproto, vk496, MPX4132
+       sametuca
 
 SEE ALSO
        aircrack-ng(8),
 
-Linux                              MARCH 2026                        CAPCAP(1)
+Linux                              MARCH 2026                       CAPWIFI(1)

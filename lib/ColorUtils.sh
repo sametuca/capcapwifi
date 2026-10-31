@@ -66,4 +66,4 @@ readonly CBCyn="\e[5;36m"
 readonly CBGry="\e[5;37m"
 readonly CBWht="\e[5;37m"
 
-# FLUXSCRIPT END
+# CAPWIFI END

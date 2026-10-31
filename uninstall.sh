@@ -59,4 +59,4 @@ done < "$InstallerUtilsInstalledPackagesFile"
 
 echo "CapWifi uninstall process finished." >&2
 
-# FLUXSCRIPT END
+# CAPWIFI END

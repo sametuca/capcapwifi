@@ -50,4 +50,4 @@ CaptivePortalAPChannelSharedRadioWarning="${CYel}Warning$CClr: jammer and access
 CaptivePortalAPChannelUnsupportedWarning="${CRed}The access point interface can't host on the target's band$CClr, pick a ${CGrn}custom channel$CClr on a band it supports."
 CaptivePortalAPChannelUnsupportedAutoError="The access point interface can't host on the requested channel's band. Pass --ap-channel with a supported channel, or select a different --ap-interface."
 
-# FLUXSCRIPT END
+# CAPWIFI END

@@ -28,4 +28,4 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}Siker${CClr}: Van érvényes hash,
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Kézfogás felderítő$CBYel támadás befejeződött, zárd be ezt az ablakot, és indíts egy újabb támadást.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

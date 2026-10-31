@@ -28,7 +28,7 @@ CAPCAPTargetTrackerInterfaceQueryTip="${CSYel}Lehet, hogy szükséges lesz egy m
 CAPCAPTargetTrackerInterfaceQueryTip2="${CBRed}Ha nem vagy biztos adolgodban válaszd a \"${CBYel}Kihagyás${CBRed}\"lehetőséget!$CClr"
 CAPCAPTargetTrackerInterfaceUnsupportedError="The target tracker interface can't see the target's band (5GHz). Pass --tracker-interface with a 5GHz-capable card, or omit it to skip tracking."
 CAPCAPIncompleteTargettingInfoNotice="Hiányos ESSID, BSSID, vagy csatorna információ!"
-CAPCAPTargettingAccessPointAboveNotice="A fluxus a fenti hozzáférési pontot célozta meg."
+CAPCAPTargettingAccessPointAboveNotice="A CapWifi a fenti hozzáférési pontot célozta meg."
 CAPCAPContinueWithTargetQuery="Folytatod ezzel a célpontal?"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 CAPCAPStartingScannerNotice="A szkennelés elindítása, kérlek várj... "
@@ -103,4 +103,4 @@ CAPCAPCleanupSuccessNotice="Takarítási folyamat sikeresen befejeződött!"
 CAPCAPThanksSupportersNotice="Köszönom, hogy használtad a CAPWIFI programot!"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

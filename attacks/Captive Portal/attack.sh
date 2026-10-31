@@ -2211,4 +2211,4 @@ start_attack() {
     >> $CAPCAPOutputDevice
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END
