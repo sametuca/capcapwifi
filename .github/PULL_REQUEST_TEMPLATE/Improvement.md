@@ -1,6 +1,6 @@
 ---
 name: Improvement
-about: You have some improvement to make capcapwifi better?
+about: You have some improvement to make capwifi better?
 ---
 
 ### Improvement

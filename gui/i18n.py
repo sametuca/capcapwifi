@@ -6,7 +6,8 @@ tables below; widgets call :func:`t` at render time, so switching language
 re-renders the window without restarting the attack engine.
 
 The choice is persisted in ``~/.config/capwifi/gui.json`` and can be
-overridden per run with ``CAPCAP_GUI_LANG=en|tr``.
+overridden per run with ``CAPCAP_GUI_LANG=en|tr``. Settings written by the
+pre-rename build under ``~/.config/capcapwifi/`` are still read as a fallback.
 """
 from __future__ import annotations
 
@@ -25,6 +26,12 @@ LANGUAGES: Tuple[Tuple[str, str], ...] = (
 
 CONFIG_DIR = Path.home() / ".config" / "capwifi"
 CONFIG_FILE = CONFIG_DIR / "gui.json"
+
+#: Where the GUI kept its settings before the project was renamed from
+#: CapCapWifi. Read-only fallback so an existing install keeps its language
+#: instead of silently reverting to the default after an upgrade.
+LEGACY_CONFIG_DIR = Path.home() / ".config" / "capcapwifi"
+LEGACY_CONFIG_FILE = LEGACY_CONFIG_DIR / "gui.json"
 
 EN: Dict[str, str] = {
     # ── window chrome ───────────────────────────────────────────
@@ -970,24 +977,35 @@ def language_codes() -> List[str]:
 
 def read_pref(key: str, default: str = "") -> str:
     """Kayıtlı bir tercihi okur; bozuk/eksik dosya varsayılanı döndürür."""
+    for path in (CONFIG_FILE, LEGACY_CONFIG_FILE):
+        value = _read_pref_file(path, key)
+        if value:
+            return value
+    return default
+
+
+def _read_pref_file(path: Path, key: str) -> str:
     try:
-        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return default
+        return ""
     if not isinstance(data, dict):
-        return default
-    value = str(data.get(key, "")).strip()
-    return value or default
+        return ""
+    return str(data.get(key, "")).strip()
 
 
 def write_pref(key: str, value: str) -> None:
     """Tek bir tercihi yazar; diğer anahtarlar korunur."""
-    try:
-        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            data = {}
-    except (OSError, ValueError):
-        data = {}
+    data: Dict[str, str] = {}
+    for path in (CONFIG_FILE, LEGACY_CONFIG_FILE):
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(loaded, dict):
+            # The new file wins, but a legacy file still seeds keys the new
+            # one has not written yet (upgrade path).
+            data = {**loaded, **data}
     data[key] = value
     try:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)

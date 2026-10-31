@@ -8,9 +8,13 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 echo "[*] Killing capwifi processes..."
+# The pre-rename script name is matched too, so a session started before an
+# in-place upgrade is still cleaned up.
 pkill -SIGINT -f "capwifi.sh" 2>/dev/null
+pkill -SIGINT -f "capcapwifi.sh" 2>/dev/null
 sleep 2
 pkill -9 -f "capwifi.sh" 2>/dev/null
+pkill -9 -f "capcapwifi.sh" 2>/dev/null
 
 echo "[*] Killing attack service processes..."
 for proc in hostapd dnsmasq lighttpd kea-dhcp4 php-cgi airodump-ng aireplay-ng mdk4 airbase-ng; do
@@ -18,7 +22,11 @@ for proc in hostapd dnsmasq lighttpd kea-dhcp4 php-cgi airodump-ng aireplay-ng m
 done
 
 echo "[*] Killing CAPWIFI tmux sessions..."
-for session in $(tmux ls 2>/dev/null | grep -oE '^CAPCAP[^:]*'); do
+# The engine names its session CAPWIFI or CAPCAP_<pid>; CAPCAPWIFI is what the
+# pre-rename build used. Match those exactly so an unrelated session that
+# merely starts with the same letters is left alone.
+for session in $(tmux ls 2>/dev/null |
+	grep -oE '^(CAPWIFI|CAPCAPWIFI|CAPCAP_[0-9]+):' | tr -d ':'); do
 	tmux kill-session -t "$session" 2>/dev/null && echo "    killed tmux session $session"
 done
 

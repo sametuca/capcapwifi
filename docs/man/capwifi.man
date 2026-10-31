@@ -1,97 +1,95 @@
-CAPWIFI(1)                       User Manuals                      CAPWIFI(1)
+CAPWIFI(1)                        User Manuals                        CAPWIFI(1)
 
 NAME
-       capwifi - CapWifi is a security auditing and social-engineering research
-       tool
+       capwifi - wireless auditing and captive-portal research toolkit
 
 SYNOPSIS
-       capwifi  [-m]  [--auto]  [--scan-time N ] [-l language ] [-b bssid ] [-c
+       capwifi  [-m]  [--auto]  [--scan-time  N ] [-l language ] [-b bssid ] [-c
        channel ] [--band bg|a|abg ] [--timeout minutes ] ...
 
 DESCRIPTION
        capwifi is a security auditing and social-engineering research tool.  The
-       script  attempts  to retrieve the WPA/WPA2 key from a target access point
-       by means of a social engineering (phishing) attack. It's  compati‐
-       ble  with the latest release of Kali (rolling). CapWifi's attacks' setup
-       is mostly manual, but auto-mode handles some of the attacks' setup para‐
-       meters.
+       script attempts to retrieve the WPA/WPA2 key from a target  access  point
+       by  means of a social engineering (phishing) attack. It's compatible with
+       the latest release of Kali (rolling). CapWifi's attacks' setup is  mostly
+       manual, but auto-mode handles some of the attacks' setup parameters.
 
 OPTIONS
        -v     Print version number.
 
        --help Print help page and exit with 0.
 
-       -m     Use tmux multiplexer instead of xterm. Enables headless operation
-              without an X11/graphical session. If not already  inside  a  tmux
-              session,  capwifi will re-exec itself inside one. All sub-windows
+       -m     Use  tmux multiplexer instead of xterm. Enables headless operation
+              without an X11/graphical session. If not  already  inside  a  tmux
+              session,  capwifi  will re-exec itself inside one. All sub-windows
               are opened as tmux windows instead of xterm terminals.
 
-       --auto Run capwifi in fully non-interactive auto mode. Every interactive
-              prompt auto-selects a sensible default. Implies --killer (-k). In
-              auto mode, capwifi runs one attack cycle and exits (no  looping).
+       --auto Run capwifi in fully non-interactive auto mode. Every  interactive
+              prompt  auto-selects a sensible default. Implies --killer (-k). In
+              auto mode, capwifi runs one attack cycle and exits  (no  looping).
               Best combined with -m for headless operation.
 
        --scan-time <seconds>
-              Duration  in  seconds for the wireless scanner in auto mode.  De‐
-              fault is 30. After this time, the scanner is killed  and  results
+              Duration  in  seconds  for the wireless scanner in auto mode.  De‐
+              fault is 30. After this time, the scanner is  killed  and  results
               are processed. Only meaningful with --auto or --scan-only.
 
        --scan-only
-              Scan  for nearby WPA networks, print results to stdout, and exit.
-              Does not launch any attack. Implies  --auto  and  -k.   Use  with
-              --scan-time to control scan duration and -c to restrict channels.
+              Scan  for  nearby WPA networks, print results to stdout, and exit.
+              Does not launch any attack.  Implies  --auto  and  -k.   Use  with
+              --scan-time  to control scan duration and -c to restrict channels.
               Output is a machine-friendly table.
 
        --list-interfaces
-              List  all  detected  wireless  network interfaces with their sup‐
-              ported bands, driver, chipset, bus type, and state, then exit.
+              List all detected wireless network interfaces with their supported
+              bands, driver, chipset, bus type, and state, then exit.
 
        --interface <iface>
-              Use the specified wireless interface for scanning and operations.
+              Use the specified wireless interface for scanning and  operations.
               If not given, the first available wireless interface is used.
 
        --jammer-interface <iface>
-              Use the specified wireless interface for the deauth jammer  (Cap‐
+              Use  the  specified wireless interface for the deauth jammer (Cap‐
               tive Portal attack). Overrides auto-selection for this role only.
 
        --ap-interface <iface>
-              Use  the  specified wireless interface for the rogue access point
-              (Captive Portal attack). Overrides auto-selection for  this  role
+              Use the specified wireless interface for the  rogue  access  point
+              (Captive  Portal  attack).  Overrides auto-selection for this role
               only.
 
        --ap-channel <channel>
-              Run  the rogue access point on this channel instead of the tar‐
-              get's (Captive Portal attack). Lets the evil twin serve on a dif‐
-              ferent  band  than  the  one being deauthenticated, e.g. deauth
-              clients on 5 GHz while the AP runs on longer-range, less-regulat‐
-              ed  2.4 GHz. The jammer always stays on the target's channel, so
-              this generally requires a second interface. In auto mode,  de‐
-              faults to the target's channel.
+              Run the rogue access point on this channel instead of the target's
+              (Captive Portal attack). Lets the evil twin serve on  a  different
+              band than the one being deauthenticated, e.g.  deauth clients on 5
+              GHz while the AP runs on longer-range, less-regulated 2.4 GHz. The
+              jammer always stays on the target's channel, so this generally re‐
+              quires  a second interface. In auto mode, defaults to the target's
+              channel.
 
        --tracker-interface <iface>
-              Use  the  specified  wireless  interface  for  the target tracker
-              (channel-change detection). In auto mode the tracker is  disabled
-              unless this option is given.
+              Use the specified wireless interface for the target tracker (chan‐
+              nel-change detection). In auto mode the tracker is disabled unless
+              this option is given.
 
        --ap-service <hostapd|airbase-ng>
-              Override  the rogue AP service. Default is hostapd.  On DFS chan‐
-              nels (52-64, 100-144) auto mode selects airbase-ng  automatically
-              since hostapd requires driver radar/CAC support that USB adapters
+              Override the rogue AP service. Default is hostapd.  On  DFS  chan‐
+              nels  (52-64,  100-144) auto mode selects airbase-ng automatically
+              since hostapd requires driver radar/CAC support that USB  adapters
               lack.
 
        --reg-domain <CC>
-              Override the wireless regulatory domain used when bringing up the
-              rogue AP on 5 GHz channels (e.g. US, DE, JP).  Default is US. The
+              Override  the wireless regulatory domain used when bringing up the
+              rogue AP on 5 GHz channels (e.g. US, DE, JP).  Default is US.  The
               original domain is restored on exit.
 
        --timeout <minutes>
-              Maximum  duration  in minutes for the attack in auto mode.  After
-              this time the attack is stopped and capwifi exits.  Default is no
-              timeout (runs indefinitely until the attack succeeds or is inter‐
+              Maximum  duration  in  minutes for the attack in auto mode.  After
+              this time the attack is stopped and capwifi exits.  Default is  no
+              timeout  (runs indefinitely until the attack succeeds or is inter‐
               rupted).
 
-       -k     Kill interfering wireless processes (NetworkManager,  etc.)   be‐
-              fore allocating interfaces. Implied by --auto.
+       -k     Kill interfering wireless processes (NetworkManager, etc.)  before
+              allocating interfaces. Implied by --auto.
 
        -d     Run capwifi in debug mode.
 
@@ -101,28 +99,28 @@ OPTIONS
               Define a certain language. In auto mode, defaults to "en".
 
        -e <essid>
-              Select  the target network based on the ESSID. In auto mode, used
+              Select the target network based on the ESSID. In auto  mode,  used
               to filter scan results to the matching network.
 
        --band <bg|a|abg>
-              Wireless band to scan. bg = 2.4 GHz, a = 5 GHz, abg =  both.  De‐
-              fault is bg. Overrides auto-detection from -c. Passed directly to
+              Wireless  band  to  scan. bg = 2.4 GHz, a = 5 GHz, abg = both. De‐
+              fault is bg. Overrides auto-detection from -c. Passed directly  to
               airodump-ng --band.
 
        -c <channel>
-              Indicate  the  channel(s) to listen to. In auto mode, the scanner
-              is restricted to these channels.
+              Indicate the channel(s) to listen to. In auto mode, the scanner is
+              restricted to these channels.
 
        -a <attack>
-              Define a certain attack. In auto mode, this  selects  the  attack
+              Define  a  certain  attack.  In auto mode, this selects the attack
               type without prompting.
 
        --ratio <ratio>
-              Define the window size. Bigger ratio -> smaller window size.  De‐
+              Define the window size. Bigger ratio -> smaller window size.   De‐
               fault is 4. Only applies in xterm mode.
 
        -b <bssid>
-              Select  the target network based on the access point MAC address.
+              Select  the  target network based on the access point MAC address.
               In auto mode, used to filter scan results.
 
        -j <jamming interface>
@@ -164,7 +162,7 @@ DIAGNOSTICS
        Please checkout the other log files or use the debug mode.
 
 BUGS
-       Please  report  any  bugs  at:  https://github.com/sametuca/capwifi/issues
+       Please report any bugs at: https://github.com/sametuca/capwifi/issues
 
 AUTHOR
        sametuca
@@ -172,4 +170,4 @@ AUTHOR
 SEE ALSO
        aircrack-ng(8),
 
-Linux                              MARCH 2026                       CAPWIFI(1)
+Linux                              MARCH 2026                         CAPWIFI(1)
