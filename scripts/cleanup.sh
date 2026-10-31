@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # capcapwifi cleanup script — kills any lingering state from a forced termination.
-# Run as root from anywhere: sudo bash /path/to/fluxion/scripts/cleanup.sh
+# Run as root from anywhere: sudo bash /path/to/capcapwifi/scripts/cleanup.sh
 
 if [ "$(id -u)" -ne 0 ]; then
 	echo "cleanup.sh must be run as root." >&2
 	exit 1
 fi
 
-echo "[*] Killing fluxion processes..."
+echo "[*] Killing capcapwifi processes..."
 pkill -SIGINT -f "capcapwifi.sh" 2>/dev/null
 sleep 2
 pkill -9 -f "capcapwifi.sh" 2>/dev/null

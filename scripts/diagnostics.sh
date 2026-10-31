@@ -29,14 +29,14 @@ cmd_version() {
 	fi
 }
 
-# Resolve fluxion root directory.
+# Resolve the capcapwifi root directory.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/../capcapwifi.sh" ]; then
 	FLUXION_ROOT="$SCRIPT_DIR/.."
 elif [ -f "./capcapwifi.sh" ]; then
 	FLUXION_ROOT="."
 else
-	echo "Error: cannot find capcapwifi.sh. Run from the fluxion directory or scripts/." >&2
+	echo "Error: cannot find capcapwifi.sh. Run from the capcapwifi directory or scripts/." >&2
 	exit 1
 fi
 

@@ -388,24 +388,17 @@ fluxion_startup() {
   local banner=()
 
   format_center_literals \
-    " ⌠▓▒▓▒   ⌠▓╗     ⌠█┐ ┌█   ┌▓\  /▓┐   ⌠▓╖   ⌠◙▒▓▒◙   ⌠█\  ☒┐"
+    "  ___   _   ___  ___   _   _____      _____ ___ ___"
   banner+=("$FormatCenterLiterals")
   format_center_literals \
-    " ║▒_     │▒║     │▒║ ║▒    \▒\/▒/    │☢╫   │▒┌╤┐▒   ║▓▒\ ▓║"
+    " / __| /_\ | _ \/ __| /_\ | _ \ \    / /_ _| __|_ _|"
   banner+=("$FormatCenterLiterals")
   format_center_literals \
-    " ≡◙◙     ║◙║     ║◙║ ║◙      ◙◙      ║¤▒   ║▓║☯║▓   ♜◙\✪\◙♜"
+    "| (__ / _ \|  _/ (__ / _ \|  _/\ \/\/ / | || _| | |"
   banner+=("$FormatCenterLiterals")
   format_center_literals \
-    " ║▒      │▒║__   │▒└_┘▒    /▒/\▒\    │☢╫   │▒└╧┘▒   ║█ \▒█║"
+    " \___/_/ \_\_|  \___/_/ \_\_|   \_/\_/ |___|_| |___|"
   banner+=("$FormatCenterLiterals")
-  format_center_literals \
-    " ⌡▓      ⌡◘▒▓▒   ⌡◘▒▓▒◘   └▓/  \▓┘   ⌡▓╝   ⌡◙▒▓▒◙   ⌡▓  \▓┘"
-  banner+=("$FormatCenterLiterals")
-  format_center_literals \
-    "¯¯¯     ¯¯¯¯¯¯  ¯¯¯¯¯¯¯  ¯¯¯    ¯¯¯ ¯¯¯¯  ¯¯¯¯¯¯¯  ¯¯¯¯¯¯¯¯"
-  banner+=("$FormatCenterLiterals")
-
   clear
 
   if [ "$FLUXIONAuto" ]; then echo -e "$CBlu"; else echo -e "$CRed"; fi
@@ -417,27 +410,27 @@ fluxion_startup() {
   echo # Do not remove.
 
   sleep 0.1
-  local -r fluxionRepository="https://github.com/FluxionNetwork/fluxion"
-  format_center_literals "${CGrn}Site: ${CRed}$fluxionRepository$CClr"
+  local -r projectRepository="https://github.com/sametuca/capcapwifi"
+  format_center_literals "${CGrn}Site: ${CRed}$projectRepository$CClr"
   echo -e "$FormatCenterLiterals"
 
   sleep 0.1
   local -r versionInfo="${CSRed}CAPCAPWIFI $FLUXIONVersion$CClr"
   local -r revisionInfo="(rev. $CSBlu$FLUXIONRevision$CClr)"
-  local -r credits="by$CCyn FluxionNetwork$CClr"
+  local -r credits="by$CCyn sametuca$CClr"
   format_center_literals "$versionInfo $revisionInfo $credits"
   echo -e "$FormatCenterLiterals"
 
   sleep 0.1
   if [ ! "$FLUXIONAuto" ]; then
-    local -r fluxionDomain="raw.githubusercontent.com"
-    local -r fluxionPath="FluxionNetwork/fluxion/master/capcapwifi.sh"
-    local -r updateDomain="github.com"
-    local -r updatePath="FluxionNetwork/fluxion/archive/master.zip"
-    if installer_utils_check_update "https://$fluxionDomain/$fluxionPath" \
+    local -r updateRawDomain="raw.githubusercontent.com"
+    local -r updateRawPath="sametuca/capcapwifi/master/capcapwifi.sh"
+    local -r updateZipDomain="github.com"
+    local -r updateZipPath="sametuca/capcapwifi/archive/master.zip"
+    if installer_utils_check_update "https://$updateRawDomain/$updateRawPath" \
       "FLUXIONVersion=" "FLUXIONRevision=" \
       $FLUXIONVersion $FLUXIONRevision; then
-      if installer_utils_run_update "https://$updateDomain/$updatePath" \
+      if installer_utils_run_update "https://$updateZipDomain/$updateZipPath" \
         "CAPCAPWIFI-V$FLUXIONVersion.$FLUXIONRevision" "$FLUXIONPath"; then
         fluxion_shutdown
       fi
@@ -2235,7 +2228,7 @@ fluxion_target_tracker_daemon() {
   readonly capturePath="$FLUXIONWorkspacePath/tracker_capture"
 
   echo "[T-Tracker] === DAEMON STARTED ===" >> $FLUXIONOutputDevice
-  echo "[T-Tracker] Fluxion PID: $fluxionPID" >> $FLUXIONOutputDevice
+  echo "[T-Tracker] CapCapWifi PID: $fluxionPID" >> $FLUXIONOutputDevice
   echo "[T-Tracker] Tracker Interface: $FluxionTargetTrackerInterface" >> $FLUXIONOutputDevice
   echo "[T-Tracker] Target MAC: $FluxionTargetMAC" >> $FLUXIONOutputDevice
   echo "[T-Tracker] Target SSID: $FluxionTargetSSID" >> $FLUXIONOutputDevice
