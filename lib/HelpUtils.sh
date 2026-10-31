@@ -104,6 +104,12 @@ capcap_help(){
                 stays silent until then; use it when you specifically want its
                 traffic-triggered behavior.
 
+         --site <template>
+                Captive Portal template to serve, without the .portal
+                suffix (for example Instagram_tur, ARRIS_en). This is the
+                same value the attack accepts as -u/--ui; the flag exists so
+                a front-end can select a template from the main CLI.
+
          --kill-exclude <name[,name...]>
                 Comma-separated list of process names to spare when killer
                 mode (-k / --auto) terminates interfering processes. Useful

@@ -119,18 +119,25 @@ handshake_snooper_arbiter_daemon() {
   handshake_snooper_stop_captor
 
   local completionTime=$(env -i date '+%H:%M:%S')
-  echo -e "[$completionTime] $HandshakeSnooperArbiterSuccededNotice" >> \
-    "$CAPCAPWorkspacePath/handshake_snooper.log"
-  echo -e "[$completionTime] $HandshakeSnooperArbiterCompletedTip" >> \
-    "$CAPCAPWorkspacePath/handshake_snooper.log"
 
   # Assure we've got a directory to store hashes into.
   mkdir -p "$CAPCAPPath/attacks/Handshake Snooper/handshakes/"
 
   # Move handshake to storage if one was acquired.
-  mv "$CAPCAPWorkspacePath/capture/recent.cap" \
-    "$CAPCAPPath/attacks/Handshake Snooper/handshakes/$CapCapTargetSSIDClean-$CapCapTargetMAC.cap"
-  capcap_status "HANDSHAKE_CAPTURED path=$CAPCAPPath/attacks/Handshake Snooper/handshakes/$CapCapTargetSSIDClean-$CapCapTargetMAC.cap"
+  local -r savedHandshakePath="$CAPCAPPath/attacks/Handshake Snooper/handshakes/$CapCapTargetSSIDClean-$CapCapTargetMAC.cap"
+  mv "$CAPCAPWorkspacePath/capture/recent.cap" "$savedHandshakePath"
+  capcap_status "HANDSHAKE_CAPTURED path=$savedHandshakePath"
+
+  # Tell the operator exactly what was saved and what to do with it. The
+  # arbiter window is a plain tail, so the path belongs here and not only in
+  # the main window banner.
+  echo -e "[$completionTime] $HandshakeSnooperArbiterSuccededNotice" >> \
+    "$CAPCAPWorkspacePath/handshake_snooper.log"
+  # shellcheck disable=SC2059
+  echo -e "[$completionTime] $(printf "$HandshakeSnooperSavedFileNotice" "$savedHandshakePath")" >> \
+    "$CAPCAPWorkspacePath/handshake_snooper.log"
+  echo -e "[$completionTime] $HandshakeSnooperArbiterCompletedTip" >> \
+    "$CAPCAPWorkspacePath/handshake_snooper.log"
 
   # Write success flag so the main window polling loop can detect completion
   # and update its display without waiting for manual user input.

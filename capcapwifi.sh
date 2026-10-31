@@ -81,7 +81,9 @@ readonly CAPCAPOriginalArgs=$(printf '%q ' "$@")
 
 # If stdin is not a TTY (e.g., running from an LLM tool or CI) and we need
 # tmux mode, re-exec under script(1) to allocate a pseudo-terminal.
-if [ ! -t 0 ] && [ -z "$CAPCAP_HAS_PTY" ] && [ "$CAPCAPPreParseTMux" ]; then
+if [ ! -t 0 ] && [ -z "$CAPCAP_HAS_PTY" ] && [ "$CAPCAPPreParseTMux" ] \
+   && [ -z "$CAPCAPPreParseScanOnly" ] && [ -z "$CAPCAPPreParseListIfaces" ] \
+   && [ -z "$CAPCAPPreParseInstallDeps" ] && [ -z "$CAPCAPPreParseHelp" ]; then
   export CAPCAP_HAS_PTY=1
   exec 3>&1
   exec script -qc "$CAPCAPSelf $CAPCAPOriginalArgs" /dev/null
@@ -184,7 +186,7 @@ capcap_status() {
 # ============================================================ #
 if ! CAPCAPCLIArguments=$(
     getopt --options="vdkrinmthb:e:c:l:a:r" \
-      --longoptions="debug,debug-log:,version,killer,installer,reloader,help,airmon-ng,multiplexer,target,test,auto,bssid:,essid:,channel:,language:,attack:,ratio,skip-dependencies,scan-time:,scan-only,list-interfaces,install-deps,interface:,jammer-interface:,ap-interface:,ap-channel:,tracker-interface:,ap-service:,deauth-method:,kill-exclude:,timeout:,reg-domain:,band:" \
+      --longoptions="debug,debug-log:,version,killer,installer,reloader,help,airmon-ng,multiplexer,target,test,auto,bssid:,essid:,channel:,language:,attack:,ratio,skip-dependencies,scan-time:,scan-only,list-interfaces,install-deps,interface:,jammer-interface:,ap-interface:,ap-channel:,tracker-interface:,ap-service:,deauth-method:,site:,kill-exclude:,timeout:,reg-domain:,band:" \
       --name="CAPCAPWIFI V$CAPCAPVersion.$CAPCAPRevision" -- "$@"
   ); then
   echo -e "${CRed}Aborted$CClr, parameter error detected..."; exit 5
@@ -237,6 +239,7 @@ while [ "$1" != "" ] && [ "$1" != "--" ]; do
     --tracker-interface) CAPCAPTrackerInterface=$2; shift;;
     --ap-service) CAPCAPAPService=$2; shift;;
     --deauth-method) CAPCAPDeauthMethod=$2; shift;;
+    --site) CAPCAPUserInterface=$2; shift;;
     --kill-exclude) CAPCAPKillExclude=$2; shift;;
     --timeout) CAPCAPTimeout=$2; shift;;
     --reg-domain) CAPCAPRegDomain=${2^^}; shift;;
@@ -476,11 +479,15 @@ capcap_configure_dependencies() {
     "iptables" "iptables-save:iptables" "iptables-restore:iptables"
   )
 
-  # Add display-mode-specific dependency.
-  if [ "$CAPCAPDisplayMode" = "tmux" ]; then
+  # Add display-mode-specific dependency. Headless runs (scan-only) need no
+  # terminal emulator at all; `--install-deps` prepares the tmux stack the GUI
+  # uses for attacks, so it must not pull xterm on a tmux-only machine.
+  case "$CAPCAPDisplayMode" in
+    tmux) requiredCLITools+=("tmux");;
+    xterm) requiredCLITools+=("xterm");;
+  esac
+  if [ "$CAPCAPDisplayMode" = "headless" ] && [ "1" = "$CAPCAPInstallDeps" ]; then
     requiredCLITools+=("tmux")
-  else
-    requiredCLITools+=("xterm")
   fi
 
   capcap_status "DEP_CHECK start"
@@ -1602,7 +1609,12 @@ capcap_target_get_candidates() {
   if [ ! "$1" ] || ! interface_is_wireless "$1"; then return 1; fi
 
   echo -e "$CAPCAPVLine $CAPCAPStartingScannerNotice"
-  echo -e "$CAPCAPVLine $CAPCAPStartingScannerTip"
+  if [ "$CAPCAPAuto" ]; then
+    # shellcheck disable=SC2059
+    echo -e "$CAPCAPVLine $(printf "$CAPCAPStartingScannerAutoNotice" "$CAPCAPScanTime")"
+  else
+    echo -e "$CAPCAPVLine $CAPCAPStartingScannerTip"
+  fi
 
   # Assure all previous scan results have been cleared.
   sandbox_remove_workfile "$CAPCAPWorkspacePath/dump*"
@@ -2966,6 +2978,18 @@ capcap_prep_attack() {
   if [ ! -x "$path/attack.sh" ]; then return 1; fi
   if [ ! -x "$path/language/$CapCapLanguage.sh" ]; then return 2; fi
 
+  # --site is a front-end convenience flag: the attack itself knows the portal
+  # as -u/--ui. Translate it here so the GUI can name the template directly.
+  # Only Captive Portal understands -u; passing it to other attacks would make
+  # their own getopt fail, so it is ignored with a warning there.
+  if [ "$CAPCAPUserInterface" ]; then
+    if [ "$CapCapAttack" = "Captive Portal" ]; then
+      AttackCLIArguments="${AttackCLIArguments:+$AttackCLIArguments }-u $CAPCAPUserInterface"
+    else
+      echo -e "$CAPCAPVLine $CAPCAPSiteIgnoredWarning"
+    fi
+  fi
+
   # Load attack parameters if any exist.
   if [ "$AttackCLIArguments" ]; then
     eval set -- "$AttackCLIArguments"
@@ -3031,6 +3055,27 @@ capcap_prep_attack() {
   if type -t save_attack &> /dev/null; then
     save_attack "$path/attack.conf"
   fi
+}
+
+capcap_handshake_success_banner() {
+  local handshakePath="$1"
+  local rule="  ${CSGrn}============================================================${CClr}"
+
+  echo
+  echo -e "$rule"
+  echo -e "  ${CSGrn} ${CAPCAPHandshakeBannerTitle}${CClr}"
+  echo -e "$rule"
+  echo -e "  ${CGrn}${CAPCAPHandshakeBannerNetwork} :${CClr} ${CSWht}${CapCapTargetSSID:-?}${CClr}"
+  echo -e "  ${CGrn}${CAPCAPHandshakeBannerBssid}     :${CClr} ${CSWht}${CapCapTargetMAC:-?}${CClr}"
+  echo -e "  ${CGrn}${CAPCAPHandshakeBannerSaved} :${CClr} ${CSWht}${handshakePath}${CClr}"
+  echo
+  echo -e "  ${CSWht}${CAPCAPHandshakeBannerStopped}${CClr}"
+  echo
+  echo -e "  ${CYel}${CAPCAPHandshakeBannerNext}${CClr}"
+  echo -e "  ${CGrn}1)${CClr} ${CAPCAPHandshakeBannerOption1}"
+  echo -e "  ${CGrn}2)${CClr} ${CAPCAPHandshakeBannerOption2}"
+  echo -e "$rule"
+  echo
 }
 
 capcap_run_attack() {
@@ -3116,8 +3161,8 @@ capcap_run_attack() {
         _handshakeNotified=1
         rm -f "$CAPCAPWorkspacePath/handshake_success.flag"
         capcap_header
-        echo -e "$CAPCAPVLine $HandshakeSnooperArbiterSuccededNotice"
-        echo
+        capcap_handshake_success_banner \
+          "$CAPCAPPath/attacks/Handshake Snooper/handshakes/$CapCapTargetSSIDClean-$CapCapTargetMAC.cap"
         _ci=1
         for _c in "${choices[@]}"; do
           echo -e "\t${CRed}[${CSYel}${_ci}${CClr}${CRed}]${CClr} ${_c}${CClr}"

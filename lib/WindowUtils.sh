@@ -9,12 +9,14 @@
 CAPCAPWindowCounter=0
 
 capcap_window_init() {
-	# Scan-only mode doesn't need a terminal multiplexer.
-	if [ "$CAPCAPScanOnly" ]; then
+	# Scan-only and dependency-install modes never open windows, so they must
+	# not re-exec into tmux/xterm either: the GUI runs them with piped output.
+	if [ "$CAPCAPScanOnly" ] || [ "$CAPCAPInstallDeps" ]; then
 		CAPCAPDisplayMode="headless"
 		return 0
 	fi
 
+	# --multiplexer was requested, or there is no X display to draw into.
 	if [ "$CAPCAPTMux" ]; then
 		CAPCAPDisplayMode="tmux"
 
@@ -39,7 +41,22 @@ capcap_window_init() {
 		# Enable mouse support (scrolling, pane selection).
 		tmux set-option -g mouse on 2>/dev/null
 	else
-		CAPCAPDisplayMode="xterm"
+		# X display present, but xterm may still be missing. Falling back to
+		# tmux beats failing halfway through an attack with no output window.
+		if ! hash xterm 2>/dev/null && hash tmux 2>/dev/null; then
+			CAPCAPDisplayMode="tmux"
+			if [ -z "$TMUX" ]; then
+				local _sessionName="CAPCAPWIFI"
+				tmux has-session -t "$_sessionName" 2>/dev/null && _sessionName="CAPCAP_$$"
+				exec env LANG=C.UTF-8 LC_ALL=C.UTF-8 \
+					tmux new-session -s "$_sessionName" "$0 $CAPCAPOriginalArgs"
+			fi
+			tmux rename-session CAPCAPWIFI 2>/dev/null
+			tmux set-option -g mouse on 2>/dev/null
+			CAPCAPTMux=1
+		else
+			CAPCAPDisplayMode="xterm"
+		fi
 	fi
 }
 

@@ -78,6 +78,12 @@ done
 
 assert_contains "$(cat "$HELP")" "--install-deps" "help documents --install-deps"
 
+# Mode çalışırken pencere/terminal yöneticisi açılmamalı: GUI çıktıyı boru ile
+# okuyor. Kurulum yine de saldırıların kullandığı tmux'u hazırlamalı.
+window_utils="$(cat "$REPO_DIR/lib/WindowUtils.sh")"
+assert_contains "$window_utils" 'CAPCAPInstallDeps' "install-deps never re-execs into tmux"
+assert_contains "$(cat "$MAIN")" 'requiredCLITools+=("tmux")' "install prepares the tmux backend"
+
 # GUI tarafı: denetleyici kurulum çağrısını ve tamamlanma olayını taşımalı.
 controller="$REPO_DIR/gui/controller.py"
 assert_contains "$(cat "$controller")" "def install_dependencies" "GUI can trigger the installer"

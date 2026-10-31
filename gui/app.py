@@ -6,17 +6,21 @@ CustomTkinter tabanlı, karanlık temalı, hibrit denetleyici (capcapwifi.sh →
 Arayüzün amacı tek bir soruya cevap vermek: "şu anda neredeyim, sırada ne var?"
 Bu yüzden her ekranda kısa bir açıklama, üstte adım çubuğu ve altta dinamik
 "şimdi ne yapmalıyım" satırı bulunur.
+
+Arayüz dili (EN/TR) sağ üstten değiştirilir; pencere yeniden kurulur, çalışan
+saldırı etkilenmez.
 """
 from __future__ import annotations
 
 import threading
-import tkinter as tk
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import customtkinter as ctk
 
 # Local modules
+import i18n
+from i18n import t
 from controller import CapCapWifiController
 from models import (
     AttackConfig,
@@ -42,61 +46,18 @@ ctk.set_default_color_theme("green")
 
 REPO_DIR = Path(__file__).resolve().parent.parent
 
-STEPS = ("Adaptör", "Tara", "Hedef seç", "Saldır", "Sonuç")
+BAND_CODES = ("bg", "a", "abg")
 
-AUTO = "Otomatik (program seçsin)"
+ATTACK_TYPES = (AttackType.CAPTIVE_PORTAL, AttackType.HANDSHAKE_SNOOPER)
 
-BAND_LABELS = {
-    "bg (2.4 GHz)": "bg",
-    "a (5 GHz)": "a",
-    "abg (Her ikisi)": "abg",
-}
 
-ATTACK_LABELS = {
-    "Captive Portal – sahte giriş sayfası": AttackType.CAPTIVE_PORTAL,
-    "Handshake Snooper – el sıkışma yakalama": AttackType.HANDSHAKE_SNOOPER,
-}
+def band_labels() -> Dict[str, str]:
+    """Görünen etiket → CLI değeri, aktif dile göre."""
+    return {t(f"band.{code}"): code for code in BAND_CODES}
 
-HELP_TEXT = """NASIL KULLANILIR – 5 ADIM
 
-1) ADAPTÖR
-   Ekranın sağındaki "Ortam Kontrolü" kartına bak. Kırmızı ✗ varsa
-   saldırı başlamaz: adaptör monitor mode + paket enjeksiyonu
-   desteklemeli ve program root yetkisiyle çalışmalı.
-
-2) TARA
-   "🔍 Tara" düğmesi yakındaki ağları listeler. Süre uzadıkça
-   daha çok ağ görünür ama bağlı cihaz sayısı da o sürede toplanır.
-   Cihaz yoksa deauth atacak kimse yok demektir.
-
-3) HEDEF SEÇ
-   Tabloda yeşil satır = en az bir cihaz bağlı. Satıra tıkla;
-   program SSID/BSSID/kanal alanlarını kendisi doldurur ve
-   altındaki satırda o ağın neden uygun (ya da uygun olmadığını)
-   yazar.
-
-4) SALDIR
-   Captive Portal: hedef ağın birebir kopyasını açar, bağlanan
-   cihaza seçtiğin portal sayfasını gösterir ve forma yazılanları
-   kaydeder. Portalın kendisi kayıt yapıyorsa (Instagram şablonları)
-   ayrıca şifre doğrulama adımı atlanır.
-   Handshake Snooper: cihazları düşürüp yeniden bağlanmaya zorlar
-   ve WPA/WPA2 handshake'ini yakalar; sonuç .cap dosyasıdır.
-
-5) SONUÇ
-   Captive Portal → "🔑 Şifreler" sekmesi
-   Handshake Snooper → "📡 Ağlar" sekmesinde ✔ işareti
-
-DOSYALAR
-   Canlı durum : /tmp/capcapspace/capcap.status
-   Girişler    : /tmp/capcapspace/instagram_credentials.log
-   Handshake   : attacks/Handshake Snooper/handshakes/
-
-NOTLAR
-   • ! işaretli kanallar DFS: sahte AP orada açılamaz.
-   • Deauth yöntemi otomatik seçilir (aireplay-ng); mdk4 istisnadır.
-   • Saldırı sürerken "⏹ Durdur" ile her şey temiz kapatılır.
-"""
+def attack_labels() -> Dict[str, AttackType]:
+    return {attack.label: attack for attack in ATTACK_TYPES}
 
 
 # ─────────────────────── Left configuration panel ───────────────────
@@ -113,6 +74,8 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
         self._ifaces: List[WirelessInterface] = []
         self._portals: List[PortalSite] = []
         self._portal_by_title: Dict[str, PortalSite] = {}
+        self._attack_labels = attack_labels()
+        self._band_labels = band_labels()
 
         self._build_interfaces()
         self._build_scan()
@@ -126,25 +89,25 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
 
     def _build_interfaces(self) -> None:
         sec = SectionCard(
-            self, "1 · ADAPTÖR",
-            "Hangi kablosuz kart kullanılacak. Emin değilsen otomatik bırak.",
+            self, t("config.adapter.title"),
+            t("config.adapter.desc"),
         )
         sec.pack(fill="x", padx=4, pady=(4, 4))
         body = sec.body()
 
-        self._iface_var = self._combo_row(body, 0, "Birincil (tarama):")
-        self._jammer_var = self._combo_row(body, 1, "Deauth kartı:")
-        self._ap_iface_var = self._combo_row(body, 2, "Sahte AP kartı:")
+        self._iface_var = self._combo_row(body, 0, t("config.adapter.primary"))
+        self._jammer_var = self._combo_row(body, 1, t("config.adapter.jammer"))
+        self._ap_iface_var = self._combo_row(body, 2, t("config.adapter.ap"))
 
         ctk.CTkLabel(
             body,
-            text=("İki adaptör varsa: biri sahte AP, diğeri deauth için. "
-                  "Tek adaptörle de çalışır ama daha yavaş."),
+            text=t("config.adapter.note"),
             font=FONT_UI_S, text_color=MUTED, anchor="w",
             justify="left", wraplength=250,
         ).grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
-        ctk.CTkButton(body, text="🔄 Listeyi yenile", command=self._refresh_ifaces,
+        ctk.CTkButton(body, text=f"🔄 {t('config.adapter.refresh')}",
+                      command=self._refresh_ifaces,
                       fg_color=DARK_BG, border_color=ACCENT, border_width=1,
                       text_color=ACCENT, hover_color="#1b3a2a", font=FONT_UI,
                       height=26).grid(row=4, column=0, columnspan=2,
@@ -152,13 +115,13 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
 
     def _build_scan(self) -> None:
         sec = SectionCard(
-            self, "2 · TARAMA",
-            "Kısa süre hızlıdır, uzun süre bağlı cihazları da görür.",
+            self, t("config.scan.title"),
+            t("config.scan.desc"),
         )
         sec.pack(fill="x", padx=4, pady=4)
         body = sec.body()
 
-        ctk.CTkLabel(body, text="Süre (sn):", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.scan.time"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=0, column=0, sticky="w", pady=2)
         self._scan_time = ctk.CTkEntry(body, width=80, fg_color=DARK_BG,
                                        border_color=BORDER, text_color=TEXT_PRI,
@@ -166,38 +129,38 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
         self._scan_time.insert(0, "30")
         self._scan_time.grid(row=0, column=1, padx=(8, 0), pady=2, sticky="w")
 
-        ctk.CTkLabel(body, text="Bant:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.scan.band"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=1, column=0, sticky="w", pady=2)
-        self._band_var = ctk.StringVar(value="bg (2.4 GHz)")
+        self._band_var = ctk.StringVar(value=t("band.bg"))
         ctk.CTkComboBox(body, variable=self._band_var, width=160,
-                        values=list(BAND_LABELS),
+                        values=list(self._band_labels),
                         fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
                         text_color=TEXT_PRI, font=FONT_UI).grid(
             row=1, column=1, padx=(8, 0), pady=2)
 
-        ctk.CTkLabel(body, text="Kanal:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.scan.channel"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=2, column=0, sticky="w", pady=2)
-        self._channel_e = ctk.CTkEntry(body, placeholder_text="Tümü", width=80,
-                                       fg_color=DARK_BG, border_color=BORDER,
+        self._channel_e = ctk.CTkEntry(body, placeholder_text=t("config.scan.channel_ph"),
+                                       width=80, fg_color=DARK_BG, border_color=BORDER,
                                        text_color=TEXT_PRI, font=FONT_UI)
         self._channel_e.grid(row=2, column=1, padx=(8, 0), pady=2, sticky="w")
 
     def _build_target(self) -> None:
         sec = SectionCard(
-            self, "3 · HEDEF",
-            "Tablo satırına tıklarsan bu alanlar kendiliğinden dolar.",
+            self, t("config.target.title"),
+            t("config.target.desc"),
         )
         sec.pack(fill="x", padx=4, pady=4)
         body = sec.body()
 
-        ctk.CTkLabel(body, text="SSID:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.target.ssid"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=0, column=0, sticky="w", pady=2)
-        self._essid_e = ctk.CTkEntry(body, placeholder_text="Ağ adı", width=200,
-                                     fg_color=DARK_BG, border_color=BORDER,
+        self._essid_e = ctk.CTkEntry(body, placeholder_text=t("config.target.ssid_ph"),
+                                     width=200, fg_color=DARK_BG, border_color=BORDER,
                                      text_color=TEXT_PRI, font=FONT_UI)
         self._essid_e.grid(row=0, column=1, padx=(8, 0), pady=2)
 
-        ctk.CTkLabel(body, text="BSSID:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.target.bssid"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=1, column=0, sticky="w", pady=2)
         self._bssid_e = ctk.CTkEntry(body, placeholder_text="AA:BB:CC:DD:EE:FF",
                                      width=200, fg_color=DARK_BG,
@@ -205,7 +168,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
                                      font=FONT_UI)
         self._bssid_e.grid(row=1, column=1, padx=(8, 0), pady=2)
 
-        ctk.CTkLabel(body, text="Kanal:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.target.channel"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=2, column=0, sticky="w", pady=2)
         self._target_ch_e = ctk.CTkEntry(body, placeholder_text="6", width=80,
                                          fg_color=DARK_BG, border_color=BORDER,
@@ -213,7 +176,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
         self._target_ch_e.grid(row=2, column=1, padx=(8, 0), pady=2, sticky="w")
 
         self._target_note = ctk.CTkLabel(
-            body, text="Henüz hedef seçilmedi.", font=FONT_UI_S,
+            body, text=t("config.target.none"), font=FONT_UI_S,
             text_color=MUTED, anchor="w", justify="left", wraplength=250,
         )
         self._target_note.grid(row=3, column=0, columnspan=2, sticky="w",
@@ -221,17 +184,17 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
 
     def _build_attack(self) -> None:
         sec = SectionCard(
-            self, "4 · SALDIRI",
-            "İki yöntem var; hangisini seçtiğinin açıklaması altında yazar.",
+            self, t("config.attack.title"),
+            t("config.attack.desc"),
         )
         sec.pack(fill="x", padx=4, pady=(4, 10))
         body = sec.body()
 
-        ctk.CTkLabel(body, text="Tür:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.attack.type"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=0, column=0, sticky="w", pady=2)
-        self._attack_var = ctk.StringVar(value=list(ATTACK_LABELS)[0])
+        self._attack_var = ctk.StringVar(value=list(self._attack_labels)[0])
         ctk.CTkComboBox(body, variable=self._attack_var, width=220,
-                        values=list(ATTACK_LABELS),
+                        values=list(self._attack_labels),
                         fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
                         text_color=TEXT_PRI, font=FONT_UI,
                         command=self._on_attack_change).grid(
@@ -244,9 +207,9 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
         self._attack_desc.grid(row=1, column=0, columnspan=2, sticky="w",
                                pady=(4, 6))
 
-        ctk.CTkLabel(body, text="Portal:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.attack.portal"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=2, column=0, sticky="w", pady=2)
-        self._portal_var = ctk.StringVar(value="Yükleniyor…")
+        self._portal_var = ctk.StringVar(value=t("config.attack.portal_loading"))
         self._portal_cb = ctk.CTkComboBox(
             body, variable=self._portal_var, width=220,
             fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
@@ -260,7 +223,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
         self._portal_desc.grid(row=3, column=0, columnspan=2, sticky="w",
                                pady=(2, 6))
 
-        ctk.CTkLabel(body, text="AP servisi:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.attack.ap_service"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=4, column=0, sticky="w", pady=2)
         self._ap_svc_var = ctk.StringVar(value="hostapd")
         self._ap_svc_cb = ctk.CTkComboBox(
@@ -270,7 +233,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             text_color=TEXT_PRI, font=FONT_UI)
         self._ap_svc_cb.grid(row=4, column=1, padx=(8, 0), pady=2)
 
-        ctk.CTkLabel(body, text="Deauth:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.attack.deauth"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=5, column=0, sticky="w", pady=2)
         self._deauth_var = ctk.StringVar(value="aireplay-ng")
         ctk.CTkComboBox(body, variable=self._deauth_var, width=160,
@@ -279,19 +242,20 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
                         text_color=TEXT_PRI, font=FONT_UI).grid(
             row=5, column=1, padx=(8, 0), pady=2)
 
-        ctk.CTkLabel(body, text="Dil:", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.attack.lang"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=6, column=0, sticky="w", pady=2)
-        self._lang_var = ctk.StringVar(value="tur")
+        clipped_default = "tur" if i18n.get_language() == "tr" else "en"
+        self._lang_var = ctk.StringVar(value=clipped_default)
         ctk.CTkComboBox(body, variable=self._lang_var, width=100,
                         values=self._get_languages(),
                         fg_color=DARK_BG, border_color=BORDER, button_color=ACCENT,
                         text_color=TEXT_PRI, font=FONT_UI).grid(
             row=6, column=1, padx=(8, 0), pady=2, sticky="w")
 
-        ctk.CTkLabel(body, text="Timeout (dk):", font=FONT_UI,
+        ctk.CTkLabel(body, text=t("config.attack.timeout"), font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=7, column=0, sticky="w", pady=2)
-        self._timeout_e = ctk.CTkEntry(body, placeholder_text="Süresiz", width=80,
-                                       fg_color=DARK_BG, border_color=BORDER,
+        self._timeout_e = ctk.CTkEntry(body, placeholder_text=t("config.attack.timeout_ph"),
+                                       width=80, fg_color=DARK_BG, border_color=BORDER,
                                        text_color=TEXT_PRI, font=FONT_UI)
         self._timeout_e.grid(row=7, column=1, padx=(8, 0), pady=2, sticky="w")
 
@@ -303,9 +267,9 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
         ctk.CTkLabel(body, text=label, font=FONT_UI,
                      text_color=TEXT_SEC).grid(row=row, column=0,
                                                sticky="w", pady=2)
-        var = ctk.StringVar(value=AUTO)
+        var = ctk.StringVar(value=t("config.auto"))
         ctk.CTkComboBox(body, variable=var, width=200,
-                        values=[AUTO],
+                        values=[t("config.auto")],
                         fg_color=DARK_BG, border_color=BORDER,
                         button_color=ACCENT, text_color=TEXT_PRI,
                         font=FONT_UI).grid(row=row, column=1, padx=(8, 0), pady=2)
@@ -315,6 +279,88 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
     def _notify(self) -> None:
         if self._on_change:
             self._on_change()
+
+    # ── language re-render support ──────────────────────────────
+
+    def snapshot(self) -> Dict[str, str]:
+        """Dil değişiminde kaybolmaması gereken tüm alanlar."""
+        return {
+            "iface": self._iface_var.get(),
+            "jammer": self._jammer_var.get(),
+            "ap_iface": self._ap_iface_var.get(),
+            "scan_time": self._scan_time.get(),
+            "band": self._band_labels.get(self._band_var.get(), "bg"),
+            "channel": self._channel_e.get(),
+            "essid": self._essid_e.get(),
+            "bssid": self._bssid_e.get(),
+            "target_channel": self._target_ch_e.get(),
+            "attack": self.attack_type.value,
+            "portal": self._portal_var.get(),
+            "ap_service": self._ap_svc_var.get(),
+            "deauth": self._deauth_var.get(),
+            "cli_language": self._lang_var.get(),
+            "timeout": self._timeout_e.get(),
+            "target_note": self._target_note.cget("text"),
+            "target_note_color": str(self._target_note.cget("text_color")),
+        }
+
+    def restore(self, data: Optional[Dict[str, str]]) -> None:
+        if not data:
+            return
+        auto = t("config.auto")
+        for var, key in (
+            (self._iface_var, "iface"),
+            (self._jammer_var, "jammer"),
+            (self._ap_iface_var, "ap_iface"),
+        ):
+            value = data.get(key, "")
+            var.set(value if value and value != auto else auto)
+
+        self._scan_time.delete(0, "end")
+        self._scan_time.insert(0, data.get("scan_time", "30"))
+
+        band = data.get("band", "bg")
+        self._band_var.set(t(f"band.{band}") if band in BAND_CODES
+                           else t("band.bg"))
+
+        entry_values = (
+            (self._channel_e, "channel"),
+            (self._essid_e, "essid"),
+            (self._bssid_e, "bssid"),
+            (self._target_ch_e, "target_channel"),
+            (self._timeout_e, "timeout"),
+        )
+        for entry, key in entry_values:
+            entry.delete(0, "end")
+            value = data.get(key, "")
+            if value:
+                entry.insert(0, value)
+
+        attack_value = data.get("attack", AttackType.CAPTIVE_PORTAL.value)
+        attack = next((a for a in ATTACK_TYPES if a.value == attack_value),
+                      AttackType.CAPTIVE_PORTAL)
+        self._attack_var.set(attack.label)
+        self._on_attack_change()
+
+        portal = data.get("portal", "")
+        if portal in self._portal_by_title:
+            self._portal_var.set(portal)
+        self._on_portal_change()
+
+        self._ap_svc_var.set(data.get("ap_service", "hostapd"))
+        self._deauth_var.set(data.get("deauth", "aireplay-ng"))
+
+        cli_language = data.get("cli_language", "")
+        if cli_language in self._get_languages():
+            self._lang_var.set(cli_language)
+
+        note = data.get("target_note", "")
+        if note:
+            self._target_note.configure(
+                text=note,
+                text_color=data.get("target_note_color", MUTED),
+            )
+        self._notify()
 
     # ── public ──────────────────────────────────────────────────
 
@@ -334,16 +380,17 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
     def clear_target(self) -> None:
         for entry in (self._bssid_e, self._essid_e, self._target_ch_e):
             entry.delete(0, "end")
-        self._target_note.configure(text="Henüz hedef seçilmedi.", text_color=MUTED)
+        self._target_note.configure(text=t("config.target.none"), text_color=MUTED)
         self._notify()
 
     @property
     def attack_type(self) -> AttackType:
-        return ATTACK_LABELS.get(self._attack_var.get(), AttackType.CAPTIVE_PORTAL)
+        return self._attack_labels.get(self._attack_var.get(),
+                                       AttackType.CAPTIVE_PORTAL)
 
     @property
     def language(self) -> str:
-        return self._lang_var.get() or "tur"
+        return self._lang_var.get() or ("tur" if i18n.get_language() == "tr" else "en")
 
     @property
     def selected_portal(self) -> Optional[PortalSite]:
@@ -372,7 +419,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             deauth_method=self._deauth_var.get(),
             portal_site=portal.site_id if portal else "Instagram_tur",
             language=self._lang_var.get(),
-            band=BAND_LABELS.get(self._band_var.get(), "bg"),
+            band=self._band_labels.get(self._band_var.get(), "bg"),
             timeout_minutes=timeout,
         )
 
@@ -385,7 +432,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
             self._value(self._iface_var),
             scan_time,
             self._channel_e.get().strip(),
-            BAND_LABELS.get(self._band_var.get(), "bg"),
+            self._band_labels.get(self._band_var.get(), "bg"),
         )
 
     # ── private ─────────────────────────────────────────────────
@@ -393,16 +440,16 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
     @staticmethod
     def _value(var: ctk.StringVar) -> str:
         value = var.get().strip()
-        return "" if value.startswith("Otomatik") else value
+        return "" if value == t("config.auto") else value
 
     def _refresh_ifaces(self) -> None:
         def _load():
             ifaces = self._ctrl.list_interfaces()
             self._ifaces = ifaces
-            names = [AUTO] + [i.name for i in ifaces]
+            names = [t("config.auto")] + [i.name for i in ifaces]
             for var in (self._iface_var, self._jammer_var, self._ap_iface_var):
                 if var.get() not in names:
-                    var.set(AUTO)
+                    var.set(t("config.auto"))
 
         threading.Thread(target=_load, daemon=True).start()
 
@@ -430,8 +477,10 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
 
         attack = self.attack_type
         self._attack_desc.configure(
-            text=f"{attack.summary}\n\nGEREKEN: {attack.what_you_need}\n\n"
-                 f"SONRA: {attack.what_happens_next}",
+            text=t("config.attack.desc_format",
+                   summary=attack.summary,
+                   need=attack.what_you_need,
+                   next=attack.what_happens_next),
         )
         self._notify()
 
@@ -457,7 +506,7 @@ class AttackConfigPanel(ctk.CTkScrollableFrame):
 class CapCapWifiApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("CapCapWifi – Wi-Fi Güvenlik Denetleyicisi")
+        self.title(t("app.title"))
         self.geometry("1360x860")
         self.minsize(1100, 720)
         self.configure(fg_color=DARK_BG)
@@ -476,6 +525,10 @@ class CapCapWifiApp(ctk.CTk):
         self._target: Optional[TargetCandidate] = None
         self._env_checks: List[EnvironmentCheck] = []
         self._install_attempted = False
+        self._install_visible = False
+        self._step = 0
+        self._active_tab = "networks"
+        self._ui_ready = False
 
         self._build_ui()
         self._update_status(AttackState.IDLE)
@@ -485,6 +538,9 @@ class CapCapWifiApp(ctk.CTk):
     # ── UI construction ──────────────────────────────────────────
 
     def _build_ui(self) -> None:
+        self._ui_ready = False
+        self.title(t("app.title"))
+
         top = ctk.CTkFrame(self, fg_color="#08090B", height=60,
                            corner_radius=0)
         top.pack(fill="x")
@@ -494,18 +550,31 @@ class CapCapWifiApp(ctk.CTk):
                      text_color=ACCENT).pack(side="left", padx=(18, 2), pady=8)
         ctk.CTkLabel(top, text="CapCapWifi", font=("Inter", 18, "bold"),
                      text_color=TEXT_PRI).pack(side="left", pady=8)
-        ctk.CTkLabel(top, text="  Wi-Fi güvenlik denetleyicisi",
+        ctk.CTkLabel(top, text=f"  {t('app.subtitle')}",
                      font=FONT_UI, text_color=MUTED).pack(side="left", pady=8)
 
         self._status_badge = StatusBadge(top)
-        self._status_badge.pack(side="right", padx=18, pady=10)
+        self._status_badge.pack(side="right", padx=(8, 18), pady=10)
+
+        # Dil değiştirici: EN / TR, anında yeniden çizer.
+        self._lang_switch = ctk.CTkSegmentedButton(
+            top, values=["EN", "TR"], command=self._on_language_selected,
+            font=FONT_UI_B, height=26, corner_radius=8,
+            fg_color=CARD_BG, selected_color=CARD_HOVER,
+            selected_hover_color=CARD_HOVER, unselected_color=CARD_BG,
+            unselected_hover_color=CARD_HOVER, text_color=TEXT_PRI,
+        )
+        self._lang_switch.pack(side="right", padx=(0, 4), pady=10)
+        self._lang_switch.set("TR" if i18n.get_language() == "tr" else "EN")
 
         ctk.CTkFrame(self, fg_color=ACCENT, height=2,
                      corner_radius=0).pack(fill="x")
 
-        self._guide = GuideBar(self, STEPS)
+        steps = tuple(t(f"step.{key}") for key in
+                      ("adapter", "scan", "target", "attack", "result"))
+        self._guide = GuideBar(self, steps)
         self._guide.pack(fill="x", padx=12, pady=(8, 0))
-        self._guide.set_active(0)
+        self._guide.set_active(self._step)
 
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True)
@@ -533,7 +602,6 @@ class CapCapWifiApp(ctk.CTk):
             on_crack_wordlist=self._start_crack_from_guide,
             on_dismiss=self._dismiss_guide,
         )
-        # Başlangıçta gizli tutulur
 
         self._tabs = ctk.CTkTabview(
             centre, fg_color=PANEL_BG,
@@ -546,9 +614,14 @@ class CapCapWifiApp(ctk.CTk):
             corner_radius=12,
         )
         self._tabs.grid(row=1, column=0, sticky="nsew")
-        tab_nets = self._tabs.add("📡  Ağlar")
-        tab_creds = self._tabs.add("🔑  Şifreler")
-        tab_help = self._tabs.add("❓  Nasıl kullanılır")
+        self._tab_names = {
+            "networks": f"📡  {t('app.tab.networks')}",
+            "credentials": f"🔑  {t('app.tab.credentials')}",
+            "help": f"❓  {t('app.tab.help')}",
+        }
+        tab_nets = self._tabs.add(self._tab_names["networks"])
+        tab_creds = self._tabs.add(self._tab_names["credentials"])
+        tab_help = self._tabs.add(self._tab_names["help"])
 
         self._net_table = NetworkTable(tab_nets, on_select=self._on_target_select)
         self._net_table.pack(fill="both", expand=True)
@@ -567,7 +640,7 @@ class CapCapWifiApp(ctk.CTk):
                                    wrap="word", corner_radius=10,
                                    border_width=1, border_color=BORDER)
         help_text.pack(fill="both", expand=True, padx=6, pady=6)
-        help_text.insert("1.0", HELP_TEXT)
+        help_text.insert("1.0", t("help.text"))
         help_text.configure(state="disabled")
 
         # Action buttons
@@ -577,26 +650,26 @@ class CapCapWifiApp(ctk.CTk):
             btn_row.columnconfigure(column, weight=1)
 
         self._btn_scan = ctk.CTkButton(
-            btn_row, text="🔍  Tara", command=self._do_scan,
+            btn_row, text=f"🔍  {t('app.btn.scan')}", command=self._do_scan,
             fg_color=ACCENT, text_color="#052012", hover_color="#00C86A",
             font=FONT_UI_B, height=44, corner_radius=12)
         self._btn_scan.grid(row=0, column=0, padx=(0, 5), sticky="ew")
 
         self._btn_attack = ctk.CTkButton(
-            btn_row, text="⚡  Saldırıyı başlat", command=self._do_attack,
+            btn_row, text=f"⚡  {t('app.btn.attack')}", command=self._do_attack,
             fg_color=WARN, text_color="#201500", hover_color="#FFC44D",
             font=FONT_UI_B, height=44, corner_radius=12)
         self._btn_attack.grid(row=0, column=1, padx=5, sticky="ew")
 
         self._btn_stop = ctk.CTkButton(
-            btn_row, text="⏹  Durdur", command=self._do_stop,
+            btn_row, text=f"⏹  {t('app.btn.stop')}", command=self._do_stop,
             fg_color="transparent", text_color=DANGER, hover_color="#2A1218",
             border_width=1, border_color=DANGER, font=FONT_UI_B,
             height=44, corner_radius=12, state="disabled")
         self._btn_stop.grid(row=0, column=2, padx=5, sticky="ew")
 
         self._btn_clear = ctk.CTkButton(
-            btn_row, text="🗑  Temizle", command=self._do_clear,
+            btn_row, text=f"🗑  {t('app.btn.clear')}", command=self._do_clear,
             fg_color="transparent", text_color=TEXT_SEC, hover_color=CARD_HOVER,
             font=FONT_UI_B, height=44, border_color=BORDER, border_width=1,
             corner_radius=12)
@@ -613,7 +686,7 @@ class CapCapWifiApp(ctk.CTk):
         health.grid(row=0, column=0, sticky="ew")
         head = ctk.CTkFrame(health, fg_color="transparent")
         head.pack(fill="x", padx=14, pady=(12, 2))
-        ctk.CTkLabel(head, text="🩺  Ortam kontrolü", font=FONT_TITLE,
+        ctk.CTkLabel(head, text=f"🩺  {t('app.health.title')}", font=FONT_TITLE,
                      text_color=TEXT_PRI).pack(side="left")
         ctk.CTkButton(head, text="🔄", width=30, height=26,
                       command=lambda: self._ctrl.check_environment(),
@@ -622,7 +695,7 @@ class CapCapWifiApp(ctk.CTk):
                       hover_color=CARD_HOVER,
                       font=FONT_UI).pack(side="right")
         self._btn_install = ctk.CTkButton(
-            head, text="📦 Eksikleri kur", width=118, height=26,
+            head, text=f"📦 {t('app.health.install')}", width=118, height=26,
             command=self._start_install, fg_color="transparent",
             border_color=WARN, border_width=1, text_color=WARN,
             hover_color="#2A2110", font=FONT_UI_S, corner_radius=10)
@@ -630,7 +703,7 @@ class CapCapWifiApp(ctk.CTk):
 
         ctk.CTkLabel(
             health,
-            text="Saldırı için gereken her şey burada listelenir. ✗ = eksik.",
+            text=t("app.health.desc"),
             font=FONT_UI_S, text_color=MUTED, anchor="w",
         ).pack(fill="x", padx=12, pady=(0, 4))
 
@@ -639,7 +712,6 @@ class CapCapWifiApp(ctk.CTk):
                                                fg_color=BORDER)
         self._install_label = ctk.CTkLabel(
             health, text="", font=FONT_UI_S, text_color=ACCENT2, anchor="w")
-        self._install_visible = False
 
         self._health_scroll = ctk.CTkScrollableFrame(
             health, fg_color="transparent", height=230)
@@ -647,8 +719,8 @@ class CapCapWifiApp(ctk.CTk):
         self._checklist = Checklist(self._health_scroll)
         self._checklist.pack(fill="x")
         self._checklist.show([EnvironmentCheck(
-            name="Kontrol ediliyor…", ok=False,
-            detail="araçlar ve adaptör taranıyor", hint="")])
+            name=t("app.health.checking.name"), ok=False,
+            detail=t("app.health.checking.detail"), hint="")])
 
         self._log_panel = LogPanel(right)
         self._log_panel.grid(row=1, column=0, sticky="nsew", pady=(8, 0))
@@ -668,7 +740,59 @@ class CapCapWifiApp(ctk.CTk):
                      font=FONT_MONO_S,
                      text_color="#2F343B").pack(side="right", padx=16)
 
+        self._tabs.set(self._tab_names[self._active_tab])
+        self._ui_ready = True
         self._refresh_hint()
+
+    # ── Language switching ──────────────────────────────────────
+
+    def _on_language_selected(self, value: str) -> None:
+        code = "tr" if str(value).strip().upper() == "TR" else "en"
+        if code == i18n.get_language():
+            return
+        self._apply_language(code)
+
+    def _apply_language(self, code: str) -> None:
+        """Dili değiştirip pencereyi yeniden kurar; saldırı süreci etkilenmez."""
+        snapshot = self._config_panel.snapshot()
+        candidates = self._net_table.candidates
+        guide_hf = getattr(self._next_step_guide, "_hf", None)
+
+        # Eski widget'lar yıkılmadan önce callback'lerin onlara dokunmasını kes.
+        self._ui_ready = False
+        i18n.set_language(code)
+        i18n.save_language(code)
+
+        for child in list(self.winfo_children()):
+            child.destroy()
+
+        self._install_visible = False
+        self._build_ui()
+        self._config_panel.restore(snapshot)
+
+        if candidates:
+            self._net_table.load(candidates)
+        if self._env_checks:
+            self._checklist.show(self._env_checks)
+
+        for cred in self._ctrl.credentials:
+            self._cred_panel.add(cred)
+        self._refresh_handshake_archive()
+
+        if guide_hf is not None:
+            self._next_step_guide.set_handshake(guide_hf)
+            self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+
+        self._set_step(self._step)
+        self._update_status(self._state)
+
+    def _set_step(self, index: int) -> None:
+        self._step = index
+        self._guide.set_active(index)
+
+    def _show_tab(self, key: str) -> None:
+        self._active_tab = key
+        self._tabs.set(self._tab_names[key])
 
     # ── Callbacks (background threads → GUI thread) ──────────────
 
@@ -681,18 +805,22 @@ class CapCapWifiApp(ctk.CTk):
     def _on_candidates(self, candidates) -> None:
         def _apply():
             self._net_table.load(candidates)
-            self._tabs.set("📡 Ağlar")
+            self._show_tab("networks")
             if candidates:
-                self._guide.set_active(2)
+                self._set_step(2)
                 self._refresh_hint()
         self.after(0, _apply)
 
     def _on_credential(self, cred: CapturedCredential) -> None:
         def _apply():
             self._cred_panel.add(cred)
-            self._tabs.set("🔑 Şifreler")
-            self._guide.set_active(4)
+            self._show_tab("credentials")
+            self._set_step(4)
             self._refresh_hint()
+            try:
+                self.bell()
+            except Exception:
+                pass
         self.after(0, _apply)
 
     def _on_environment(self, checks) -> None:
@@ -703,7 +831,8 @@ class CapCapWifiApp(ctk.CTk):
             for check in self._env_checks:
                 if not check.ok:
                     self._log_panel.append(
-                        f"[ortam] {check.name}: {check.detail} → {check.hint}", "warn")
+                        t("log.env_line", name=check.name,
+                          detail=check.detail, hint=check.hint), "warn")
 
             # İlk açılışta zorunlu bir paket eksikse kendiliğinden kur.
             if missing and not self._install_attempted and not self._ctrl.is_busy:
@@ -711,8 +840,7 @@ class CapCapWifiApp(ctk.CTk):
                     self._install_attempted = True
                     self._start_install(auto=True)
                 else:
-                    self._log_panel.append(
-                        "[!] Kurulum için root gerekli: sudo ./run_gui.sh", "error")
+                    self._log_panel.append(t("log.needs_root"), "error")
             self._refresh_hint()
         self.after(0, _apply)
 
@@ -720,13 +848,9 @@ class CapCapWifiApp(ctk.CTk):
         def _apply():
             self._set_install_busy(False)
             if ok:
-                self._log_panel.append(
-                    "[+] Kurulum tamamlandı. Ortam yeniden kontrol ediliyor…", "success")
+                self._log_panel.append(t("log.install_done"), "success")
             else:
-                self._log_panel.append(
-                    "[!] Kurulum tamamlanamadı. Log'daki apt çıktısına bak; "
-                    "gerekirse terminalde `sudo ./capcapwifi.sh --install-deps` çalıştır.",
-                    "error")
+                self._log_panel.append(t("log.install_failed"), "error")
             self._ctrl.check_environment()
             self._refresh_hint()
         self.after(0, _apply)
@@ -735,8 +859,9 @@ class CapCapWifiApp(ctk.CTk):
         self._target = target
         self._config_panel.fill_from_target(target)
         self._log_panel.append(
-            f"[+] Hedef: {target.clean_essid} ({target.bssid}) CH{target.channel}", "info")
-        self._guide.set_active(3)
+            t("log.target_selected", ssid=target.clean_essid,
+              bssid=target.bssid, channel=target.channel), "info")
+        self._set_step(3)
         self._refresh_hint()
 
         # Eğer bu hedef için önceden kaydedilmiş handshake varsa kullanıcıya bildir
@@ -747,7 +872,7 @@ class CapCapWifiApp(ctk.CTk):
                 ssid=target.clean_essid,
                 bssid=target.bssid,
                 size_bytes=0,
-                created_at="Önceden kayıtlı",
+                created_at=t("hs.previous"),
             )
             self._next_step_guide.set_handshake(hf)
             self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
@@ -757,8 +882,18 @@ class CapCapWifiApp(ctk.CTk):
             self._next_step_guide.set_handshake(hf)
             self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
             self._refresh_handshake_archive()
-            self._guide.set_active(4)
+            self._show_tab("networks")
+            self._set_step(4)
             self._refresh_hint()
+            self._log_panel.append(
+                t("log.handshake_captured", file=hf.filepath), "success")
+            # Yakalama anını kaçırmasın: pencereyi öne al ve ses çıkar.
+            try:
+                self.bell()
+                self.lift()
+                self.focus_force()
+            except Exception:
+                pass
         self.after(0, _apply)
 
     def _dismiss_guide(self) -> None:
@@ -769,7 +904,7 @@ class CapCapWifiApp(ctk.CTk):
             return
         self._next_step_guide.grid_forget()
         # Saldırı türünü Captive Portal'a geçir
-        self._config_panel._attack_var.set("Captive Portal – sahte giriş sayfası")
+        self._config_panel._attack_var.set(AttackType.CAPTIVE_PORTAL.label)
         self._config_panel._on_attack_change(None)
         if hf.bssid:
             self._config_panel._bssid_e.delete(0, "end")
@@ -778,21 +913,19 @@ class CapCapWifiApp(ctk.CTk):
             self._config_panel._essid_e.delete(0, "end")
             self._config_panel._essid_e.insert(0, hf.ssid)
 
-        self._tabs.set("📡  Ağlar")
-        self._guide.set_active(3)
+        self._show_tab("networks")
+        self._set_step(3)
         self._log_panel.append(
-            f"[*] Captive Portal hazırlandı: Hedef {hf.ssid} ({hf.bssid}). "
-            f"Yakalanan handshake şifre doğrulamada otomatik kullanılacak.", "success")
-        self._log_panel.append(
-            f"[*] Başlamak için alttaki '⚡  Saldırıyı başlat' düğmesine basın.", "info")
+            t("log.guide_portal_ready", ssid=hf.ssid, bssid=hf.bssid), "success")
+        self._log_panel.append(t("log.guide_start_hint"), "info")
         self._refresh_hint()
 
     def _start_crack_from_guide(self, hf: Optional[HandshakeFile]) -> None:
         if hf is None:
             return
-        self._tabs.set("🔑  Şifreler")
+        self._show_tab("credentials")
         self._log_panel.append(
-            f"[*] Aircrack-ng wordlist kırma başlatılıyor... Hedef: {hf.ssid} ({hf.bssid})", "info")
+            t("log.crack_start", ssid=hf.ssid, bssid=hf.bssid), "info")
         self._ctrl.crack_handshake(hf.filepath, bssid=hf.bssid)
 
     def _refresh_handshake_archive(self) -> None:
@@ -800,7 +933,8 @@ class CapCapWifiApp(ctk.CTk):
             handshakes = self._ctrl.list_handshakes()
             self._cred_panel.load_handshakes(handshakes)
         except Exception as e:
-            self._log_panel.append(f"[!] Handshake arşivi taranırken hata: {e}", "warn")
+            self._log_panel.append(
+                t("log.handshake_archive_error", error=e), "warn")
 
     # ── Button handlers ─────────────────────────────────────────
 
@@ -809,8 +943,9 @@ class CapCapWifiApp(ctk.CTk):
             return
         iface, scan_time, channel, band = self._config_panel.get_scan_params()
         self._log_panel.append(
-            f"[*] Tarama başlıyor – arayüz {iface or 'otomatik'}, {scan_time} sn", "info")
-        self._guide.set_active(1)
+            t("log.scan_start", iface=iface or t("log.iface_auto"),
+              seconds=scan_time), "info")
+        self._set_step(1)
         self._ctrl.start_scan(interface=iface, scan_time=scan_time,
                               channel=channel, band=band)
 
@@ -828,26 +963,24 @@ class CapCapWifiApp(ctk.CTk):
                 config.target_channel = target.channel
 
         if not config.target_bssid and not config.target_essid:
-            self._net_table.set_hint(
-                "Önce tablodan bir hedef seç: satıra tıkla ya da yeniden tara.",
-                "warn")
-            self._log_panel.append(
-                "[!] Hedef yok. Tablodan bir ağ seç veya BSSID/SSID gir.", "warn")
-            self._tabs.set("📡 Ağlar")
+            self._net_table.set_hint(t("log.no_target_hint"), "warn")
+            self._log_panel.append(t("log.no_target"), "warn")
+            self._show_tab("networks")
             return
 
         if config.attack_type is AttackType.CAPTIVE_PORTAL:
             portal = self._config_panel.selected_portal
             if portal is None:
-                self._log_panel.append("[!] Portal şablonu seçilmedi.", "warn")
+                self._log_panel.append(t("log.no_portal"), "warn")
                 return
             self._log_panel.append(
-                f"[i] Portal: {portal.display_title} – {portal.description}", "info")
+                t("log.portal_info", title=portal.display_title,
+                  desc=portal.description), "info")
 
-        self._guide.set_active(3)
+        self._set_step(3)
         self._log_panel.append(
-            f"[*] {config.attack_type.value} → "
-            f"{config.target_essid or config.target_bssid}", "info")
+            t("log.attack_start", attack=config.attack_type.value,
+              target=(config.target_essid or config.target_bssid)), "info")
         self._ctrl.start_attack(config)
 
     def _do_stop(self) -> None:
@@ -857,12 +990,9 @@ class CapCapWifiApp(ctk.CTk):
         if self._ctrl.is_busy:
             return
         self._install_attempted = True
-        self._set_install_busy(
-            True, "Kurulum sürüyor – apt çıktısı log panelinde…")
+        self._set_install_busy(True, t("app.health.installing"))
         if auto:
-            self._log_panel.append(
-                "[i] İlk kurulum: eksik paketler otomatik yükleniyor. "
-                "Bu işlem birkaç dakika sürebilir, pencereyi kapatmayın.", "info")
+            self._log_panel.append(t("log.install_first"), "info")
         self._ctrl.install_dependencies(language=self._config_panel.language)
 
     def _set_install_busy(self, visible: bool, text: str = "") -> None:
@@ -884,7 +1014,7 @@ class CapCapWifiApp(ctk.CTk):
         self._net_table.clear()
         self._target = None
         self._config_panel.clear_target()
-        self._guide.set_active(1 if self._ctrl.candidates else 0)
+        self._set_step(1 if self._ctrl.candidates else 0)
         self._refresh_hint()
 
     # ── State / hint sync ───────────────────────────────────────
@@ -901,14 +1031,15 @@ class CapCapWifiApp(ctk.CTk):
         self._btn_install.configure(state="disabled" if busy else "normal")
 
         if state is AttackState.INSTALLING:
-            self._set_install_busy(
-                True, "Kurulum sürüyor – apt çıktısı log panelinde…")
-            self._guide.set_active(0)
+            self._set_install_busy(True, t("app.health.installing"))
+            self._set_step(0)
 
         if state is AttackState.SCANNING:
-            self._guide.set_active(1)
+            self._set_step(1)
         elif state in (AttackState.STARTING, AttackState.RUNNING):
-            self._guide.set_active(3)
+            self._set_step(3)
+        elif state in (AttackState.HANDSHAKE_CAPTURED, AttackState.CREDENTIALS_FOUND):
+            self._set_step(4)
         self._refresh_hint()
 
     def _refresh_hint(self) -> None:
@@ -916,50 +1047,50 @@ class CapCapWifiApp(ctk.CTk):
 
         Ayar paneli kurulurken de çağrılır; alt bar o an henüz yok.
         """
+        if not getattr(self, "_ui_ready", False):
+            return
         if not hasattr(self, "_bar_label") or not hasattr(self, "_config_panel"):
             return
         state = self._state
 
         if state is AttackState.INSTALLING:
-            text, colour = ("Gerekli paketler kuruluyor. Bitince kontrol otomatik "
-                            "yenilenecek; pencereyi kapatmayın.", ACCENT2)
+            text, colour = t("hint.installing"), ACCENT2
         elif state is AttackState.SCANNING:
-            text, colour = ("Ağlar taranıyor… Bitince tablo dolacak, sonra hedef seç.", ACCENT2)
+            text, colour = t("hint.scanning"), ACCENT2
         elif state is AttackState.STARTING:
-            text, colour = ("Saldırı hazırlanıyor: adaptör monitor moda alınıyor, "
-                            "servisler başlatılıyor.", WARN)
+            text, colour = t("hint.starting"), WARN
         elif state is AttackState.RUNNING:
             if self._config_panel.attack_type is AttackType.CAPTIVE_PORTAL:
-                text, colour = ("Sahte AP yayında. Cihaz bağlanıp formu gönderdiğinde "
-                                "'Şifreler' sekmesine satır düşecek.", ACCENT)
+                text, colour = t("hint.running.portal"), ACCENT
             else:
-                text, colour = ("Deauth atılıyor, handshake bekleniyor. Yakalanınca "
-                                "ağ listesinde ✔ görünecek.", ACCENT)
+                text, colour = t("hint.running.handshake"), ACCENT
         elif state is AttackState.CREDENTIALS_FOUND:
-            text, colour = ("Giriş yakalandı! '🔑 Şifreler' sekmesinden kopyalayabilirsin.", ACCENT)
+            text, colour = t("hint.credentials"), ACCENT
         elif state is AttackState.HANDSHAKE_CAPTURED:
-            text, colour = ("🎉 Handshake başarıyla yakalandı! Şimdi Captive Portal veya Aircrack ile şifreyi alabilirsiniz.", ACCENT)
+            text, colour = t("hint.handshake"), ACCENT
         elif state is AttackState.ERROR:
-            text, colour = ("Hata: sağdaki log paneli ve ortam kontrolü kartına bak.", DANGER)
+            text, colour = t("hint.error"), DANGER
         elif state is AttackState.STOPPED:
-            text, colour = ("Durduruldu. Yeni bir tarama başlatabilir ya da hedefi "
-                            "değiştirebilirsin.", MUTED)
+            text, colour = t("hint.stopped"), MUTED
         else:
             missing = [c for c in self._env_checks if not c.ok and c.required]
             if not self._env_checks:
-                text, colour = ("Ortam kontrol ediliyor…", MUTED)
+                text, colour = t("hint.env_checking"), MUTED
             elif missing:
                 names = ", ".join(c.name for c in missing[:3])
-                text, colour = (f"Eksik: {names} (+{len(missing) - 3} daha)" if len(missing) > 3
-                                else f"Eksik: {names} – sağdaki karttan ipucuna bak.", WARN)
+                if len(missing) > 3:
+                    text = t("hint.missing_more", names=names,
+                             extra=len(missing) - 3)
+                else:
+                    text = t("hint.missing", names=names)
+                colour = WARN
             elif not self._ctrl.candidates:
-                text, colour = ("Her şey hazır. Sıradaki adım: “🔍 Tara” ile ağları bul.", ACCENT2)
+                text, colour = t("hint.ready_scan"), ACCENT2
             elif not (self._config_panel.build_config().target_bssid
                       or self._config_panel.build_config().target_essid):
-                text, colour = ("Tabloda yeşil (bağlı cihazı olan) bir satıra tıkla; "
-                                "alanlar kendiliğinden dolar.", ACCENT2)
+                text, colour = t("hint.pick_row"), ACCENT2
             else:
-                text, colour = ("Hedef hazır. “⚡ Saldırıyı başlat” ile devam et.", ACCENT)
+                text, colour = t("hint.target_ready"), ACCENT
 
         self._bar_label.configure(text="▶  " + text, text_color=colour)
 

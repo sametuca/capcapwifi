@@ -2,7 +2,8 @@
 CapCapWifi GUI – yeniden kullanılabilir arayüz bileşenleri.
 
 Buradaki sınıfların hiçbiri ağ veya süreç işlemez; yalnızca görüntüler ve
-kullanıcı etkileşimini callback olarak dışarı verir.
+kullanıcı etkileşimini callback olarak dışarı verir. Görünen tüm metinler
+i18n üzerinden gelir, bu yüzden pencere yeniden kurulduğunda dil değişir.
 
 Tasarım dili: koyu zemin, yumuşak köşeli kartlar, tek vurgu rengi (neon yeşil)
 ve ikincil olarak camgöbeği. Sinyal gücü sayı yerine çubuklarla gösterilir.
@@ -10,9 +11,12 @@ ve ikincil olarak camgöbeği. Sinyal gücü sayı yerine çubuklarla gösterili
 from __future__ import annotations
 
 import tkinter as tk
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence
 
 import customtkinter as ctk
+
+from i18n import t
 
 
 # ────────────────────────── renk paleti ─────────────────────────────
@@ -102,12 +106,12 @@ class LogPanel(ctk.CTkFrame):
 
         head = ctk.CTkFrame(self, fg_color="transparent")
         head.pack(fill="x", padx=14, pady=(12, 6))
-        ctk.CTkLabel(head, text="Canlı log", font=FONT_TITLE,
+        ctk.CTkLabel(head, text=t("log.title"), font=FONT_TITLE,
                      text_color=TEXT_PRI).pack(side="left")
-        self._count = ctk.CTkLabel(head, text="0 satır", font=FONT_UI_S,
-                                   text_color=MUTED)
+        self._count = ctk.CTkLabel(head, text=t("log.lines", count=0),
+                                   font=FONT_UI_S, text_color=MUTED)
         self._count.pack(side="left", padx=(8, 0))
-        ctk.CTkButton(head, text="Temizle", width=64, height=24,
+        ctk.CTkButton(head, text=t("log.clear"), width=64, height=24,
                       command=self.clear, fg_color="transparent",
                       hover_color=CARD_HOVER, border_width=1,
                       border_color=BORDER, text_color=TEXT_SEC,
@@ -145,14 +149,14 @@ class LogPanel(ctk.CTkFrame):
         self._text.see("end")
         self._lines += 1
         if self._lines % 10 == 0 or self._lines < 10:
-            self._count.configure(text=f"{self._lines} satır")
+            self._count.configure(text=t("log.lines", count=self._lines))
 
     def clear(self) -> None:
         self._text.configure(state="normal")
         self._text.delete("1.0", "end")
         self._text.configure(state="disabled")
         self._lines = 0
-        self._count.configure(text="0 satır")
+        self._count.configure(text=t("log.lines", count=0))
 
 
 # ────────────────────────── Adım çubuğu ─────────────────────────────
@@ -208,7 +212,7 @@ class GuideBar(ctk.CTkFrame):
 
 class NetworkRow(ctk.CTkFrame):
     """Tek bir ağın modern satırı: ferah 2 satırlı düzen.
-    
+
     Üst satır: Kanal rozeti · AĞ ADI (SSID - asla sıkışmaz) · Sinyal & Rozetler
     Alt satır: BSSID (MAC) · Şifreleme · Üretici · Bağlı cihaz & Handshake rozetleri
     """
@@ -272,7 +276,10 @@ class NetworkRow(ctk.CTkFrame):
         extra_frame = ctk.CTkFrame(self, fg_color="transparent")
         extra_frame.grid(row=1, column=2, padx=(0, 10), pady=(0, 8), sticky="e")
 
-        clients_text = f"{candidate.clients} cihaz" if candidate.clients else "cihaz yok"
+        if candidate.clients:
+            clients_text = t("networks.clients", count=candidate.clients)
+        else:
+            clients_text = t("networks.no_clients")
         clients_badge = ctk.CTkLabel(
             extra_frame, text=clients_text, font=FONT_UI_S, width=64, height=20,
             corner_radius=6,
@@ -283,14 +290,14 @@ class NetworkRow(ctk.CTkFrame):
 
         if candidate.has_handshake:
             ctk.CTkLabel(
-                extra_frame, text="✔ Handshake", font=FONT_UI_S,
+                extra_frame, text=t("networks.handshake_badge"), font=FONT_UI_S,
                 text_color=ACCENT, fg_color="#102A1E", corner_radius=6,
                 height=20, padx=6
             ).pack(side="left", padx=(0, 4))
 
         if candidate.is_dfs:
             ctk.CTkLabel(
-                extra_frame, text="DFS", font=FONT_UI_S,
+                extra_frame, text=t("networks.dfs_badge"), font=FONT_UI_S,
                 text_color=WARN, fg_color="#33260F", corner_radius=6,
                 height=20, padx=6
             ).pack(side="left")
@@ -341,14 +348,14 @@ class NetworkTable(ctk.CTkFrame):
 
         head = ctk.CTkFrame(self, fg_color="transparent")
         head.pack(fill="x", padx=14, pady=(12, 2))
-        ctk.CTkLabel(head, text="Yakındaki ağlar", font=FONT_TITLE,
+        ctk.CTkLabel(head, text=t("networks.title"), font=FONT_TITLE,
                      text_color=TEXT_PRI).pack(side="left")
         self._count = ctk.CTkLabel(head, text="", font=FONT_UI_S,
                                    text_color=MUTED)
         self._count.pack(side="left", padx=(8, 0))
 
         self._search = ctk.CTkEntry(
-            head, placeholder_text="Ağ adı veya BSSID ara…", width=220,
+            head, placeholder_text=t("networks.search_ph"), width=220,
             height=28, fg_color=DARK_BG, border_color=BORDER,
             text_color=TEXT_PRI, font=FONT_UI_S)
         self._search.pack(side="right")
@@ -358,8 +365,7 @@ class NetworkTable(ctk.CTkFrame):
         legend.pack(fill="x", padx=14, pady=(2, 8))
         ctk.CTkLabel(
             legend,
-            text=("Yeşil rozet = bağlı cihaz var (deauth atılabilir)   ·   "
-                  "✔ = handshake kayıtlı   ·   DFS = sahte AP açılamaz"),
+            text=t("networks.legend"),
             font=FONT_UI_S, text_color=MUTED, anchor="w", justify="left",
             wraplength=760,
         ).pack(side="left")
@@ -379,19 +385,22 @@ class NetworkTable(ctk.CTkFrame):
 
         self._empty = ctk.CTkLabel(
             self._list,
-            text="Henüz ağ yok.\n\nSıradaki adım: sol panelden süreyi seç ve "
-                 "“🔍 Tara” düğmesine bas.",
+            text=t("networks.empty"),
             font=FONT_UI, text_color=MUTED, justify="center",
         )
         self._empty.pack(pady=40)
 
         self._hint = ctk.CTkLabel(
-            self, text="Önce “🔍 Tara” ile ağları listeleyin.", font=FONT_UI_S,
+            self, text=t("networks.hint_initial"), font=FONT_UI_S,
             text_color=MUTED, anchor="w", justify="left", wraplength=760,
         )
         self._hint.pack(fill="x", padx=14, pady=(0, 12))
 
     # ── public ──────────────────────────────────────────────────
+
+    @property
+    def candidates(self) -> List:
+        return list(self._candidates)
 
     def load(self, candidates) -> None:
         self._candidates = list(candidates)
@@ -403,9 +412,8 @@ class NetworkTable(ctk.CTkFrame):
         handshakes = sum(1 for c in self._candidates if c.has_handshake)
         if self._candidates:
             self._hint.configure(
-                text=(f"{len(self._candidates)} ağ, {with_clients} tanesinde "
-                      f"bağlı cihaz, {handshakes} tanesinde kayıtlı handshake. "
-                      "Bir satıra tıkla; alttaki alanlar kendiliğinden dolar."),
+                text=t("networks.summary", total=len(self._candidates),
+                       clients=with_clients, handshakes=handshakes),
                 text_color=TEXT_SEC)
 
     def selected(self):
@@ -423,7 +431,7 @@ class NetworkTable(ctk.CTkFrame):
         self._selected = None
         self._search.delete(0, "end")
         self._render()
-        self._hint.configure(text="Önce “🔍 Tara” ile ağları listeleyin.",
+        self._hint.configure(text=t("networks.hint_initial"),
                              text_color=MUTED)
 
     def set_hint(self, text: str, level: str = "info") -> None:
@@ -456,7 +464,8 @@ class NetworkTable(ctk.CTkFrame):
             row.pack(fill="x", padx=4, pady=3)
             self._rows[candidate.bssid] = row
 
-        self._count.configure(text=f"{len(self._candidates)} ağ")
+        self._count.configure(text=t("networks.count",
+                                     count=len(self._candidates)))
         self._apply_filter()
 
     def _apply_filter(self) -> None:
@@ -478,8 +487,9 @@ class NetworkTable(ctk.CTkFrame):
 
         if self._candidates:
             self._count.configure(
-                text=f"{visible}/{len(self._candidates)} ağ" if needle
-                else f"{len(self._candidates)} ağ")
+                text=t("networks.filtered_count", visible=visible,
+                       total=len(self._candidates)) if needle
+                else t("networks.count", count=len(self._candidates)))
 
     def _select(self, candidate) -> None:
         for bssid, row in self._rows.items():
@@ -514,7 +524,7 @@ class StatusBadge(ctk.CTkFrame):
         self._icon = ctk.CTkLabel(self, text="●", font=("Inter", 14),
                                   text_color=MUTED, width=18)
         self._icon.pack(side="left", padx=(14, 4), pady=6)
-        self._label = ctk.CTkLabel(self, text="Hazır", font=FONT_UI_B,
+        self._label = ctk.CTkLabel(self, text=t("state.IDLE"), font=FONT_UI_B,
                                    text_color=MUTED)
         self._label.pack(side="left", padx=(0, 14), pady=6)
 
@@ -522,7 +532,7 @@ class StatusBadge(ctk.CTkFrame):
         icon, default_colour = STATE_ICONS.get(text, ("●", MUTED))
         self._icon.configure(text=icon, text_color=colour or default_colour)
         self._label.configure(
-            text=text.replace("_", " ").title(),
+            text=t(f"state.{text}"),
             text_color=colour or default_colour,
         )
 
@@ -588,7 +598,7 @@ class CredentialRow(ctk.CTkFrame):
                      text_color=ACCENT, anchor="w").grid(
             row=1, column=2, sticky="w", pady=(0, 8))
 
-        ctk.CTkButton(self, text="Kopyala", width=72, height=26,
+        ctk.CTkButton(self, text=t("creds.copy"), width=72, height=26,
                       font=FONT_UI_S, fg_color="transparent",
                       hover_color=CARD_HOVER, border_width=1,
                       border_color=BORDER, text_color=TEXT_SEC,
@@ -620,12 +630,12 @@ class HandshakeRow(ctk.CTkFrame):
         ).grid(row=0, column=0, rowspan=2, padx=(10, 6), pady=6)
 
         # Ağ Adı ve BSSID
-        title_text = f"{hf.ssid or '<Bilinmeyen Ağ>'}"
+        title_text = f"{hf.ssid or t('hs.unknown_ssid')}"
         ctk.CTkLabel(
             self, text=title_text, font=FONT_UI_B, text_color=TEXT_PRI, anchor="w"
         ).grid(row=0, column=1, sticky="w", pady=(6, 0))
 
-        sub_text = f"{hf.bssid or '-'}  ·  {Path(hf.filepath).name}  ·  {hf.size_kb if hasattr(hf, 'size_kb') else f'{hf.size_bytes}B'}  ·  {hf.created_at}"
+        sub_text = f"{hf.bssid or '-'}  ·  {Path(hf.filepath).name}  ·  {hf.size_bytes}B  ·  {hf.created_at}"
         ctk.CTkLabel(
             self, text=sub_text, font=FONT_MONO_S, text_color=MUTED, anchor="w"
         ).grid(row=1, column=1, sticky="w", pady=(0, 6))
@@ -636,14 +646,14 @@ class HandshakeRow(ctk.CTkFrame):
 
         if on_use_portal:
             ctk.CTkButton(
-                btn_f, text="⚡ Portal'da Kullan", width=120, height=26,
+                btn_f, text=t("hs.use_portal"), width=120, height=26,
                 font=FONT_UI_S, fg_color=ACCENT, text_color=DARK_BG,
                 hover_color="#00C86A", command=lambda: on_use_portal(hf)
             ).pack(side="left", padx=(0, 6))
 
         if on_crack:
             ctk.CTkButton(
-                btn_f, text="🔑 Aircrack ile Kır", width=110, height=26,
+                btn_f, text=t("hs.crack"), width=110, height=26,
                 font=FONT_UI_S, fg_color=CARD_BG, text_color=TEXT_PRI,
                 hover_color=CARD_HOVER, border_width=1, border_color=BORDER,
                 command=lambda: on_crack(hf)
@@ -667,7 +677,7 @@ class NextStepGuideCard(ctk.CTkFrame):
         head.pack(fill="x", padx=14, pady=(10, 4))
 
         title_lbl = ctk.CTkLabel(
-            head, text="🎉 TEBRİKLER! WPA HANDSHAKE BAŞARIYLA YAKALANDI",
+            head, text=f"🎉 {t('guide.title')}",
             font=FONT_TITLE, text_color=ACCENT, anchor="w"
         )
         title_lbl.pack(side="left")
@@ -681,26 +691,25 @@ class NextStepGuideCard(ctk.CTkFrame):
 
         # Hedef Ağ & Dosya Bilgisi Banner
         self._info_lbl = ctk.CTkLabel(
-            self, text="Hedef Ağ: - · Dosya: -",
+            self, text=t("guide.info", ssid="-", bssid="-", file="-"),
             font=FONT_UI_B, text_color=TEXT_PRI, anchor="w", justify="left"
         )
         self._info_lbl.pack(fill="x", padx=14, pady=(0, 6))
+
+        # Kaydedilen dosyanın tam yolu — kullanıcı dosyayı nerede bulacağını
+        # aramadan görsün.
+        self._saved_lbl = ctk.CTkLabel(
+            self, text="", font=FONT_UI_S, text_color=ACCENT2,
+            anchor="w", justify="left", wraplength=760,
+        )
+        self._saved_lbl.pack(fill="x", padx=14, pady=(0, 8))
 
         # Açıklama
         guide_box = ctk.CTkFrame(self, fg_color=DARK_BG, corner_radius=10, border_width=1, border_color=BORDER)
         guide_box.pack(fill="x", padx=14, pady=(0, 8))
 
-        desc_text = (
-            "💡 ŞİMDİ NE YAPMALISINIZ? İKİ SEÇENEĞİNİZ VAR:\n\n"
-            "1. YOL (ÖNERİLEN): CAPTIVE PORTAL (SAHTE GİRİŞ EKRANI) BAŞLATIN\n"
-            "   Elinizde doğrulanmış handshake olduğu için artık sahte AP açtığınızda kurbanın gireceği parola\n"
-            "   bu dosya ile %100 otomatik doğrulanır. Sahte şifre girerse reddedilir, doğru girerse anında ekrana düşer!\n\n"
-            "2. YOL (OFFLINE): AIRCRACK-NG İLE SÖZLÜK (WORDLIST) SALDIRISI YAPIN\n"
-            "   Handshake (.cap) dosyası kaydedildi. Hedef ağ ile bağlantıyı kesip wordlist (rockyou.txt vb.) ile\n"
-            "   bilgisayarınızda internetsiz çevrimdışı kırmayı deneyebilirsiniz."
-        )
         ctk.CTkLabel(
-            guide_box, text=desc_text, font=FONT_UI_S, text_color=TEXT_SEC,
+            guide_box, text=t("guide.body"), font=FONT_UI_S, text_color=TEXT_SEC,
             justify="left", anchor="w", padx=12, pady=8
         ).pack(fill="x")
 
@@ -709,14 +718,14 @@ class NextStepGuideCard(ctk.CTkFrame):
         btn_bar.pack(fill="x", padx=14, pady=(0, 10))
 
         self._btn_portal = ctk.CTkButton(
-            btn_bar, text="⚡ Bu Ağ İçin Captive Portal Başlat (Önerilen)",
+            btn_bar, text=t("guide.btn_portal"),
             command=self._portal_clicked, fg_color=ACCENT, text_color=DARK_BG,
             hover_color="#00C86A", font=FONT_UI_B, height=36
         )
         self._btn_portal.pack(side="left", padx=(0, 8), expand=True, fill="x")
 
         self._btn_crack = ctk.CTkButton(
-            btn_bar, text="🔑 Aircrack-ng ile Kırmayı Dene",
+            btn_bar, text=t("guide.btn_crack"),
             command=self._crack_clicked, fg_color=CARD_BG, text_color=TEXT_PRI,
             hover_color=CARD_HOVER, border_width=1, border_color=BORDER,
             font=FONT_UI, height=36
@@ -726,8 +735,13 @@ class NextStepGuideCard(ctk.CTkFrame):
     def set_handshake(self, hf) -> None:
         self._hf = hf
         self._info_lbl.configure(
-            text=f"Hedef Ağ: {hf.ssid}  ·  BSSID: {hf.bssid}  ·  Dosya: {Path(hf.filepath).name}"
+            text=t("guide.info", ssid=hf.ssid, bssid=hf.bssid,
+                   file=Path(hf.filepath).name)
         )
+        if hf.filepath:
+            self._saved_lbl.configure(text=t("guide.saved", path=hf.filepath))
+        else:
+            self._saved_lbl.configure(text="")
 
     def _portal_clicked(self) -> None:
         if self._on_start_portal:
@@ -748,19 +762,15 @@ class CredentialsPanel(ctk.CTkFrame):
 
         head = ctk.CTkFrame(self, fg_color="transparent")
         head.pack(fill="x", padx=14, pady=(12, 2))
-        ctk.CTkLabel(head, text="Yakalanan Girişler & Handshake Arşivi", font=FONT_TITLE,
+        ctk.CTkLabel(head, text=t("creds.title"), font=FONT_TITLE,
                      text_color=TEXT_PRI).pack(side="left")
         self._count = ctk.CTkLabel(head, text="", font=FONT_UI_S,
                                    text_color=MUTED)
         self._count.pack(side="left", padx=(8, 0))
 
-        # Sekme seçici: Portaldan Girişler / Handshake Arşivi
-        self._view_mode = "all"
-
         ctk.CTkLabel(
             self,
-            text=("Web portallarına yazılan şifreler ve dinleme ile yakalanan WPA .cap "
-                  "el sıkışma dosyaları burada arşivlenir."),
+            text=t("creds.desc"),
             font=FONT_UI_S, text_color=MUTED, anchor="w", justify="left",
             wraplength=760,
         ).pack(fill="x", padx=14, pady=(0, 8))
@@ -771,9 +781,7 @@ class CredentialsPanel(ctk.CTkFrame):
 
         self._empty = ctk.CTkLabel(
             self._list,
-            text=("Henüz giriş veya handshake yok.\n\n"
-                  "• Bir cihaz sahte portala bağlanıp şifre girdiğinde burada belirir.\n"
-                  "• Yakalanan WPA handshake dosyaları da burada listelenir."),
+            text=t("creds.empty"),
             font=FONT_UI, text_color=MUTED, justify="center",
         )
         self._empty.pack(pady=40)
@@ -802,7 +810,7 @@ class CredentialsPanel(ctk.CTkFrame):
 
         if handshakes:
             hdr = ctk.CTkLabel(
-                self._list, text="── 🤝 Yakalanan WPA Handshake (.cap) Dosyaları ──",
+                self._list, text=t("creds.handshake_header"),
                 font=FONT_UI_B, text_color=ACCENT2
             )
             hdr.pack(fill="x", padx=4, pady=(6, 2))
@@ -816,9 +824,9 @@ class CredentialsPanel(ctk.CTkFrame):
     def _update_counter(self) -> None:
         parts = []
         if self._count_value:
-            parts.append(f"{self._count_value} şifre")
+            parts.append(t("creds.count_passwords", count=self._count_value))
         if self._handshake_count:
-            parts.append(f"{self._handshake_count} handshake")
+            parts.append(t("creds.count_handshakes", count=self._handshake_count))
         self._count.configure(text=" · ".join(parts) if parts else "")
 
     def clear(self) -> None:
@@ -863,15 +871,13 @@ class Checklist(ctk.CTkFrame):
             self._rows.append(row)
 
         if missing:
-            text = (f"{len(missing)} zorunlu bileşen eksik – "
-                    "log panelinde kurulum komutu yazıyor")
+            text = t("checklist.missing", count=len(missing))
             colour = WARN
         elif optional_missing:
-            text = (f"Hazır. {len(optional_missing)} opsiyonel araç yok, "
-                    "temel akışlar çalışır.")
+            text = t("checklist.optional", count=len(optional_missing))
             colour = ACCENT2
         else:
-            text = "Her şey hazır."
+            text = t("checklist.ready")
             colour = ACCENT
 
         summary = ctk.CTkLabel(self, text=text, font=FONT_UI_S,

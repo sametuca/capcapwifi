@@ -27,8 +27,9 @@ HandshakeSnooperSnoopingForNSecondsNotice="\$HandshakeSnooperVerifierInterval sa
 HandshakeSnooperStoppingForVerifierNotice="İzleme durduruluyor & hash kontrolü yapılıyor"
 HandshakeSnooperSearchingForHashesNotice="Capture dosyasında hash aranıyor..."
 HandshakeSnooperArbiterAbortedWarning="${CYel}Durduruldu${CClr}: Bu işlem durduruldu, geçerli bir hash bulunamadı."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}Başarı${CClr}: Geçerli bir hash tespit edildi ve capcap veritabanına kaydedildi."
-HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel saldırısı tamamlandı, bu pencereyi kapatın ve başka bir saldırıya başlayın.$CClr"
+HandshakeSnooperArbiterSuccededNotice="${CGrn}Başarı${CClr}: Geçerli bir WPA/WPA2 handshake'i yakalandı."
+HandshakeSnooperSavedFileNotice="Kayıt dosyası: %s"
+HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel saldırısı tamamlandı.$CClr Kayıtlı handshake'i Captive Portal ile kullanabilir (şifreyi otomatik doğrular) ya da aircrack-ng ile çevrimdışı kırabilirsiniz."
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # FLUXSCRIPT END

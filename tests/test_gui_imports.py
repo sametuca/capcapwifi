@@ -14,7 +14,7 @@ sys.path.insert(0, GUI_DIR)
 
 errors = 0
 modules = {}
-for mod in ("models", "controller", "widgets"):
+for mod in ("i18n", "models", "controller", "widgets"):
     try:
         modules[mod] = importlib.import_module(mod)
         print(f"  [OK] {mod}.py")

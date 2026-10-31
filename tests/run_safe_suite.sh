@@ -15,6 +15,8 @@ tests=(
   "$SCRIPT_DIR/test_sandbox_utils.sh"
   "$SCRIPT_DIR/test_instagram_portal.sh"
   "$SCRIPT_DIR/test_install_deps.sh"
+  "$SCRIPT_DIR/test_gui_i18n.sh"
+  "$SCRIPT_DIR/test_gui_status.sh"
 )
 
 failures=0

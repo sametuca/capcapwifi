@@ -9,6 +9,9 @@ dosya işlemez; her şey buradan geçer.
   * stdout/stderr  – taranan ağ listesi, hata mesajları, ilerleme satırları
   * çalışma alanı  – $CAPCAPWorkspacePath/capcap.status (yapılandırılmış
                      olaylar) ve instagram_credentials.log (yakalanan girdiler)
+
+Kullanıcıya gösterilen metinler i18n üzerinden gelir; GUI dili değişince
+sonraki mesajlar da yeni dilde yazılır.
 """
 from __future__ import annotations
 
@@ -22,6 +25,7 @@ import time
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
+from i18n import get_language, t
 from models import (
     AttackConfig,
     AttackState,
@@ -61,24 +65,25 @@ _SCAN_SLICES = {
     "essid": (81, None),
 }
 
-#: Doğrulama için gerekli araçlar ve ne işe yaradıkları.
+#: Doğrulama için gerekli araçlar; açıklamaları "purpose.<tool>" anahtarında.
 REQUIRED_TOOLS = (
-    ("aircrack-ng", "handshake doğrulama / .cap işleme"),
-    ("airmon-ng", "adaptörü monitor moduna alma"),
-    ("hostapd", "sahte access point"),
-    ("lighttpd", "portal web sunucusu"),
-    ("php-cgi", "portalın PHP uçları"),
-    ("kea-dhcp4", "portalın DHCP sunucusu"),
-    ("dnsspoof", "tüm alan adlarını portala yönlendirme"),
-    ("mdk4", "deauth (alternatif yöntem)"),
-    ("iw", "kanal / arayüz bilgisi"),
+    "aircrack-ng",
+    "airmon-ng",
+    "hostapd",
+    "lighttpd",
+    "php-cgi",
+    "kea-dhcp4",
+    "dnsspoof",
+    "mdk4",
+    "iw",
+    # Attack runs are launched with `-m`, so tmux is the window backend.
+    "tmux",
 )
 
 OPTIONAL_TOOLS = (
-    ("xterm", "ayrı pencereler (yoksa -m/tmux kullanılır)"),
-    ("tmux", "headless çalışma"),
-    ("cowpatty", "stok portallar için şifre doğrulama"),
-    ("pyrit", "alternatif şifre doğrulama"),
+    "xterm",
+    "cowpatty",
+    "pyrit",
 )
 
 
@@ -101,15 +106,15 @@ def clean_log_line(raw: str) -> str:
 
 
 def humanize_log(line: str) -> tuple[str, str]:
-    """Teknik terminal satırlarını son kullanıcının anlayabileceği Türkçe açıklamalarla zenginleştirir."""
+    """Teknik terminal satırlarını son kullanıcının anlayabileceği açıklamalarla zenginleştirir."""
     if "Sending 64 directed Deauth" in line or "WPA handshake:" in line:
-        return f"⚡ [Deauth] Kurban cihaza bağlantı kesme paketi gönderiliyor... ({line})", "warn"
+        return t("humanize.deauth_directed", line=line), "warn"
     if "Notice: Target tracker" in line:
-        return "🎯 Hedef takipçisi aktif: Kanal değişiklikleri izleniyor.", "info"
+        return t("humanize.tracker"), "info"
     if "aireplay-ng" in line and "deauth" in line:
-        return "⚡ [Deauth] Aireplay-ng ile hedef cihazların bağlantısı geçici kesiliyor...", "warn"
+        return t("humanize.aireplay"), "warn"
     if "airodump-ng" in line:
-        return "📡 Airodump-ng hedef kanalda dinlemeye başladı...", "info"
+        return t("humanize.airodump"), "info"
     return line, "raw"
 
 
@@ -191,15 +196,21 @@ def parse_interface_table(lines: List[str]) -> List[WirelessInterface]:
 
 
 def parse_status_line(line: str) -> Optional[Dict[str, str]]:
-    """`[2026-10-31T12:00:00] TARGET_SELECTED ssid=... bssid=...` biçimi."""
+    """`[2026-10-31T12:00:00] TARGET_SELECTED ssid=... bssid=...` biçimi.
+
+    Değerler boşluk içerebilir (SSID'ler, "Handshake Snooper" gibi yol adları),
+    bu yüzden alanlar yalnızca `anahtar=` deseninden hemen önce bölünür;
+    düz `split()` değerleri ilk boşlukta kırardı.
+    """
     match = re.match(r"\[.*?\]\s*(.+)", line)
     if not match:
         return None
-    parts = match.group(1).split()
-    if not parts:
+    body = match.group(1).strip()
+    head, _, rest = body.partition(" ")
+    if not head:
         return None
-    event: Dict[str, str] = {"type": parts[0]}
-    for token in parts[1:]:
+    event: Dict[str, str] = {"type": head}
+    for token in re.split(r"\s+(?=[A-Za-z_][A-Za-z0-9_]*=)", rest.strip()):
         if "=" in token:
             key, _, value = token.partition("=")
             event[key] = value
@@ -216,6 +227,7 @@ class CapCapWifiController:
         on_candidates([TargetCandidate])
         on_credential(CapturedCredential)
         on_environment([EnvironmentCheck])
+        on_dependency_install(bool)
     """
 
     def __init__(self) -> None:
@@ -230,6 +242,7 @@ class CapCapWifiController:
         self._install_result: Optional[bool] = None
         self._handshake_detected = False
         self._last_config: Optional[AttackConfig] = None
+        self._status_offset = 0
 
         self.on_state_change: Callable[[AttackState], None] = lambda s: None
         self.on_log: Callable[[str, str], None] = lambda msg, level: None
@@ -279,31 +292,31 @@ class CapCapWifiController:
 
         checks.append(
             EnvironmentCheck(
-                name="Root yetkisi",
+                name=t("env.root.name"),
                 ok=self.is_root,
-                detail="yönetici olarak çalışıyor" if self.is_root else "sudo olmadan çalışıyor",
-                hint="sudo ./run_gui.sh ile başlatın; monitor mode ve hostapd root ister.",
+                detail=t("env.root.ok") if self.is_root else t("env.root.missing"),
+                hint=t("env.root.hint"),
             )
         )
 
-        for tool, purpose in REQUIRED_TOOLS:
+        for tool in REQUIRED_TOOLS:
             path = shutil.which(tool)
             checks.append(
                 EnvironmentCheck(
                     name=tool,
                     ok=bool(path),
-                    detail=purpose if path else "kurulu değil",
+                    detail=t(f"purpose.{tool}") if path else t("env.tool.missing"),
                     hint=f"sudo apt install -y {tool}",
                 )
             )
 
-        for tool, purpose in OPTIONAL_TOOLS:
+        for tool in OPTIONAL_TOOLS:
             path = shutil.which(tool)
             checks.append(
                 EnvironmentCheck(
-                    name=f"{tool} (opsiyonel)",
+                    name=t("env.optional.name", tool=tool),
                     ok=bool(path),
-                    detail=purpose if path else "yok – bu özellik kullanılamaz",
+                    detail=t(f"purpose.{tool}") if path else t("env.optional.missing"),
                     hint=f"sudo apt install -y {tool}",
                     required=False,
                 )
@@ -316,23 +329,21 @@ class CapCapWifiController:
         wireless = [i for i in ifaces if i.name]
         checks.append(
             EnvironmentCheck(
-                name="Kablosuz adaptör",
+                name=t("env.adapter.name"),
                 ok=bool(wireless),
-                detail=", ".join(i.name for i in wireless) if wireless else "bulunamadı",
-                hint=(
-                    "Adaptör takılı mı? VM kullanıyorsan USB passthrough yapılmış mı? "
-                    "iw dev çıktısında görünmesi gerekir."
-                ),
+                detail=(t("env.adapter.found", names=", ".join(i.name for i in wireless))
+                        if wireless else t("env.adapter.none")),
+                hint=t("env.adapter.hint"),
             )
         )
 
         monitor_ok = any("monitor" in i.state.lower() for i in wireless)
         checks.append(
             EnvironmentCheck(
-                name="Monitor mode",
+                name=t("env.monitor.name"),
                 ok=monitor_ok,
-                detail="hazır" if monitor_ok else "henüz açılmadı (saldırı başında açılır)",
-                hint="Sorun çıkarsa: sudo airmon-ng start <arayüz>",
+                detail=t("env.monitor.ready") if monitor_ok else t("env.monitor.pending"),
+                hint=t("env.monitor.hint"),
             )
         )
 
@@ -342,28 +353,27 @@ class CapCapWifiController:
 
     def missing_required_tools(self) -> List[str]:
         """PATH'te bulunamayan zorunlu araçlar."""
-        return [tool for tool, _ in REQUIRED_TOOLS if shutil.which(tool) is None]
+        return [tool for tool in REQUIRED_TOOLS if shutil.which(tool) is None]
 
-    def install_dependencies(self, language: str = "tur") -> None:
+    def install_dependencies(self, language: str = "") -> None:
         """Eksik paketleri kurar (`--install-deps`), çıktı log paneline akar."""
         if self.is_busy:
-            self._log("Kurulum/saldırı zaten çalışıyor.", "warn")
+            self._log(t("ctrl.install.busy"), "warn")
             return
+
+        if not language:
+            language = "tur" if get_language() == "tr" else "en"
 
         self._install_result = None
         args = [
             "sudo", "-n", str(SCRIPT),
             "--install-deps",
             "--auto",
-            "-m", "-k",
+            "-k",
             "-l", language,
         ]
         self._set_state(AttackState.INSTALLING)
-        self._log(
-            "Paket kontrolü başlıyor. Eksik varsa otomatik kurulacak "
-            "(ilk seferde birkaç dakika sürebilir).",
-            "info",
-        )
+        self._log(t("ctrl.install.start"), "info")
         self._run_async(args, mode="install")
 
     # ── listeler ────────────────────────────────────────────────
@@ -442,19 +452,15 @@ class CapCapWifiController:
     ) -> None:
         """Aircrack-ng ile arka planda wordlist kırma işlemi başlatır."""
         if not os.path.exists(cap_path):
-            self._log(f"Handshake dosyası bulunamadı: {cap_path}", "error")
+            self._log(t("ctrl.crack.missing_file", path=cap_path), "error")
             return
         if not os.path.exists(wordlist_path):
-            self._log(
-                f"Wordlist bulunamadı: {wordlist_path}. "
-                "Kali'de 'sudo gzip -d /usr/share/wordlists/rockyou.txt.gz' çalıştırabilirsiniz.",
-                "warn",
-            )
+            self._log(t("ctrl.crack.missing_wordlist", path=wordlist_path), "warn")
             return
 
-        self._log("🔑 Aircrack-ng ile sözlük saldırısı başlatıldı...", "info")
-        self._log(f"   Handshake: {Path(cap_path).name}", "info")
-        self._log(f"   Wordlist: {wordlist_path}", "info")
+        self._log(t("ctrl.crack.started"), "info")
+        self._log(t("ctrl.crack.handshake", name=Path(cap_path).name), "info")
+        self._log(t("ctrl.crack.wordlist", path=wordlist_path), "info")
 
         def _worker():
             cmd = ["aircrack-ng"]
@@ -471,7 +477,7 @@ class CapCapWifiController:
                     if not clean:
                         continue
                     if "KEY FOUND!" in clean:
-                        self._log(f"🎉 {clean}", "success")
+                        self._log(t("ctrl.crack.found", line=clean), "success")
                         m = re.search(r"KEY FOUND!\s*\[\s*(.*?)\s*\]", clean)
                         if m:
                             found_pw = m.group(1)
@@ -481,15 +487,15 @@ class CapCapWifiController:
                         self._log(clean, "raw")
                 proc.wait()
                 if found_pw:
-                    self._log(f"🎉 PAROLA ÇÖZÜLDÜ: {found_pw}", "success")
+                    self._log(t("ctrl.crack.solved", password=found_pw), "success")
                     if on_done:
                         on_done(True, found_pw)
                 else:
-                    self._log("❌ Parola bu sözlük içinde bulunamadı.", "warn")
+                    self._log(t("ctrl.crack.not_found"), "warn")
                     if on_done:
                         on_done(False, "")
             except Exception as e:
-                self._log(f"Aircrack-ng hatası: {e}", "error")
+                self._log(t("ctrl.crack.error", error=e), "error")
                 if on_done:
                     on_done(False, str(e))
 
@@ -505,7 +511,7 @@ class CapCapWifiController:
         band: str = "bg",
     ) -> None:
         if self.is_busy:
-            self._log("Zaten çalışan bir işlem var, önce durdurun.", "warn")
+            self._log(t("ctrl.scan.busy"), "warn")
             return
 
         args = [
@@ -526,7 +532,8 @@ class CapCapWifiController:
 
         self._set_state(AttackState.SCANNING)
         self._log(
-            f"Tarama başladı – arayüz: {interface or 'otomatik'}, süre: {scan_time}s",
+            t("ctrl.scan.start", iface=interface or t("log.iface_auto"),
+              seconds=scan_time),
             "info",
         )
         self._run_async(args, mode="scan")
@@ -535,7 +542,7 @@ class CapCapWifiController:
 
     def start_attack(self, config: AttackConfig) -> None:
         if self.is_busy:
-            self._log("Zaten çalışan bir işlem var, önce durdurun.", "warn")
+            self._log(t("ctrl.attack.busy"), "warn")
             return
 
         args = [
@@ -572,6 +579,8 @@ class CapCapWifiController:
             args += ["--deauth-method", config.deauth_method]
         if config.reg_domain:
             args += ["--reg-domain", config.reg_domain]
+        if config.attack_type is AttackType.CAPTIVE_PORTAL and config.portal_site:
+            args += ["--site", config.portal_site]
         if config.timeout_minutes:
             args += ["--timeout", str(config.timeout_minutes)]
 
@@ -579,8 +588,9 @@ class CapCapWifiController:
         self._handshake_detected = False
         self._set_state(AttackState.STARTING)
         self._log(
-            f"Saldırı başlatılıyor: {config.attack_type.value} → "
-            f"{config.target_essid or config.target_bssid or 'hedef seçilmedi'}",
+            t("ctrl.attack.start", attack=config.attack_type.value,
+              target=(config.target_essid or config.target_bssid
+                      or t("ctrl.attack.none"))),
             "info",
         )
         self._run_async(args, mode="attack")
@@ -602,7 +612,7 @@ class CapCapWifiController:
                     os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
                 except OSError:
                     pass
-            self._log("İşlem durduruldu.", "warn")
+            self._log(t("ctrl.stop.done"), "warn")
 
         self._stop_watching.set()
         self._set_state(AttackState.STOPPED)
@@ -637,16 +647,18 @@ class CapCapWifiController:
                 start_new_session=True,
             )
         except FileNotFoundError:
-            self._log(
-                "capcapwifi.sh bulunamadı ya da sudo parola soruyor. "
-                "GUI'yi `sudo ./run_gui.sh` ile başlatın.",
-                "error",
-            )
+            self._log(t("ctrl.error.script_missing"), "error")
             self._set_state(AttackState.ERROR)
+            # Kurulum çalışırken çağrıldıysa ilerleme çubuğu sonsuza kadar
+            # dönmesin: sonucu her durumda bildir.
+            if mode == "install":
+                self.on_dependency_install(False)
             return
         except OSError as exc:
-            self._log(f"İşlem başlatılamadı: {exc}", "error")
+            self._log(t("ctrl.error.spawn", error=exc), "error")
             self._set_state(AttackState.ERROR)
+            if mode == "install":
+                self.on_dependency_install(False)
             return
 
         with self._lock:
@@ -701,30 +713,31 @@ class CapCapWifiController:
         if kind == "SCAN_START":
             self._set_state(AttackState.SCANNING)
         elif kind == "DEP_CHECK":
-            self._log("Paketler kontrol ediliyor…", "info")
+            self._log(t("ctrl.dep.check"), "info")
         elif kind == "DEP_MISSING":
             tools = event.get("tools", "")
-            self._log(f"Eksik paketler kuruluyor: {tools}", "warn")
+            self._log(t("ctrl.dep.missing", tools=tools), "warn")
         elif kind == "DEP_OK":
             self._install_result = True
-            self._log("Tüm gerekli paketler hazır.", "success")
+            self._log(t("ctrl.dep.ok"), "success")
         elif kind == "DEP_FAILED":
             self._install_result = False
-            self._log("Paket kurulumu başarısız oldu.", "error")
+            self._log(t("ctrl.dep.failed"), "error")
         elif kind == "SCAN_COMPLETE":
             count = event.get("candidates", "?")
-            self._log(f"Tarama tamamlandı – {count} ağ bulundu.", "success")
+            self._log(t("ctrl.scan.complete", count=count), "success")
         elif kind == "TARGET_SELECTED":
             self._log(
-                "Hedef: {} ({}) kanal {}".format(
-                    event.get("ssid", "?"), event.get("bssid", "?"), event.get("channel", "?")
-                ),
+                t("ctrl.target",
+                  ssid=event.get("ssid", "?"),
+                  bssid=event.get("bssid", "?"),
+                  channel=event.get("channel", "?")),
                 "info",
             )
         elif kind == "ATTACK_STARTED":
             self._set_state(AttackState.RUNNING)
         elif kind == "TIMEOUT":
-            self._log(f"Süre doldu ({event.get('minutes', '?')} dk), saldırı kapatılıyor.", "warn")
+            self._log(t("ctrl.timeout", minutes=event.get("minutes", "?")), "warn")
         elif kind == "HANDSHAKE_CAPTURED":
             path = event.get("path", "")
             self._handle_handshake_captured(path)
@@ -732,6 +745,12 @@ class CapCapWifiController:
             self._handle_result(event)
 
     def _handle_handshake_captured(self, path_str: str) -> None:
+        # Aynı yakalama üç kanaldan gelebilir: başarı bayrağı, HANDSHAKE_CAPTURED
+        # durum satırı ve RESULT handshake= satırı. Kullanıcıya bir kez göster.
+        if self._handshake_detected:
+            return
+        self._handshake_detected = True
+
         p = Path(path_str) if path_str else None
         ssid = ""
         bssid = ""
@@ -761,33 +780,42 @@ class CapCapWifiController:
             created_at=mtime_str,
         )
         self._set_state(AttackState.HANDSHAKE_CAPTURED)
-        self._log("🎉 TEBRİKLER! WPA 4-Yönlü Handshake başarıyla yakalandı ve doğrulandı!", "success")
-        self._log(f"📁 Kayıt konumu: {path_str}", "info")
-        self._log("💡 ŞİMDİ NE YAPILMALI?", "warn")
-        self._log("   1. (Önerilen) Bu ağ için Captive Portal saldırısı başlatın. Kurban şifre girdiğinde sistem yakalanan bu handshake ile şifrenin doğruluğunu otomatik teyit eder!", "info")
-        self._log("   2. Veya 'Şifreler' sekmesinden aircrack-ng ile wordlist kırma işlemi başlatabilirsiniz.", "info")
+        self._log(f"🎉 {t('ctrl.handshake.congrats')}", "success")
+        self._log(f"📁 {t('ctrl.handshake.location', path=path_str)}", "info")
+        self._log(f"💡 {t('ctrl.handshake.whatnow')}", "warn")
+        self._log(t("ctrl.handshake.option1"), "info")
+        self._log(t("ctrl.handshake.option2"), "info")
         self.on_handshake(hf)
 
     def _handle_result(self, event: Dict[str, str]) -> None:
         password = event.get("password")
         handshake = event.get("handshake")
         if password:
-            cred = CapturedCredential(
-                timestamp=time.strftime("%H:%M:%S"),
-                ssid=event.get("ssid", ""),
-                bssid=event.get("bssid", ""),
-                password=password,
-                username=event.get("username", ""),
-            )
-            self._credentials.append(cred)
-            self.on_credential(cred)
+            username = event.get("username", "")
+            # The portal already appended this login to
+            # instagram_credentials.log, which the watcher reads live; adding
+            # the RESULT line too would show every capture twice.
+            if not any(c.password == password
+                       and (not username or c.username == username)
+                       for c in self._credentials):
+                cred = CapturedCredential(
+                    timestamp=time.strftime("%H:%M:%S"),
+                    ssid=event.get("ssid", ""),
+                    bssid=event.get("bssid", ""),
+                    password=password,
+                    username=username,
+                )
+                self._credentials.append(cred)
+                self.on_credential(cred)
             self._set_state(AttackState.CREDENTIALS_FOUND)
         elif handshake:
             self._handle_handshake_captured(handshake)
 
     def _watch_workspace(self, mode: str) -> None:
         """Süreç çalışırken status ve kimlik dosyalarını izler."""
-        self._status_offset = self._file_size(STATUS_FILE)
+        # Script her çalışmanın başında capcap.status'u sıfırlar; eski
+        # offset'i taşımak yeni satırları yutardı.
+        self._status_offset = 0
         cred_offset = self._file_size(CREDENTIAL_LOG)
 
         while not self._stop_watching.is_set():
@@ -804,7 +832,6 @@ class CapCapWifiController:
             # Handshake Snooper flag kontrolü
             flag_file = WORKSPACE / "handshake_success.flag"
             if flag_file.exists() and not self._handshake_detected:
-                self._handshake_detected = True
                 folder = REPO_DIR / "attacks" / "Handshake Snooper" / "handshakes"
                 caps = sorted(folder.glob("*.cap"), key=lambda x: x.stat().st_mtime, reverse=True) if folder.is_dir() else []
                 recent_cap = str(caps[0]) if caps else str(WORKSPACE / "capture" / "recent.cap")
@@ -827,6 +854,10 @@ class CapCapWifiController:
             return 0
 
     def _read_new_lines(self, path: Path, offset: int, handler, mode: str) -> int:
+        # Dosya küçüldüyse (truncate/rotation) baştan oku; aksi hâlde seek
+        # dosya sonunun ötesine gider ve yeni olaylar hiç görünmez.
+        if self._file_size(path) < offset:
+            offset = 0
         try:
             with path.open("r", encoding="utf-8", errors="replace") as handle:
                 handle.seek(offset)
@@ -853,7 +884,8 @@ class CapCapWifiController:
         )
         self._credentials.append(cred)
         self.on_credential(cred)
-        self._log(f"Yeni giriş yakalandı: {cred.username} ({cred.client_ip})", "success")
+        self._log(t("ctrl.credential.new", username=cred.username,
+                    ip=cred.client_ip), "success")
         self._set_state(AttackState.CREDENTIALS_FOUND)
 
     def _finish_scan(self) -> None:
@@ -861,11 +893,7 @@ class CapCapWifiController:
         if candidates:
             self._candidates = candidates
             self.on_candidates(candidates)
-            self._log(f"{len(candidates)} ağ listelendi.", "success")
+            self._log(t("ctrl.scan.found", count=len(candidates)), "success")
         else:
-            self._log(
-                "Tarama çıktısında ağ bulunamadı. Adaptör monitor mode destekliyor mu? "
-                "Süreyi artırmayı deneyin.",
-                "warn",
-            )
+            self._log(t("ctrl.scan.empty"), "warn")
         self._set_state(AttackState.STOPPED)

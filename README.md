@@ -103,8 +103,11 @@ install finishes. The same check can be triggered by hand with the install butto
 that card, or from a terminal with:
 
 ```bash
-sudo ./capcapwifi.sh --install-deps --auto -m
+sudo ./capcapwifi.sh --install-deps --auto
 ```
+
+This mode needs no X display and no tmux: it only installs the missing packages and
+exits with `0` on success or `7` on failure.
 
 ### Workflow
 
@@ -123,11 +126,16 @@ Attack → Result**. The status bar at the bottom always states the single next 
 4. **Attack.** Pick an attack type. Its description, prerequisites and expected
    outcome are shown inline, as is the selected portal's behaviour. Start it.
 5. **Result.** Captured credentials appear under the credentials tab (each with a copy
-   button); a captured handshake is marked on the network card.
+   button). A captured handshake opens a green panel above the tabs with the full path
+   of the saved `.cap` file and two buttons: continue with the Captive Portal, or crack
+   the file with a wordlist. A system bell, a highlighted log line and the step bar
+   jumping to **Result** make the capture hard to miss.
 
 The help tab holds the same walkthrough inside the application, including the
-workspace paths. The interface strings are currently Turkish; the CLI is localised
-independently of it.
+workspace paths. The interface language is switched with the EN / TR control in the
+top bar: the window is re-rendered in place, an attack that is already running keeps
+going, and the choice is remembered between launches. `CAPCAP_GUI_LANG=en|tr` forces
+a language for one run. The CLI language is independent of it and is set with `-l`.
 
 ### Conventions in the UI
 
@@ -170,6 +178,7 @@ sudo ./capcapwifi.sh --help        # full manual page
 | `--ap-channel <ch>` | Run the rogue AP on a different channel than the target |
 | `--ap-service hostapd\|airbase-ng` | Rogue AP backend |
 | `--deauth-method aireplay-ng\|mdk4` | Deauthentication method (default `aireplay-ng`) |
+| `--site <template>` | Captive Portal template to serve, e.g. `Instagram_tur` or `ARRIS_en` |
 | `--timeout <min>` | Stop the attack after N minutes |
 | `--reg-domain <CC>` | Regulatory domain for 5 GHz (default `US`) |
 | `--kill-exclude <name,…>` | Processes to spare when killing interference |
