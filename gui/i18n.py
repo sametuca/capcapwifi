@@ -218,7 +218,8 @@ NOTES
     "log.portal_info": "[i] Portal: {title} – {desc}",
     "log.attack_start": "[*] {attack} → {target}",
     "log.guide_portal_ready": ("[*] Captive Portal prepared: target {ssid} ({bssid}). "
-                               "The captured handshake will be used for password verification."),
+                               "The same SSID is broadcast with the portal page attached."),
+    "log.guide_portal_autostart": "[*] Starting the Captive Portal now – the portal page appears once a device joins.",
     "log.guide_start_hint": "[*] Press the 'Start' button at the bottom to begin.",
     "log.crack_start": "[*] Starting aircrack-ng wordlist attack… Target: {ssid} ({bssid})",
 
@@ -263,13 +264,12 @@ NOTES
     "guide.saved": "Saved file: {path}",
     "guide.body": """WHAT SHOULD YOU DO NOW? YOU HAVE TWO OPTIONS:
 
-Everything has already been stopped: the deauthentication, the capture and the
-adapter were closed and restored. Nothing is running in the background.
+The handshake was saved, so the snooper closed itself: you did not stop it, and
+nothing is left running in the background. The adapter is back to normal mode.
 
 1. OPTION (RECOMMENDED): START THE CAPTIVE PORTAL
-   You now hold a verified handshake, so when the rogue AP is up, every password the
-   visitor types is checked against this file automatically. A wrong password is
-   rejected; the right one shows up immediately.
+   A fake access point with the same network name opens. Once a device joins it,
+   the portal page appears and whatever is typed there lands in the Passwords tab.
 
 2. OPTION (OFFLINE): RUN AN AIRCRACK-NG WORDLIST ATTACK
    The handshake (.cap) file is saved. You can disconnect from the target network and
@@ -391,6 +391,9 @@ adapter were closed and restored. Nothing is running in the background.
     "ctrl.handshake.option1": ("   1. (Recommended) Start a Captive Portal attack for this "
                                "network. When the visitor types a password, the captured "
                                "handshake confirms it automatically!"),
+    "ctrl.handshake.autostop": ("Handshake Snooper stops itself once the handshake is saved: you did "
+                                "not stop anything, and nothing is left running. The Captive Portal "
+                                "needs a separate start."),
     "ctrl.handshake.option2": ("   2. Or start an aircrack-ng wordlist attack from the "
                                "Passwords tab."),
     "ctrl.credential.new": "New login captured: {username} ({ip})",
@@ -400,7 +403,7 @@ adapter were closed and restored. Nothing is running in the background.
     "humanize.tracker": "🎯 Target tracker active: following channel changes.",
     "humanize.aireplay": "⚡ [Deauth] aireplay-ng is briefly disconnecting the target devices…",
     "humanize.airodump": "📡 airodump-ng started listening on the target channel…",
-    "humanize.cleanup": "✓ Background attack stopped, adapter returned to normal mode.",
+    "humanize.cleanup": "✓ Cleanup finished: attack processes were closed and the adapter is back in normal mode.",
 }
 
 TR: Dict[str, str] = {
@@ -586,7 +589,8 @@ NOTLAR
     "log.portal_info": "[i] Portal: {title} – {desc}",
     "log.attack_start": "[*] {attack} → {target}",
     "log.guide_portal_ready": ("[*] Captive Portal hazırlandı: Hedef {ssid} ({bssid}). "
-                               "Yakalanan handshake şifre doğrulamada otomatik kullanılacak."),
+                               "Aynı ağ adı, portal sayfasıyla birlikte yayınlanacak."),
+    "log.guide_portal_autostart": "[*] Captive Portal şimdi başlatılıyor – bir cihaz bağlanınca portal sayfası açılır.",
     "log.guide_start_hint": "[*] Başlamak için alttaki 'Başlat' düğmesine basın.",
     "log.crack_start": "[*] Aircrack-ng wordlist kırma başlatılıyor… Hedef: {ssid} ({bssid})",
 
@@ -627,13 +631,12 @@ NOTLAR
     "guide.saved": "Kayıt dosyası: {path}",
     "guide.body": """ŞİMDİ NE YAPMALISINIZ? İKİ SEÇENEĞİNİZ VAR:
 
-Her şey zaten durduruldu: deauth, dinleme ve adaptör kapatılıp normal hâline
-döndürüldü. Arka planda çalışan bir işlem yok.
+Handshake kaydedildiği için dinleyici kendini kapattı: sen bir şey durdurmadın,
+arka planda çalışan işlem yok. Adaptör normal moda döndü.
 
-1. YOL (ÖNERİLEN): CAPTIVE PORTAL (SAHTE GİRİŞ EKRANI) BAŞLATIN
-   Elinizde doğrulanmış handshake olduğu için artık sahte AP açtığınızda kurbanın gireceği
-   parola bu dosya ile otomatik doğrulanır. Sahte şifre girerse reddedilir, doğru girerse
-   anında ekrana düşer.
+1. YOL (ÖNERİLEN): CAPTIVE PORTAL'I BAŞLAT
+   Aynı ağ adıyla sahte bir erişim noktası açılır. Bir cihaz bağlanınca portal
+   sayfası gelir ve girilen bilgiler anında Şifreler sekmesine düşer.
 
 2. YOL (OFFLINE): AIRCRACK-NG İLE SÖZLÜK (WORDLIST) SALDIRISI YAPIN
    Handshake (.cap) dosyası kaydedildi. Hedef ağ ile bağlantıyı kesip wordlist (rockyou.txt
@@ -752,6 +755,9 @@ döndürüldü. Arka planda çalışan bir işlem yok.
     "ctrl.handshake.option1": ("   1. (Önerilen) Bu ağ için Captive Portal saldırısı başlatın. "
                                "Kurban şifre girdiğinde sistem yakalanan bu handshake ile "
                                "şifrenin doğruluğunu otomatik teyit eder!"),
+    "ctrl.handshake.autostop": ("Handshake kaydedilince Handshake Snooper kendini kapatır: sen bir şey "
+                                "durdurmadın ve arkada çalışan işlem kalmadı. Captive Portal ayrıca "
+                                "başlatılır."),
     "ctrl.handshake.option2": ("   2. Veya Şifreler sekmesinden aircrack-ng ile wordlist kırma "
                                "işlemi başlatabilirsiniz."),
     "ctrl.credential.new": "Yeni giriş yakalandı: {username} ({ip})",
@@ -762,7 +768,7 @@ döndürüldü. Arka planda çalışan bir işlem yok.
     "humanize.aireplay": ("⚡ [Deauth] Aireplay-ng ile hedef cihazların bağlantısı geçici "
                           "kesiliyor…"),
     "humanize.airodump": "📡 Airodump-ng hedef kanalda dinlemeye başladı…",
-    "humanize.cleanup": "✓ Arka plan saldırısı durduruldu, adaptör normal moda döndürüldü.",
+    "humanize.cleanup": "✓ Temizlik tamamlandı: saldırı süreçleri kapatıldı, adaptör normal moda döndü.",
 }
 
 TRANSLATIONS: Dict[str, Dict[str, str]] = {"en": EN, "tr": TR}

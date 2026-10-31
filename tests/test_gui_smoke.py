@@ -105,6 +105,13 @@ def step_handshake_visible(hf):
     saved = getattr(guide, "_saved_lbl", None)
     check(saved is not None and hf.filepath in saved.cget("text"),
           "kaydedilen dosya yolu kartta yazıyor")
+    check(guide._btn_portal.winfo_ismapped() and guide._btn_crack.winfo_ismapped(),
+          "rehber düğmeleri görünür")
+    check(guide._btn_portal.winfo_width() <= guide.winfo_width()
+          and guide._btn_crack.winfo_width() <= guide.winfo_width(),
+          "rehber düğmeleri kartın dışına taşmıyor")
+    check(guide._info_lbl.cget("wraplength") not in (0, "0"),
+          "hedef bilgisi satırı kart genişliğine göre sarılıyor")
     check(window._step == 4, "adım göstergesi sonuca taşındı")
     window.after(100, step_language_tr)
 

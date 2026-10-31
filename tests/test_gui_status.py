@@ -13,6 +13,7 @@ from controller import (  # noqa: E402
     CapCapWifiController,
     parse_status_line,
 )
+from models import AttackState  # noqa: E402
 
 failures = []
 
@@ -74,6 +75,17 @@ ctrl._handle_handshake_captured("/tmp/nope.cap")
 ctrl._handle_handshake_captured("/tmp/nope.cap")
 check("duplicate handshake is shown once", len(handshakes) == 1,
       str(len(handshakes)))
+
+# Kullanıcı "durdur" demeden süreç kapanınca rozet "Durduruldu"ya düşmemeli.
+ctrl._success_state = AttackState.HANDSHAKE_CAPTURED
+ctrl.stop()
+check("badge keeps the capture state after a self-stop",
+      ctrl._state is AttackState.HANDSHAKE_CAPTURED, str(ctrl._state))
+
+ctrl._success_state = None
+ctrl.stop()
+check("an explicit stop still reports STOPPED",
+      ctrl._state is AttackState.STOPPED, str(ctrl._state))
 
 if failures:
     print(f"\nGUI status parser FAILED: {failures}")

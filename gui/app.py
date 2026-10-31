@@ -999,6 +999,12 @@ class CapCapWifiApp(ctk.CTk):
         self._next_step_guide.grid_forget()
 
     def _start_portal_from_guide(self, hf: Optional[HandshakeFile]) -> None:
+        """Rehberdeki tek tık: portalı hazırla ve hemen başlat.
+
+        Kullanıcı "başlat" düğmesine basıyor ama sadece form doluyordu; oysa
+        buton "Captive Portal başlat" diyor. Artık saldırı gerçekten başlıyor;
+        meşgulse eski yönlendirme metni gösterilir.
+        """
         if hf is None:
             return
         self._next_step_guide.grid_forget()
@@ -1012,11 +1018,22 @@ class CapCapWifiApp(ctk.CTk):
             self._config_panel._essid_e.delete(0, "end")
             self._config_panel._essid_e.insert(0, hf.ssid)
 
+        # Kanal biliniyorsa taşı: saldırı hedef kanalı aramakla vakit kaybetmez.
+        target = self._target
+        if target is not None and target.bssid.upper() == (hf.bssid or "").upper():
+            self._config_panel._target_ch_e.delete(0, "end")
+            self._config_panel._target_ch_e.insert(0, target.channel)
+
         self._show_tab("networks")
         self._set_step(3)
         self._log_panel.append(
             t("log.guide_portal_ready", ssid=hf.ssid, bssid=hf.bssid), "success")
-        self._log_panel.append(t("log.guide_start_hint"), "info")
+
+        if self._ctrl.is_busy:
+            self._log_panel.append(t("log.guide_start_hint"), "info")
+        else:
+            self._log_panel.append(t("log.guide_portal_autostart"), "info")
+            self.after(250, self._do_attack)
         self._refresh_hint()
 
     def _start_crack_from_guide(self, hf: Optional[HandshakeFile]) -> None:

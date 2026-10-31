@@ -246,6 +246,9 @@ class CapCapWifiController:
         self._pending_output: List[str] = []
         self._install_result: Optional[bool] = None
         self._handshake_detected = False
+        # Başarıyla biten bir saldırıdan sonra süreç kapanınca durum rozeti
+        # "Durduruldu"ya düşmemeli; kullanıcı bir şey durdurmadı.
+        self._success_state: Optional[AttackState] = None
         self._last_config: Optional[AttackConfig] = None
         self._status_offset = 0
 
@@ -596,6 +599,7 @@ class CapCapWifiController:
 
         self._last_config = config
         self._handshake_detected = False
+        self._success_state = None
         self._set_state(AttackState.STARTING)
         self._log(
             t("ctrl.attack.start", attack=config.attack_type.value,
@@ -625,7 +629,8 @@ class CapCapWifiController:
             self._log(t("ctrl.stop.done"), "warn")
 
         self._stop_watching.set()
-        self._set_state(AttackState.STOPPED)
+        # Yakalanan bir handshake/şifre varsa rozet başarı durumunda kalsın.
+        self._set_state(self._success_state or AttackState.STOPPED)
 
     # ── iç işleyiş ──────────────────────────────────────────────
 
@@ -710,9 +715,15 @@ class CapCapWifiController:
             # Süreç bittiğinde dosyada kalan satırları bir kez daha oku.
             self._drain_workspace(mode)
             if self._state in (AttackState.RUNNING, AttackState.STARTING):
-                self._set_state(
-                    AttackState.STOPPED if proc.returncode == 0 else AttackState.ERROR
-                )
+                # Süreç, başarı durumu işlenmeden önce kapanabilir (yarış);
+                # o zaman kullanıcıya "durduruldu" demek yanıltıcı olur.
+                if self._success_state is not None:
+                    self._set_state(self._success_state)
+                else:
+                    self._set_state(
+                        AttackState.STOPPED if proc.returncode == 0
+                        else AttackState.ERROR
+                    )
 
     def _handle_status_line(self, line: str, mode: str) -> None:
         event = parse_status_line(line)
@@ -789,9 +800,11 @@ class CapCapWifiController:
             size_bytes=size,
             created_at=mtime_str,
         )
+        self._success_state = AttackState.HANDSHAKE_CAPTURED
         self._set_state(AttackState.HANDSHAKE_CAPTURED)
         self._log(f"🎉 {t('ctrl.handshake.congrats')}", "success")
         self._log(f"📁 {t('ctrl.handshake.location', path=path_str)}", "info")
+        self._log(t("ctrl.handshake.autostop"), "info")
         self._log(f"💡 {t('ctrl.handshake.whatnow')}", "warn")
         self._log(t("ctrl.handshake.option1"), "info")
         self._log(t("ctrl.handshake.option2"), "info")
@@ -817,6 +830,7 @@ class CapCapWifiController:
                 )
                 self._credentials.append(cred)
                 self.on_credential(cred)
+            self._success_state = AttackState.CREDENTIALS_FOUND
             self._set_state(AttackState.CREDENTIALS_FOUND)
         elif handshake:
             self._handle_handshake_captured(handshake)
@@ -896,6 +910,7 @@ class CapCapWifiController:
         self.on_credential(cred)
         self._log(t("ctrl.credential.new", username=cred.username,
                     ip=cred.client_ip), "success")
+        self._success_state = AttackState.CREDENTIALS_FOUND
         self._set_state(AttackState.CREDENTIALS_FOUND)
 
     def _finish_scan(self) -> None:

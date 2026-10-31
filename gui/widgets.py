@@ -68,21 +68,18 @@ def mix_colour(first: str, second: str, amount: float) -> str:
 
 def auto_wrap(label: "ctk.CTkLabel", minimum: int = 220,
               slack: int = 24) -> "ctk.CTkLabel":
-    """Etiketi bulunduğu kapsayıcının genişliğine göre sar.
+    """Etiketi kapsayıcısının genişliğine göre sar.
 
-    Tkinter içinde döngüye (feedback loop) yol açmaması için:
-      1) Event doğrudan etikete değil, kapsayıcısına (master) bağlanır;
-         böylece wraplength değişimi yeni bir <Configure> tetiklemez.
-      2) Yalnızca en az 12 piksellik genişlik değişimlerinde configure
-         çağrılır, gereksiz yeniden hesaplamalar engellenir.
+    Bağlama kapsayıcıya yapılır: etiketin kendi <Configure> olayına bağlanınca
+    customtkinter'ın scrollbar çizimi ile birlikte sonsuz yerleşim döngüsü
+    oluşabiliyordu. Karşılaştırma `str()` üzerinden yapılır çünkü CTk sarmalayıcı
+    nesnesi ile Tk widget'ı `==` ile hiç eşleşmez.
     """
     last_wrap = [0]
     parent = getattr(label, "master", None)
 
-    def _resize(event) -> None:
-        if parent is not None and event.widget != parent:
-            return
-        target = max(minimum, int(event.width) - slack)
+    def _apply(width: int) -> None:
+        target = max(minimum, int(width) - slack)
         if abs(target - last_wrap[0]) >= 12:
             last_wrap[0] = target
             try:
@@ -90,8 +87,21 @@ def auto_wrap(label: "ctk.CTkLabel", minimum: int = 220,
             except Exception:
                 pass
 
+    def _resize(event) -> None:
+        if parent is not None and str(event.widget) != str(parent):
+            return
+        _apply(event.width)
+
     if parent is not None:
         parent.bind("<Configure>", _resize, add="+")
+        # İlk yerleşimden sonra bir kez uygula: kapsayıcı genişliği değişmese
+        # bile etiketin doğru sarılması gerekir.
+        def _initial() -> None:
+            try:
+                _apply(parent.winfo_width())
+            except Exception:
+                pass
+        parent.after(60, _initial)
     return label
 
 
@@ -780,10 +790,10 @@ class NextStepGuideCard(ctk.CTkFrame):
             ).pack(side="right")
 
         # Hedef Ağ & Dosya Bilgisi Banner
-        self._info_lbl = ctk.CTkLabel(
+        self._info_lbl = auto_wrap(ctk.CTkLabel(
             self, text=t("guide.info", ssid="-", bssid="-", file="-"),
             font=FONT_UI_B, text_color=TEXT_PRI, anchor="w", justify="left"
-        )
+        ))
         self._info_lbl.pack(fill="x", padx=14, pady=(0, 6))
 
         # Kaydedilen dosyanın tam yolu — kullanıcı dosyayı nerede bulacağını
@@ -803,24 +813,26 @@ class NextStepGuideCard(ctk.CTkFrame):
             justify="left", anchor="w", padx=12, pady=8
         )).pack(fill="x")
 
-        # Aksiyon Butonları
+        # Aksiyon Butonları — alt alta tam genişlik. Yan yana koyunca uzun
+        # Türkçe etiketler dar sütunda kırpılıyordu (buton dışarı taşıyordu).
         btn_bar = ctk.CTkFrame(self, fg_color="transparent")
         btn_bar.pack(fill="x", padx=14, pady=(0, 10))
+        btn_bar.columnconfigure(0, weight=1)
 
         self._btn_portal = ctk.CTkButton(
             btn_bar, text=t("guide.btn_portal"),
             command=self._portal_clicked, fg_color=ACCENT, text_color=DARK_BG,
-            hover_color=ACCENT_DK, font=FONT_UI_B, height=36
+            hover_color=ACCENT_DK, font=FONT_UI_B, height=36, width=1,
         )
-        self._btn_portal.pack(side="left", padx=(0, 8), expand=True, fill="x")
+        self._btn_portal.grid(row=0, column=0, sticky="ew")
 
         self._btn_crack = ctk.CTkButton(
             btn_bar, text=t("guide.btn_crack"),
             command=self._crack_clicked, fg_color=CARD_BG, text_color=TEXT_PRI,
             hover_color=CARD_HOVER, border_width=1, border_color=BORDER,
-            font=FONT_UI, height=36
+            font=FONT_UI, height=32, width=1,
         )
-        self._btn_crack.pack(side="left")
+        self._btn_crack.grid(row=1, column=0, sticky="ew", pady=(6, 0))
 
     def set_handshake(self, hf) -> None:
         self._hf = hf
