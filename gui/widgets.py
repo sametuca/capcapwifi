@@ -207,7 +207,11 @@ class GuideBar(ctk.CTkFrame):
 # ────────────────────────── Ağ tablosu ──────────────────────────────
 
 class NetworkRow(ctk.CTkFrame):
-    """Tek bir ağın modern satırı: rozet + sinyal çubukları + etiketler."""
+    """Tek bir ağın modern satırı: ferah 2 satırlı düzen.
+    
+    Üst satır: Kanal rozeti · AĞ ADI (SSID - asla sıkışmaz) · Sinyal & Rozetler
+    Alt satır: BSSID (MAC) · Şifreleme · Üretici · Bağlı cihaz & Handshake rozetleri
+    """
 
     def __init__(self, master, candidate, on_click: Callable, **kw):
         super().__init__(master, fg_color=CARD_BG, corner_radius=10,
@@ -216,62 +220,80 @@ class NetworkRow(ctk.CTkFrame):
         self._on_click = on_click
         self._selected = False
 
-        self.grid_columnconfigure(1, weight=1)
+        self.columnconfigure(1, weight=1)
 
-        # Kanal rozeti
+        # ── 1. SATIR: Kanal Rozeti, Ağ Adı (SSID), Sinyal ──
         badge_text = f"{candidate.channel}"
         if candidate.is_dfs:
             badge_text += "!"
         badge = ctk.CTkLabel(
-            self, text=badge_text, width=44, height=26, font=FONT_UI_B,
+            self, text=badge_text, width=38, height=24, font=FONT_UI_B,
             text_color=ACCENT2 if not candidate.is_dfs else WARN,
-            fg_color=DARK_BG, corner_radius=8,
+            fg_color=DARK_BG, corner_radius=6,
         )
-        badge.grid(row=0, column=0, rowspan=2, padx=(10, 8), pady=8)
+        badge.grid(row=0, column=0, padx=(10, 8), pady=(8, 2), sticky="w")
 
-        # SSID + BSSID
-        name = ctk.CTkLabel(self, text=candidate.clean_essid, font=FONT_UI_B,
-                            text_color=TEXT_PRI, anchor="w")
-        name.grid(row=0, column=1, sticky="w", pady=(8, 0))
-        sub = ctk.CTkLabel(self, text=candidate.bssid, font=FONT_MONO_S,
-                           text_color=MUTED, anchor="w")
-        sub.grid(row=1, column=1, sticky="w", pady=(0, 8))
+        # SSID: Kalın, belirgin ve tam genişlikte ana başlık
+        name = ctk.CTkLabel(
+            self, text=candidate.clean_essid, font=FONT_UI_B,
+            text_color=TEXT_PRI, anchor="w", justify="left"
+        )
+        name.grid(row=0, column=1, sticky="ew", padx=(0, 8), pady=(8, 2))
 
-        # Sinyal: çubuklar + dBm
-        self.bars = SignalBars(self)
+        # Sağ taraf: Sinyal çubukları + dBm
+        sig_frame = ctk.CTkFrame(self, fg_color="transparent")
+        sig_frame.grid(row=0, column=2, padx=(0, 10), pady=(8, 2), sticky="e")
+
+        self.bars = SignalBars(sig_frame)
         self.bars.set(candidate.signal_percent)
-        self.bars.grid(row=0, column=2, rowspan=2, padx=(4, 4))
-        signal = ctk.CTkLabel(self, text=f"{candidate.power} dBm",
-                              font=FONT_MONO_S, text_color=TEXT_SEC, width=64,
-                              anchor="w")
-        signal.grid(row=0, column=3, rowspan=2, padx=(0, 6))
+        self.bars.pack(side="left", padx=(0, 4))
 
-        # Bağlı cihaz sayısı
-        clients_text = (f"{candidate.clients} cihaz" if candidate.clients
-                        else "cihaz yok")
-        clients = ctk.CTkLabel(
-            self, text=clients_text, font=FONT_UI_S, width=76, height=24,
-            corner_radius=8,
+        signal = ctk.CTkLabel(
+            sig_frame, text=f"{candidate.power} dBm",
+            font=FONT_MONO_S, text_color=TEXT_SEC, width=54, anchor="e"
+        )
+        signal.pack(side="left")
+
+        # ── 2. SATIR: BSSID (MAC), Şifreleme, Üretici ve Durum Rozetleri ──
+        info_parts = [candidate.bssid]
+        if candidate.enc:
+            info_parts.append(candidate.enc)
+        if candidate.vendor:
+            info_parts.append(candidate.vendor)
+        sub_text = "  ·  ".join(info_parts)
+
+        sub = ctk.CTkLabel(
+            self, text=sub_text, font=FONT_MONO_S,
+            text_color=MUTED, anchor="w", justify="left"
+        )
+        sub.grid(row=1, column=1, sticky="w", padx=(0, 8), pady=(0, 8))
+
+        # Alt sağ: Bağlı cihaz rozeti, Handshake rozeti ve DFS etiketi
+        extra_frame = ctk.CTkFrame(self, fg_color="transparent")
+        extra_frame.grid(row=1, column=2, padx=(0, 10), pady=(0, 8), sticky="e")
+
+        clients_text = f"{candidate.clients} cihaz" if candidate.clients else "cihaz yok"
+        clients_badge = ctk.CTkLabel(
+            extra_frame, text=clients_text, font=FONT_UI_S, width=64, height=20,
+            corner_radius=6,
             text_color=DARK_BG if candidate.has_clients else MUTED,
             fg_color=ACCENT if candidate.has_clients else DARK_BG,
         )
-        clients.grid(row=0, column=4, rowspan=2, padx=(0, 6))
+        clients_badge.pack(side="left", padx=(0, 4))
 
-        # Handshake işareti
-        hs = ctk.CTkLabel(self, text="✔" if candidate.has_handshake else " ",
-                          font=FONT_UI_B, width=20,
-                          text_color=ACCENT2)
-        hs.grid(row=0, column=5, rowspan=2, padx=(0, 4))
+        if candidate.has_handshake:
+            ctk.CTkLabel(
+                extra_frame, text="✔ Handshake", font=FONT_UI_S,
+                text_color=ACCENT, fg_color="#102A1E", corner_radius=6,
+                height=20, padx=6
+            ).pack(side="left", padx=(0, 4))
 
-        # DFS etiketi
         if candidate.is_dfs:
-            ctk.CTkLabel(self, text="DFS", font=FONT_UI_S, width=36,
-                         height=20, corner_radius=6, fg_color="#33260F",
-                         text_color=WARN).grid(row=0, column=6, rowspan=2,
-                                               padx=(0, 10))
-        else:
-            ctk.CTkLabel(self, text="", width=36).grid(row=0, column=6,
-                                                       rowspan=2, padx=(0, 10))
+            ctk.CTkLabel(
+                extra_frame, text="DFS", font=FONT_UI_S,
+                text_color=WARN, fg_color="#33260F", corner_radius=6,
+                height=20, padx=6
+            ).pack(side="left")
 
         self._bind_events(self)
 
@@ -344,7 +366,16 @@ class NetworkTable(ctk.CTkFrame):
 
         self._list = ctk.CTkScrollableFrame(self, fg_color=DARK_BG,
                                             corner_radius=10)
-        self._list.pack(fill="both", expand=True, padx=12, pady=(0, 6))
+        self._list.pack(fill="both", expand=True, padx=12, pady=(0, 2))
+
+        # Alttaki yatay scroll çubuğu (dar ekranlarda yatay gezinme sağlar)
+        self._x_scroll = ctk.CTkScrollbar(
+            self, orientation="horizontal",
+            command=self._list._parent_canvas.xview,
+            height=10
+        )
+        self._list._parent_canvas.configure(xscrollcommand=self._x_scroll.set)
+        self._x_scroll.pack(fill="x", padx=12, pady=(0, 6))
 
         self._empty = ctk.CTkLabel(
             self._list,
@@ -571,24 +602,165 @@ class CredentialRow(ctk.CTkFrame):
         self.update_idletasks()
 
 
-class CredentialsPanel(ctk.CTkFrame):
-    """Yakalanan giriş bilgilerini kart listesi olarak gösterir."""
+class HandshakeRow(ctk.CTkFrame):
+    """Handshake (.cap) dosyasını ve aksiyon butonlarını gösteren satır."""
 
-    def __init__(self, master, **kw):
+    def __init__(self, master, hf, on_use_portal: Callable = None, on_crack: Callable = None, **kw):
+        super().__init__(master, fg_color=CARD_BG, corner_radius=10,
+                         border_width=1, border_color=BORDER, **kw)
+        self.hf = hf
+        self._on_use_portal = on_use_portal
+        self._on_crack = on_crack
+
+        self.grid_columnconfigure(1, weight=1)
+
+        # İkon / Rozet
+        ctk.CTkLabel(
+            self, text="🤝", font=("Segoe UI", 16), width=36
+        ).grid(row=0, column=0, rowspan=2, padx=(10, 6), pady=6)
+
+        # Ağ Adı ve BSSID
+        title_text = f"{hf.ssid or '<Bilinmeyen Ağ>'}"
+        ctk.CTkLabel(
+            self, text=title_text, font=FONT_UI_B, text_color=TEXT_PRI, anchor="w"
+        ).grid(row=0, column=1, sticky="w", pady=(6, 0))
+
+        sub_text = f"{hf.bssid or '-'}  ·  {Path(hf.filepath).name}  ·  {hf.size_kb if hasattr(hf, 'size_kb') else f'{hf.size_bytes}B'}  ·  {hf.created_at}"
+        ctk.CTkLabel(
+            self, text=sub_text, font=FONT_MONO_S, text_color=MUTED, anchor="w"
+        ).grid(row=1, column=1, sticky="w", pady=(0, 6))
+
+        # Aksiyon Butonları
+        btn_f = ctk.CTkFrame(self, fg_color="transparent")
+        btn_f.grid(row=0, column=2, rowspan=2, padx=(6, 10), pady=6, sticky="e")
+
+        if on_use_portal:
+            ctk.CTkButton(
+                btn_f, text="⚡ Portal'da Kullan", width=120, height=26,
+                font=FONT_UI_S, fg_color=ACCENT, text_color=DARK_BG,
+                hover_color="#00C86A", command=lambda: on_use_portal(hf)
+            ).pack(side="left", padx=(0, 6))
+
+        if on_crack:
+            ctk.CTkButton(
+                btn_f, text="🔑 Aircrack ile Kır", width=110, height=26,
+                font=FONT_UI_S, fg_color=CARD_BG, text_color=TEXT_PRI,
+                hover_color=CARD_HOVER, border_width=1, border_color=BORDER,
+                command=lambda: on_crack(hf)
+            ).pack(side="left")
+
+
+class NextStepGuideCard(ctk.CTkFrame):
+    """Handshake yakalandığında kullanıcıya sırada ne olduğunu anlatan
+    ve tek tıkla Captive Portal veya Aircrack başlatan rehberlik kartı."""
+
+    def __init__(self, master, on_start_portal: Callable = None, on_crack_wordlist: Callable = None, on_dismiss: Callable = None, **kw):
+        super().__init__(master, fg_color="#0C2417", corner_radius=12,
+                         border_width=2, border_color=ACCENT, **kw)
+        self._on_start_portal = on_start_portal
+        self._on_crack_wordlist = on_crack_wordlist
+        self._on_dismiss = on_dismiss
+        self._hf = None
+
+        # Üst Başlık & Kapatma Butonu
+        head = ctk.CTkFrame(self, fg_color="transparent")
+        head.pack(fill="x", padx=14, pady=(10, 4))
+
+        title_lbl = ctk.CTkLabel(
+            head, text="🎉 TEBRİKLER! WPA HANDSHAKE BAŞARIYLA YAKALANDI",
+            font=FONT_TITLE, text_color=ACCENT, anchor="w"
+        )
+        title_lbl.pack(side="left")
+
+        if on_dismiss:
+            ctk.CTkButton(
+                head, text="✕", width=26, height=22,
+                command=on_dismiss, fg_color="transparent",
+                hover_color="#1E3E2E", text_color=TEXT_SEC, font=FONT_UI_B
+            ).pack(side="right")
+
+        # Hedef Ağ & Dosya Bilgisi Banner
+        self._info_lbl = ctk.CTkLabel(
+            self, text="Hedef Ağ: - · Dosya: -",
+            font=FONT_UI_B, text_color=TEXT_PRI, anchor="w", justify="left"
+        )
+        self._info_lbl.pack(fill="x", padx=14, pady=(0, 6))
+
+        # Açıklama
+        guide_box = ctk.CTkFrame(self, fg_color=DARK_BG, corner_radius=10, border_width=1, border_color=BORDER)
+        guide_box.pack(fill="x", padx=14, pady=(0, 8))
+
+        desc_text = (
+            "💡 ŞİMDİ NE YAPMALISINIZ? İKİ SEÇENEĞİNİZ VAR:\n\n"
+            "1. YOL (ÖNERİLEN): CAPTIVE PORTAL (SAHTE GİRİŞ EKRANI) BAŞLATIN\n"
+            "   Elinizde doğrulanmış handshake olduğu için artık sahte AP açtığınızda kurbanın gireceği parola\n"
+            "   bu dosya ile %100 otomatik doğrulanır. Sahte şifre girerse reddedilir, doğru girerse anında ekrana düşer!\n\n"
+            "2. YOL (OFFLINE): AIRCRACK-NG İLE SÖZLÜK (WORDLIST) SALDIRISI YAPIN\n"
+            "   Handshake (.cap) dosyası kaydedildi. Hedef ağ ile bağlantıyı kesip wordlist (rockyou.txt vb.) ile\n"
+            "   bilgisayarınızda internetsiz çevrimdışı kırmayı deneyebilirsiniz."
+        )
+        ctk.CTkLabel(
+            guide_box, text=desc_text, font=FONT_UI_S, text_color=TEXT_SEC,
+            justify="left", anchor="w", padx=12, pady=8
+        ).pack(fill="x")
+
+        # Aksiyon Butonları
+        btn_bar = ctk.CTkFrame(self, fg_color="transparent")
+        btn_bar.pack(fill="x", padx=14, pady=(0, 10))
+
+        self._btn_portal = ctk.CTkButton(
+            btn_bar, text="⚡ Bu Ağ İçin Captive Portal Başlat (Önerilen)",
+            command=self._portal_clicked, fg_color=ACCENT, text_color=DARK_BG,
+            hover_color="#00C86A", font=FONT_UI_B, height=36
+        )
+        self._btn_portal.pack(side="left", padx=(0, 8), expand=True, fill="x")
+
+        self._btn_crack = ctk.CTkButton(
+            btn_bar, text="🔑 Aircrack-ng ile Kırmayı Dene",
+            command=self._crack_clicked, fg_color=CARD_BG, text_color=TEXT_PRI,
+            hover_color=CARD_HOVER, border_width=1, border_color=BORDER,
+            font=FONT_UI, height=36
+        )
+        self._btn_crack.pack(side="left")
+
+    def set_handshake(self, hf) -> None:
+        self._hf = hf
+        self._info_lbl.configure(
+            text=f"Hedef Ağ: {hf.ssid}  ·  BSSID: {hf.bssid}  ·  Dosya: {Path(hf.filepath).name}"
+        )
+
+    def _portal_clicked(self) -> None:
+        if self._on_start_portal:
+            self._on_start_portal(self._hf)
+
+    def _crack_clicked(self) -> None:
+        if self._on_crack_wordlist:
+            self._on_crack_wordlist(self._hf)
+
+
+class CredentialsPanel(ctk.CTkFrame):
+    """Yakalanan giriş bilgilerini ve yakalanan Handshake arşivini gösterir."""
+
+    def __init__(self, master, on_use_portal: Callable = None, on_crack: Callable = None, **kw):
         super().__init__(master, fg_color=PANEL_BG, corner_radius=12, **kw)
+        self._on_use_portal = on_use_portal
+        self._on_crack = on_crack
 
         head = ctk.CTkFrame(self, fg_color="transparent")
         head.pack(fill="x", padx=14, pady=(12, 2))
-        ctk.CTkLabel(head, text="Yakalanan girişler", font=FONT_TITLE,
+        ctk.CTkLabel(head, text="Yakalanan Girişler & Handshake Arşivi", font=FONT_TITLE,
                      text_color=TEXT_PRI).pack(side="left")
         self._count = ctk.CTkLabel(head, text="", font=FONT_UI_S,
                                    text_color=MUTED)
         self._count.pack(side="left", padx=(8, 0))
 
+        # Sekme seçici: Portaldan Girişler / Handshake Arşivi
+        self._view_mode = "all"
+
         ctk.CTkLabel(
             self,
-            text=("Portala yazılan her gönderim burada: saat · istemci IP · "
-                  "kullanıcı adı · şifre"),
+            text=("Web portallarına yazılan şifreler ve dinleme ile yakalanan WPA .cap "
+                  "el sıkışma dosyaları burada arşivlenir."),
             font=FONT_UI_S, text_color=MUTED, anchor="w", justify="left",
             wraplength=760,
         ).pack(fill="x", padx=14, pady=(0, 8))
@@ -599,26 +771,62 @@ class CredentialsPanel(ctk.CTkFrame):
 
         self._empty = ctk.CTkLabel(
             self._list,
-            text=("Henüz giriş yok.\n\nBir cihaz sahte portala bağlanıp formu "
-                  "gönderdiğinde satır burada belirir."),
+            text=("Henüz giriş veya handshake yok.\n\n"
+                  "• Bir cihaz sahte portala bağlanıp şifre girdiğinde burada belirir.\n"
+                  "• Yakalanan WPA handshake dosyaları da burada listelenir."),
             font=FONT_UI, text_color=MUTED, justify="center",
         )
         self._empty.pack(pady=40)
 
         self._count_value = 0
+        self._handshake_count = 0
 
     def add(self, cred) -> None:
-        if self._count_value == 0:
+        if self._count_value == 0 and self._handshake_count == 0:
             self._empty.pack_forget()
         self._count_value += 1
         CredentialRow(self._list, cred).pack(fill="x", padx=4, pady=3)
-        self._count.configure(text=f"{self._count_value} kayıt")
+        self._update_counter()
+
+    def load_handshakes(self, handshakes) -> None:
+        # Mevcut handshake satırlarını yenile
+        for child in list(self._list.winfo_children()):
+            if isinstance(child, HandshakeRow):
+                child.destroy()
+
+        self._handshake_count = len(handshakes)
+        if self._count_value == 0 and self._handshake_count == 0:
+            self._empty.pack(pady=40)
+        else:
+            self._empty.pack_forget()
+
+        if handshakes:
+            hdr = ctk.CTkLabel(
+                self._list, text="── 🤝 Yakalanan WPA Handshake (.cap) Dosyaları ──",
+                font=FONT_UI_B, text_color=ACCENT2
+            )
+            hdr.pack(fill="x", padx=4, pady=(6, 2))
+
+            for hf in handshakes:
+                row = HandshakeRow(self._list, hf, self._on_use_portal, self._on_crack)
+                row.pack(fill="x", padx=4, pady=3)
+
+        self._update_counter()
+
+    def _update_counter(self) -> None:
+        parts = []
+        if self._count_value:
+            parts.append(f"{self._count_value} şifre")
+        if self._handshake_count:
+            parts.append(f"{self._handshake_count} handshake")
+        self._count.configure(text=" · ".join(parts) if parts else "")
 
     def clear(self) -> None:
         for child in self._list.winfo_children():
             if child is not self._empty:
                 child.destroy()
         self._count_value = 0
+        self._handshake_count = 0
         self._count.configure(text="")
         self._empty.pack(pady=40)
 

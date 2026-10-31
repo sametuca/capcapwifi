@@ -24,6 +24,7 @@ from models import (
     AttackType,
     CapturedCredential,
     EnvironmentCheck,
+    HandshakeFile,
     PortalSite,
     TargetCandidate,
     WirelessInterface,
@@ -33,7 +34,7 @@ from widgets import (
     FONT_TITLE, FONT_UI, FONT_UI_B, FONT_UI_S, MUTED, PANEL_BG, TEXT_PRI,
     TEXT_SEC, WARN, BORDER,
     Checklist, CredentialsPanel, GuideBar, LogPanel, NetworkTable,
-    SectionCard, StatusBadge,
+    NextStepGuideCard, SectionCard, StatusBadge,
 )
 
 ctk.set_appearance_mode("dark")
@@ -467,6 +468,7 @@ class CapCapWifiApp(ctk.CTk):
         self._ctrl.on_log = self._on_log
         self._ctrl.on_candidates = self._on_candidates
         self._ctrl.on_credential = self._on_credential
+        self._ctrl.on_handshake = self._on_handshake
         self._ctrl.on_environment = self._on_environment
         self._ctrl.on_dependency_install = self._on_dependency_install
 
@@ -478,6 +480,7 @@ class CapCapWifiApp(ctk.CTk):
         self._build_ui()
         self._update_status(AttackState.IDLE)
         self.after(200, lambda: self._ctrl.check_environment())
+        self.after(500, self._refresh_handshake_archive)
 
     # ── UI construction ──────────────────────────────────────────
 
@@ -506,9 +509,9 @@ class CapCapWifiApp(ctk.CTk):
 
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True)
-        body.columnconfigure(0, weight=0, minsize=330)
-        body.columnconfigure(1, weight=3)
-        body.columnconfigure(2, weight=2, minsize=360)
+        body.columnconfigure(0, weight=0, minsize=290)
+        body.columnconfigure(1, weight=5, minsize=420)
+        body.columnconfigure(2, weight=0, minsize=300)
         body.rowconfigure(0, weight=1)
 
         # Left: configuration
@@ -520,8 +523,17 @@ class CapCapWifiApp(ctk.CTk):
         # Centre: tabs
         centre = ctk.CTkFrame(body, fg_color="transparent")
         centre.grid(row=0, column=1, sticky="nsew", padx=5, pady=10)
-        centre.rowconfigure(0, weight=1)
+        centre.rowconfigure(1, weight=1)
         centre.columnconfigure(0, weight=1)
+
+        # Handshake yakalandığında beliren dinamik rehberlik kartı
+        self._next_step_guide = NextStepGuideCard(
+            centre,
+            on_start_portal=self._start_portal_from_guide,
+            on_crack_wordlist=self._start_crack_from_guide,
+            on_dismiss=self._dismiss_guide,
+        )
+        # Başlangıçta gizli tutulur
 
         self._tabs = ctk.CTkTabview(
             centre, fg_color=PANEL_BG,
@@ -533,7 +545,7 @@ class CapCapWifiApp(ctk.CTk):
             text_color=TEXT_PRI,
             corner_radius=12,
         )
-        self._tabs.grid(row=0, column=0, sticky="nsew")
+        self._tabs.grid(row=1, column=0, sticky="nsew")
         tab_nets = self._tabs.add("📡  Ağlar")
         tab_creds = self._tabs.add("🔑  Şifreler")
         tab_help = self._tabs.add("❓  Nasıl kullanılır")
@@ -541,7 +553,11 @@ class CapCapWifiApp(ctk.CTk):
         self._net_table = NetworkTable(tab_nets, on_select=self._on_target_select)
         self._net_table.pack(fill="both", expand=True)
 
-        self._cred_panel = CredentialsPanel(tab_creds)
+        self._cred_panel = CredentialsPanel(
+            tab_creds,
+            on_use_portal=self._start_portal_from_guide,
+            on_crack=self._start_crack_from_guide,
+        )
         self._cred_panel.pack(fill="both", expand=True)
 
         help_box = ctk.CTkFrame(tab_help, fg_color="transparent")
@@ -723,6 +739,69 @@ class CapCapWifiApp(ctk.CTk):
         self._guide.set_active(3)
         self._refresh_hint()
 
+        # Eğer bu hedef için önceden kaydedilmiş handshake varsa kullanıcıya bildir
+        if target.has_handshake:
+            hf = HandshakeFile(
+                filename=f"{target.clean_essid}-{target.bssid}.cap",
+                filepath=str(REPO_DIR / "attacks" / "Handshake Snooper" / "handshakes" / f"{target.clean_essid}-{target.bssid}.cap"),
+                ssid=target.clean_essid,
+                bssid=target.bssid,
+                size_bytes=0,
+                created_at="Önceden kayıtlı",
+            )
+            self._next_step_guide.set_handshake(hf)
+            self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+
+    def _on_handshake(self, hf: HandshakeFile) -> None:
+        def _apply():
+            self._next_step_guide.set_handshake(hf)
+            self._next_step_guide.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+            self._refresh_handshake_archive()
+            self._guide.set_active(4)
+            self._refresh_hint()
+        self.after(0, _apply)
+
+    def _dismiss_guide(self) -> None:
+        self._next_step_guide.grid_forget()
+
+    def _start_portal_from_guide(self, hf: Optional[HandshakeFile]) -> None:
+        if hf is None:
+            return
+        self._next_step_guide.grid_forget()
+        # Saldırı türünü Captive Portal'a geçir
+        self._config_panel._attack_var.set("Captive Portal – sahte giriş sayfası")
+        self._config_panel._on_attack_change(None)
+        if hf.bssid:
+            self._config_panel._bssid_e.delete(0, "end")
+            self._config_panel._bssid_e.insert(0, hf.bssid)
+        if hf.ssid:
+            self._config_panel._essid_e.delete(0, "end")
+            self._config_panel._essid_e.insert(0, hf.ssid)
+
+        self._tabs.set("📡  Ağlar")
+        self._guide.set_active(3)
+        self._log_panel.append(
+            f"[*] Captive Portal hazırlandı: Hedef {hf.ssid} ({hf.bssid}). "
+            f"Yakalanan handshake şifre doğrulamada otomatik kullanılacak.", "success")
+        self._log_panel.append(
+            f"[*] Başlamak için alttaki '⚡  Saldırıyı başlat' düğmesine basın.", "info")
+        self._refresh_hint()
+
+    def _start_crack_from_guide(self, hf: Optional[HandshakeFile]) -> None:
+        if hf is None:
+            return
+        self._tabs.set("🔑  Şifreler")
+        self._log_panel.append(
+            f"[*] Aircrack-ng wordlist kırma başlatılıyor... Hedef: {hf.ssid} ({hf.bssid})", "info")
+        self._ctrl.crack_handshake(hf.filepath, bssid=hf.bssid)
+
+    def _refresh_handshake_archive(self) -> None:
+        try:
+            handshakes = self._ctrl.list_handshakes()
+            self._cred_panel.load_handshakes(handshakes)
+        except Exception as e:
+            self._log_panel.append(f"[!] Handshake arşivi taranırken hata: {e}", "warn")
+
     # ── Button handlers ─────────────────────────────────────────
 
     def _do_scan(self) -> None:
@@ -859,7 +938,7 @@ class CapCapWifiApp(ctk.CTk):
         elif state is AttackState.CREDENTIALS_FOUND:
             text, colour = ("Giriş yakalandı! '🔑 Şifreler' sekmesinden kopyalayabilirsin.", ACCENT)
         elif state is AttackState.HANDSHAKE_CAPTURED:
-            text, colour = ("Handshake yakalandı. Dosya: attacks/Handshake Snooper/handshakes/", ACCENT)
+            text, colour = ("🎉 Handshake başarıyla yakalandı! Şimdi Captive Portal veya Aircrack ile şifreyi alabilirsiniz.", ACCENT)
         elif state is AttackState.ERROR:
             text, colour = ("Hata: sağdaki log paneli ve ortam kontrolü kartına bak.", DANGER)
         elif state is AttackState.STOPPED:
