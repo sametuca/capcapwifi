@@ -134,4 +134,4 @@ CAPCAPCleanupSuccessNotice="Temizlik başarıyla tamamlandı"
 CAPCAPThanksSupportersNotice="CapWifi'ı tercih ettiğiniz için teşekkürler!"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

@@ -24,8 +24,8 @@ HandshakeSnooperSnoopingForNSecondsNotice="التطفل لـ \$HandshakeSnooperV
 HandshakeSnooperStoppingForVerifierNotice="وقف المتطفل والتحقق من وجود التجزئة."
 HandshakeSnooperSearchingForHashesNotice="البحث عن التجزئات في ملف الالتقاط."
 HandshakeSnooperArbiterAbortedWarning="${CYel}تم الإحباط${CClr}: تم إحباط العملية ، ولم يتم العثور على تجزئة صالحة."
-HandshakeSnooperArbiterSuccededNotice="${CGrn}نجاح${CClr}: تم الكشف عن تجزئة صالحة وحفظها إلى قاعدة بيانات فلاكسيون."
+HandshakeSnooperArbiterSuccededNotice="${CGrn}نجاح${CClr}: تم الكشف عن تجزئة صالحة وحفظها إلى قاعدة بيانات CapWifi."
 HandshakeSnooperArbiterCompletedTip="${CBCyn}متطفل المصافحة$CBYel اكتمل الهجوم ، أغلق هذه النافذة وابدأ في هجوم آخر.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

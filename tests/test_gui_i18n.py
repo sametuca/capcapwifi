@@ -5,6 +5,7 @@ Verifies that English and Turkish define exactly the same keys, that every
 placeholder matches between the two, that no widget asks for a key that does
 not exist, and that switching language changes the visible strings.
 """
+import json
 import os
 import re
 import string
@@ -120,12 +121,37 @@ check("missing format arguments do not raise",
 # Preference persistence, isolated from the real HOME.
 with tempfile.TemporaryDirectory() as tmp:
     original_dir, original_file = i18n.CONFIG_DIR, i18n.CONFIG_FILE
+    original_legacy = i18n.LEGACY_CONFIG_DIR, i18n.LEGACY_CONFIG_FILE
     original_env = os.environ.pop("CAPCAP_GUI_LANG", None)
     try:
         i18n.CONFIG_DIR = Path(tmp) / "capwifi"
         i18n.CONFIG_FILE = i18n.CONFIG_DIR / "gui.json"
+        i18n.LEGACY_CONFIG_DIR = Path(tmp) / "capcapwifi"
+        i18n.LEGACY_CONFIG_FILE = i18n.LEGACY_CONFIG_DIR / "gui.json"
+
+        # Model an install upgraded in place: the old build left its settings
+        # in ~/.config/capcapwifi and the new build has not written anything.
+        i18n.LEGACY_CONFIG_DIR.mkdir(parents=True)
+        i18n.LEGACY_CONFIG_FILE.write_text(
+            json.dumps({"language": "tr"}), encoding="utf-8")
+        check("settings from the pre-rename build are still read",
+              i18n.detect_language() == "tr")
+
         i18n.save_language("tr")
-        check("preference file is written", i18n.CONFIG_FILE.is_file())
+        check("writing after an upgrade uses the new location",
+              i18n.CONFIG_FILE.is_file())
+        check("the legacy file is left untouched",
+              json.loads(i18n.LEGACY_CONFIG_FILE.read_text())["language"] == "tr")
+        check("the new file wins over the legacy one",
+              i18n.detect_language() == "tr")
+
+        i18n.CONFIG_FILE.write_text(json.dumps({"language": "en"}), encoding="utf-8")
+        check("a value in the new file overrides the legacy one",
+              i18n.detect_language() == "en")
+        i18n.CONFIG_FILE.unlink()
+
+        i18n.save_language("tr")
+        check("preference file is rewritten", i18n.CONFIG_FILE.is_file())
         check("saved preference is detected", i18n.detect_language() == "tr")
 
         os.environ["CAPCAP_GUI_LANG"] = "en"
@@ -139,6 +165,7 @@ with tempfile.TemporaryDirectory() as tmp:
         if original_env is not None:
             os.environ["CAPCAP_GUI_LANG"] = original_env
         i18n.CONFIG_DIR, i18n.CONFIG_FILE = original_dir, original_file
+        i18n.LEGACY_CONFIG_DIR, i18n.LEGACY_CONFIG_FILE = original_legacy
         i18n.set_language("en")
 
 check("invalid language codes fall back to English",

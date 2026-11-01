@@ -28,4 +28,4 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}Успех${CClr}: Валидны�
 HandshakeSnooperArbiterCompletedTip="Атака ${CBCyn}Разведчик рукопожатий$CBYel завершена, закройте это окно и начните другую атаку.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

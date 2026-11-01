@@ -90,4 +90,4 @@ check_required_variables \
 
 finish_tests
 
-# FLUXSCRIPT END
+# CAPWIFI END

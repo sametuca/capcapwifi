@@ -390,7 +390,7 @@ handshake_snooper_unset_jammer_interface() {
   fi
 
   # Deallocate the interface from CapCapInterfaces so it can be reused.
-  # Pass the renamed interface (e.g. fluxwl0) — that's the current real name
+  # Pass the renamed interface (e.g. capwl0) — that's the current real name
   # in /sys/class/net, which capcap_deallocate_interface needs for interface_is_real.
   capcap_deallocate_interface "$HandshakeSnooperJammerInterface" 2>/dev/null
 
@@ -425,11 +425,11 @@ handshake_snooper_set_jammer_interface() {
 
   local selectedInterface=$HandshakeSnooperJammerInterfaceOriginal
 
-  # If the user picked a fluxwl* name from the interface list (already renamed by
+  # If the user picked a capwl* name from the interface list (already renamed by
   # the scanner), use it directly — capcap_allocate_interface would try to rename
-  # it again, and CapCapInterfaces[$fluxwl*] returns the original hw name (reverse
+  # it again, and CapCapInterfaces[$capwl*] returns the original hw name (reverse
   # mapping), which no longer exists as an interface name.
-  if [[ "$selectedInterface" == fluxwl* ]]; then
+  if [[ "$selectedInterface" == capwl* ]]; then
     HandshakeSnooperJammerInterface="$selectedInterface"
     local hwName="${CapCapInterfaces[$selectedInterface]}"
     [ -n "$hwName" ] && HandshakeSnooperJammerInterfaceOriginal="$hwName"
@@ -443,7 +443,7 @@ handshake_snooper_set_jammer_interface() {
 
   echo "Succeeded get jammer interface." >> $CAPCAPOutputDevice
 
-  # Use the renamed monitor interface (e.g. fluxwl0), not the original name.
+  # Use the renamed monitor interface (e.g. capwl0), not the original name.
   local jammerIface=${CapCapInterfaces[$selectedInterface]:-$selectedInterface}
 
   HandshakeSnooperJammerInterface=$jammerIface
@@ -719,4 +719,4 @@ start_attack() {
   HandshakeSnooperArbiterPID=$!
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

@@ -27,4 +27,4 @@ function array_contains() {
   return 1 # Not found
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

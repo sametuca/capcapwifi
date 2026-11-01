@@ -612,39 +612,77 @@ class CapWifiController:
     # ── gömülü konsollar (tmux panelleri) ───────────────────────
     CONSOLE_SESSION = "CAPWIFI"
 
-    def console_windows(self) -> List[tuple]:
-        """Saldırının açtığı tmux pencereleri: [(index, name), ...]."""
-        try:
-            proc = subprocess.run(
-                ["sudo", "-n", "tmux", "list-windows", "-t",
-                 self.CONSOLE_SESSION, "-F", "#{window_index}\t#{window_name}"],
-                capture_output=True, text=True, timeout=4,
-            )
-        except (OSError, subprocess.SubprocessError):
-            return []
-        if proc.returncode != 0:
-            return []
-        windows = []
-        for line in proc.stdout.splitlines():
-            if "\t" not in line:
+    def _tmux(self, args: List[str]) -> str:
+        """tmux komutunu çalıştır, stdout'u döndür; olmazsa boş dizge.
+
+        Neden iki deneme: GUI normalde root çalışır (gui/root_gate.py) ama
+        ``sudo -n`` parolasız sudo izni olmayan kurulumlarda (ya da sudo hiç
+        yokken) sessizce başarısız oluyor ve konsol sekmesi sonsuza kadar boş
+        kalıyordu. Önce sudo ile (tmux sunucusu root'a aitse), olmazsa doğrudan
+        tmux ile deniyoruz.
+        """
+        commands = []
+        if os.name != "nt":
+            commands.append(["sudo", "-n", "tmux"] + args)
+        commands.append(["tmux"] + args)
+        for command in commands:
+            try:
+                proc = subprocess.run(command, capture_output=True, text=True,
+                                      timeout=4)
+            except (OSError, subprocess.SubprocessError):
                 continue
-            index, name = line.split("\t", 1)
-            windows.append((index.strip(), name.strip()))
-        return windows
+            if proc.returncode == 0:
+                return proc.stdout
+        return ""
+
+    def console_windows(self) -> List[tuple]:
+        """Saldırının açtığı tmux pencereleri: [(index, name), ...].
+
+        Yalnızca ``CAPWIFI`` oturumuna bakmak yetmiyordu: lib/WindowUtils.sh
+        (satır 25-39) eski bir CAPWIFI oturumu duruyorsa yeni oturumu
+        ``CAPCAP_$$`` adıyla açıyor ve ardından gelen
+        ``tmux rename-session CAPWIFI`` "duplicate session" ile başarısız
+        oluyor. O durumda tüm saldırı pencereleri CAPCAP_* içinde kalıyor,
+        CAPWIFI'de ise yalnızca eskimiş pencere var; sekme bu yüzden boş
+        görünüyordu. Burada iki adı da tarıyoruz.
+        """
+        raw = self._tmux(["list-windows", "-a", "-F",
+                          "#{session_name}\t#{window_index}\t#{window_name}"])
+        if not raw:
+            return []
+        by_session: Dict[str, List[tuple]] = {}
+        for line in raw.splitlines():
+            parts = line.split("\t")
+            if len(parts) != 3:
+                continue
+            session, index, name = (part.strip() for part in parts)
+            if session != self.CONSOLE_SESSION and not session.startswith(
+                    "CAPCAP_"):
+                continue
+            by_session.setdefault(session, []).append((index, name))
+        if not by_session:
+            return []
+        # Eski bir CAPWIFI oturumu duruyorsa içinde tek bir eskimiş pencere
+        # kalıyor; asıl saldırı ise CAPCAP_* oturumunda. Bu yüzden "CAPWIFI
+        # varsa onu kullan" yetmiyor: en çok pencereye sahip oturumu seçiyoruz,
+        # eşitlikte CAPWIFI kazanıyor (normal durum).
+        session = max(by_session,
+                      key=lambda name: (len(by_session[name]),
+                                        name == self.CONSOLE_SESSION))
+        self._console_session = session
+        return by_session[session]
 
     def capture_console(self, index: str) -> str:
         """Bir pencerenin son ekranını metin olarak döndürür."""
-        try:
-            proc = subprocess.run(
-                ["sudo", "-n", "tmux", "capture-pane", "-p", "-J",
-                 "-S", "-160", "-t", f"{self.CONSOLE_SESSION}:{index}"],
-                capture_output=True, text=True, timeout=4,
-            )
-        except (OSError, subprocess.SubprocessError):
-            return ""
-        if proc.returncode != 0:
-            return ""
-        return proc.stdout.rstrip()
+        session = getattr(self, "_console_session", self.CONSOLE_SESSION)
+        target = f"{session}:{index}"
+        text = self._tmux(["capture-pane", "-p", "-J", "-S", "-160",
+                           "-t", target])
+        if not text and session != self.CONSOLE_SESSION:
+            # Pencere bu arada CAPWIFI'ye taşınmış olabilir.
+            text = self._tmux(["capture-pane", "-p", "-J", "-S", "-160",
+                               "-t", f"{self.CONSOLE_SESSION}:{index}"])
+        return text.rstrip()
 
     def stop(self) -> None:
         proc = self._proc

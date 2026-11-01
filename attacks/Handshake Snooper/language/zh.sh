@@ -28,4 +28,4 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}成功${CClr}: 检测到有效hash
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel 攻击完成，关闭此窗口并开始另一次攻击.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

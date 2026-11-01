@@ -6,7 +6,8 @@ tables below; widgets call :func:`t` at render time, so switching language
 re-renders the window without restarting the attack engine.
 
 The choice is persisted in ``~/.config/capwifi/gui.json`` and can be
-overridden per run with ``CAPCAP_GUI_LANG=en|tr``.
+overridden per run with ``CAPCAP_GUI_LANG=en|tr``. Settings written by the
+pre-rename build under ``~/.config/capcapwifi/`` are still read as a fallback.
 """
 from __future__ import annotations
 
@@ -25,6 +26,12 @@ LANGUAGES: Tuple[Tuple[str, str], ...] = (
 
 CONFIG_DIR = Path.home() / ".config" / "capwifi"
 CONFIG_FILE = CONFIG_DIR / "gui.json"
+
+#: Where the GUI kept its settings before the project was renamed from
+#: CapCapWifi. Read-only fallback so an existing install keeps its language
+#: instead of silently reverting to the default after an upgrade.
+LEGACY_CONFIG_DIR = Path.home() / ".config" / "capcapwifi"
+LEGACY_CONFIG_FILE = LEGACY_CONFIG_DIR / "gui.json"
 
 EN: Dict[str, str] = {
     # ── window chrome ───────────────────────────────────────────
@@ -46,6 +53,20 @@ EN: Dict[str, str] = {
     "app.health.installing": "Installing – apt output appears in the log panel…",
     "app.health.installing_short": "Installing…",
     "app.language.label": "Language",
+
+    # ── root kapısı ────────────────────────────────────────────
+    # Uygulama rootsuz hiç açılmıyor; bu metinler kullanıcıya nedenini ve
+    # tam çözümü söyleyen tek yer. Komut iki dilde de birebir aynı yazılır.
+    "root.required.title": "Root privileges required",
+    "root.required.body": ("CapWifi has to run as root: monitor mode, hostapd and the captive "
+                           "portal cannot start without it. The window was closed on purpose, so "
+                           "you would not be left with buttons that do nothing."),
+    "root.required.hint": ("Start it from a terminal with  sudo ./run_gui.sh  – sudo asks for "
+                           "your password once. If you launch it from a desktop shortcut, edit "
+                           "the shortcut to run that command."),
+    "root.required.terminal": ("[x] CapWifi needs root privileges. Start it with:  "
+                               "sudo ./run_gui.sh"),
+    "root.required.exit": "Exit",
 
     # ── tek akış metinleri ─────────────────────────────────────
     "basic.need_target": ("Pick a network from the list first – tap the row whose signal "
@@ -275,6 +296,13 @@ NOTES
     "console.not_found": ("No attack console found yet. If this stays empty, the attack has not "
                           "started yet – check the log panel on the right."),
     "console.buffer": "{name} · live tail",
+    # Çoklu panel ızgarası: her konsolun kendi başlığı ve durumu var.
+    "console.pane.title": "{name}  ·  #{index}",
+    "console.pane.loading": "reading…",
+    "console.pane.empty": "(no output yet)",
+    "console.pane.lost": "(window closed)",
+    "console.status.ready": "{count} console(s) live",
+    "console.status.idle": "No console yet",
     "creds.desc": ("Passwords typed into the web portals and WPA .cap handshakes "
                    "captured by listening are archived here."),
     "creds.empty": ("No logins or handshakes yet.\n\n"
@@ -515,6 +543,20 @@ TR: Dict[str, str] = {
     "app.health.installing_short": "Kuruluyor…",
     "app.language.label": "Dil",
 
+    # ── root kapısı ────────────────────────────────────────────
+    # Uygulama rootsuz hiç açılmıyor; bu metinler kullanıcıya nedenini ve
+    # tam çözümü söyleyen tek yer. Komut iki dilde de birebir aynı yazılır.
+    "root.required.title": "Root yetkisi gerekli",
+    "root.required.body": ("CapWifi root olarak çalışmak zorunda: monitör modu, hostapd ve "
+                           "sahte portal root olmadan başlamaz. Pencere bilerek kapatıldı; "
+                           "böylece elinizde hiçbir işe yaramayan düğmeler kalmadı."),
+    "root.required.hint": ("Terminalden  sudo ./run_gui.sh  ile başlatın – sudo parolayı bir kez "
+                           "sorar. Masaüstü kısayolundan açıyorsanız kısayolu bu komutu "
+                           "çalıştıracak şekilde düzenleyin."),
+    "root.required.terminal": ("[x] CapWifi root yetkisi ister. Şu komutla başlatın:  "
+                               "sudo ./run_gui.sh"),
+    "root.required.exit": "Çık",
+
     "step.adapter": "Adaptör",
     "step.scan": "Tara",
     "step.target": "Hedef seç",
@@ -719,6 +761,13 @@ NOTLAR
     "console.not_found": ("Henüz saldırı konsolu bulunamadı. Uzun süre boş kalırsa saldırı "
                           "başlamamış olabilir – sağdaki log paneline bak."),
     "console.buffer": "{name} · canlı akış",
+    # Çoklu panel ızgarası: her konsolun kendi başlığı ve durumu var.
+    "console.pane.title": "{name}  ·  #{index}",
+    "console.pane.loading": "okunuyor…",
+    "console.pane.empty": "(henüz çıktı yok)",
+    "console.pane.lost": "(pencere kapandı)",
+    "console.status.ready": "{count} konsol canlı",
+    "console.status.idle": "Henüz konsol yok",
     "creds.desc": ("Web portallarına yazılan şifreler ve dinleme ile yakalanan WPA .cap "
                    "el sıkışma dosyaları burada arşivlenir."),
     "creds.empty": ("Henüz giriş veya handshake yok.\n\n"
@@ -926,32 +975,69 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {"en": EN, "tr": TR}
 
 # ── updater (git tabanlı güncelleme) metinleri ──────────────────────
 EN.update({
-    "update.available": "Update available – {count} new commit(s) on GitHub",
+    # Kullanıcı isteği: güncelleme şeridi teknik ayrıntı (GitHub, commit
+    # sayısı) vermesin. Tek mesaj yeterli; ayrıntı zaten log panelinde.
+    "update.available": "Update available",
     "update.btn_now": "Update now",
     "update.btn_later": "Later",
     "update.checking": "Checking for updates…",
     "update.uptodate": "You're on the latest version.",
     "update.not_repo": "Auto-update needs a git clone; this folder isn't a git repo.",
     "update.error": "Update check failed: {msg}",
-    "update.doing": "Updating from GitHub…",
+    "update.doing": "Updating…",
     "update.done": "Updated to the latest version. Please restart the app.",
     "update.failed": "Update failed: {msg}",
     "update.confirm.title": "Update",
-    "update.confirm.body": "This resets the app to the latest GitHub version and discards any local changes in this folder. Continue?",
+    "update.confirm.body": "This resets the app to the latest version and discards any local changes in this folder. Continue?",
+    # ── modal güncelleme katmanı (kilit + ilerleme + yeniden başlatma) ──
+    "update.modal.title": "Updating CapWifi",
+    "update.modal.locked": "The app is locked until the update finishes.",
+    "update.step.check": "Preparing…",
+    "update.step.fetch": "Downloading the new version…",
+    "update.step.apply": "Applying changes…",
+    "update.step.verify": "Verifying…",
+    "update.step.done": "Update complete.",
+    # Başarılı güncellemeden sonra kaçış yok: tek düğme uygulamayı yeniden
+    # başlatır, çünkü çalışan süreç hâlâ eski kodu bellekte tutuyor.
+    "update.restart.title": "Restart required",
+    "update.restart.body": "The update is complete. Restart the app to keep using it with the new version.",
+    "update.restart.btn": "Restart now",
+    "update.restart.failed": "Could not restart automatically. Close this window and start CapWifi again.",
+    # Başarısız güncelleme kullanıcıyı kilitlemez: yeniden denemek ya da
+    # çıkmak serbesttir (uygulama eski sürümle çalışmaya devam eder).
+    "update.error.title": "Update failed",
+    "update.error.body": "The app is still on its previous version and can keep running.",
+    "update.error.retry": "Try again",
+    "update.error.quit": "Quit",
 })
 TR.update({
-    "update.available": "Güncelleme mevcut – GitHub'da {count} yeni commit",
+    "update.available": "Güncelleme mevcut",
     "update.btn_now": "Şimdi güncelle",
     "update.btn_later": "Sonra",
     "update.checking": "Güncellemeler kontrol ediliyor…",
     "update.uptodate": "En güncel sürümdesin.",
     "update.not_repo": "Otomatik güncelleme için git klonu gerekir; bu klasör bir git deposu değil.",
     "update.error": "Güncelleme kontrolü başarısız: {msg}",
-    "update.doing": "GitHub'dan güncelleniyor…",
+    "update.doing": "Güncelleniyor…",
     "update.done": "En son sürüme güncellendi. Lütfen uygulamayı yeniden başlat.",
     "update.failed": "Güncelleme başarısız: {msg}",
     "update.confirm.title": "Güncelle",
-    "update.confirm.body": "Bu işlem uygulamayı GitHub'daki en son sürüme sıfırlar ve bu klasördeki yerel değişiklikleri siler. Devam edilsin mi?",
+    "update.confirm.body": "Bu işlem uygulamayı en son sürüme sıfırlar ve bu klasördeki yerel değişiklikleri siler. Devam edilsin mi?",
+    "update.modal.title": "CapWifi güncelleniyor",
+    "update.modal.locked": "Güncelleme bitene kadar uygulama kilitli.",
+    "update.step.check": "Hazırlanıyor…",
+    "update.step.fetch": "Yeni sürüm indiriliyor…",
+    "update.step.apply": "Değişiklikler uygulanıyor…",
+    "update.step.verify": "Doğrulanıyor…",
+    "update.step.done": "Güncelleme tamamlandı.",
+    "update.restart.title": "Yeniden başlatma gerekli",
+    "update.restart.body": "Güncelleme tamamlandı. Yeni sürümle devam etmek için uygulamayı yeniden başlatın.",
+    "update.restart.btn": "Şimdi yeniden başlat",
+    "update.restart.failed": "Otomatik yeniden başlatma olmadı. Bu pencereyi kapatıp CapWifi'yi elle açın.",
+    "update.error.title": "Güncelleme başarısız",
+    "update.error.body": "Uygulama önceki sürümünde çalışmaya devam edebilir.",
+    "update.error.retry": "Yeniden dene",
+    "update.error.quit": "Kapat",
 })
 
 _current: str = DEFAULT_LANGUAGE
@@ -970,24 +1056,35 @@ def language_codes() -> List[str]:
 
 def read_pref(key: str, default: str = "") -> str:
     """Kayıtlı bir tercihi okur; bozuk/eksik dosya varsayılanı döndürür."""
+    for path in (CONFIG_FILE, LEGACY_CONFIG_FILE):
+        value = _read_pref_file(path, key)
+        if value:
+            return value
+    return default
+
+
+def _read_pref_file(path: Path, key: str) -> str:
     try:
-        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return default
+        return ""
     if not isinstance(data, dict):
-        return default
-    value = str(data.get(key, "")).strip()
-    return value or default
+        return ""
+    return str(data.get(key, "")).strip()
 
 
 def write_pref(key: str, value: str) -> None:
     """Tek bir tercihi yazar; diğer anahtarlar korunur."""
-    try:
-        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            data = {}
-    except (OSError, ValueError):
-        data = {}
+    data: Dict[str, str] = {}
+    for path in (CONFIG_FILE, LEGACY_CONFIG_FILE):
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(loaded, dict):
+            # The new file wins, but a legacy file still seeds keys the new
+            # one has not written yet (upgrade path).
+            data = {**loaded, **data}
     data[key] = value
     try:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)

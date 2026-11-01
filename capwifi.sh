@@ -595,8 +595,8 @@ capcap_shutdown() {
   if [ ${#CapCapInterfaces[@]} -gt 0 ]; then
     local interface
     for interface in "${!CapCapInterfaces[@]}"; do
-      # Only deallocate capcap or airmon-ng created interfaces.
-      if [[ "$interface" == "flux"* || "$interface" == *"mon"* || "$interface" == "prism"* ]]; then
+      # Only deallocate capwifi or airmon-ng created interfaces.
+      if [[ "$interface" == "capwl"* || "$interface" == "capet"* || "$interface" == *"mon"* || "$interface" == "prism"* ]]; then
         capcap_deallocate_interface "$interface"
       fi
     done
@@ -1241,7 +1241,7 @@ capcap_allocate_interface() { # Reserve interfaces
     local mappedIdentifier="${CapCapInterfaces[$identifier]}"
     # The allocation is live if EITHER side of the bidirectional mapping
     # still exists. When the identifier passed is itself an already-renamed
-    # interface (e.g. re-selecting fluxwl0 to also serve as the rogue AP),
+    # interface (e.g. re-selecting capwl0 to also serve as the rogue AP),
     # the reverse mapping points at the now-gone original name, yet the
     # interface itself is real and must NOT be torn down and re-initialized.
     if interface_is_real "$identifier" || \
@@ -1356,10 +1356,10 @@ capcap_allocate_interface() { # Reserve interfaces
     # Prevent interface-snatching by renaming the interface.
     if [ $allocatingWirelessInterface ]; then
       # Get next wireless interface to add to CapCapInterfaces global.
-      capcap_next_assignable_interface fluxwl
+      capcap_next_assignable_interface capwl
     else
       # Get next ethernet interface to add to CapCapInterfaces global.
-      capcap_next_assignable_interface fluxet
+      capcap_next_assignable_interface capet
     fi
 
     if ! interface_reidentify $identifier $CapCapNextAssignableInterface; then
@@ -3536,4 +3536,4 @@ capcap_main() {
 
 capcap_main # Start CapCap
 
-# FLUXSCRIPT END
+# CAPWIFI END

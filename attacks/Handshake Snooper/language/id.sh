@@ -28,4 +28,4 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}sukses${CClr}: Hash yang valid ter
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Pengintai handshake$CBYel serangan selesai, tutup jendela ini dan mulai serangan lain.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

@@ -84,4 +84,4 @@ assert_contains "$STATE" "none" \
 
 finish_tests
 
-# FLUXSCRIPT END
+# CAPWIFI END

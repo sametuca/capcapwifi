@@ -11,7 +11,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import Callable, List, Optional, Tuple
 
 REPO_DIR = Path(__file__).resolve().parent.parent
 REMOTE = "origin"
@@ -81,21 +81,58 @@ def check_for_update() -> UpdateStatus:
         return UpdateStatus(is_repo=True, ok=False, message=str(e))
 
 
-def apply_update() -> UpdateStatus:
-    """origin/master ile birebir eşitle (hard reset); yerel değişiklikler gider."""
+#: Güncelleme adımları – (etiket anahtarı, o adım TAMAMLANINCA varılan yüzde).
+#: Yüzdeler gerçek işe karşılık gelir: fetch (ağ) en uzun adım olduğu için
+#: çubuğun çoğunu o alır. Arayüz üst sınırı bu eşikten alır ve o eşiğe kadar
+#: yavaşça yaklaşır; hiçbir yüzde gerçekten bitmiş bir git komutundan önce
+#: gösterilmez, uydurma ara değer yoktur.
+UPDATE_STEPS: Tuple[Tuple[str, int], ...] = (
+    ("update.step.check", 10),     # depo sağlığı + güvenli dizin
+    ("update.step.fetch", 55),     # origin'den yeni commit'leri indir
+    ("update.step.apply", 90),     # çalışan kopyayı o commit'e getir
+    ("update.step.verify", 100),   # HEAD'i doğrula
+)
+
+#: Adım ilerledikçe çağrılacak geri bildirim: (tamamlanan yüzde, anahtar).
+ProgressCallback = Callable[[int, str], None]
+
+
+def apply_update(on_progress: Optional[ProgressCallback] = None) -> UpdateStatus:
+    """origin/master ile birebir eşitle (hard reset); yerel değişiklikler gider.
+
+    ``on_progress`` her gerçek adım BİTTİĞİNDE (tamamlanan yüzde, o adımın
+    i18n anahtarı) ile çağrılır: arayüz o ana kadar olan işi doğrulanmış
+    sayar ve sıradaki adımın etiketini gösterir. Bu fonksiyon bloklayıcıdır
+    ve thread içinde çalışır; geri bildirimi çağıran taraf (GUI)
+    ``after(0, ...)`` ile ana iş parçacığına taşımakla yükümlüdür.
+    """
+    def done(index: int) -> None:
+        if on_progress is None:
+            return
+        key, pct = UPDATE_STEPS[index]
+        try:
+            on_progress(pct, key)
+        except Exception:
+            # Arayüz geri bildirimi patlarsa güncelleme yine de sürsün.
+            pass
+
     if not is_git_repo():
         return UpdateStatus(is_repo=False, ok=False, message="not a git repo")
     _ensure_safe_directory()
+    done(0)
     try:
         fetch = _run(["fetch", REMOTE, BRANCH])
         if fetch.returncode != 0:
             return UpdateStatus(is_repo=True, ok=False,
                                 message=(fetch.stderr or "fetch failed").strip())
+        done(1)
         reset = _run(["reset", "--hard", f"{REMOTE}/{BRANCH}"])
         if reset.returncode != 0:
             return UpdateStatus(is_repo=True, ok=False,
                                 message=(reset.stderr or "reset failed").strip())
+        done(2)
         local = _run(["rev-parse", "HEAD"]).stdout.strip()
+        done(3)
         return UpdateStatus(is_repo=True, ok=True, behind=0,
                             local=local[:7], remote=local[:7],
                             message=(reset.stdout or "").strip())

@@ -33,4 +33,4 @@ HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel attack comp
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 HandshakeSnooperChannelSetWarning="Could not lock the jammer interface to the target channel; the deauth may not reach the clients. Stop and check the adapter."
-# FLUXSCRIPT END
+# CAPWIFI END

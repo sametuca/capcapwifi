@@ -268,4 +268,4 @@ function interface_reidentify() {
   return $result
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

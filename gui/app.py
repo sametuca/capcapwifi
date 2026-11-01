@@ -12,6 +12,7 @@ saldırı etkilenmez.
 """
 from __future__ import annotations
 
+import os
 import sys
 import threading
 from pathlib import Path
@@ -37,6 +38,7 @@ except Exception:
 
 # Local modules
 import i18n
+import root_gate
 import updater
 from tkinter import messagebox
 from i18n import t
@@ -54,7 +56,7 @@ from models import (
 from widgets import (
     Checklist, CredentialsPanel, GuideBar, LogPanel, NetworkTable,
     NotificationHost, SectionCard, SelectionSummary, StatusBadge, auto_wrap,
-    form_combo, form_entry, form_label, hairline, segmented,
+    form_combo, form_entry, form_label, hairline, progress_bar, segmented,
 )
 
 from effects import (
@@ -359,6 +361,349 @@ class DetailsWindow(ctk.CTkToplevel):
                 return
 
 
+# ─────────────────── Güncelleme katmanı (modal) ─────────────────────
+
+
+class UpdateOverlay:
+    """Güncelleme sırasında pencereyi ele geçiren modal katman.
+
+    Neden ayrı bir tam ekran katman: kullanıcı "güncelleme sürerken
+    uygulamayı kullanmaya devam etti" ve altında hâlâ eski kodun çalıştığı
+    bir arayüzle saldırı başlatabiliyordu. Şerit (banner) yalnızca bir
+    bildirimdi. Burada üç şey birlikte yapılıyor:
+
+    1. ``place(relwidth=1, relheight=1)`` ile pencerenin TAMAMINI kaplar;
+       altta kalan hiçbir düğme görünmez, tıklanamaz.
+    2. ``grab_set()`` ile Tk'nin işaretçi/klavye yönlendirmesini kendine
+       alır: katmanın dışına yapılan tıklamalar alt pencerelere ulaşmaz.
+    3. Başarılı güncellemede "kapat" yolu yoktur: ne X düğmesi, ne Sonra,
+       ne Escape. Çalışan süreç eski Python modüllerini bellekte tuttuğu
+       için tek güvenli çıkış yeniden başlatmadır.
+
+    Başarısız güncellemede kilit kalkar (Yeniden dene / Kapat): takılıp
+    kalan bir hata kullanıcıyı uygulamadan koparmamalı.
+    """
+
+    #: Durum adları – testler ve uygulama bunlara göre dallanır.
+    WORKING = "working"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+    def __init__(self, master, on_retry, on_quit, on_restart,
+                 on_cancel=None):
+        self._master = master
+        self._on_retry = on_retry
+        self._on_quit = on_quit
+        self._on_restart = on_restart
+        self._on_cancel = on_cancel
+        self.state = self.WORKING
+        self._grab_held = False
+        self._prev_close = None
+        self._escape_binds = []
+
+        # Zemin: pencerenin tamamı. Rengi bilinçli olarak saydam değil –
+        # saydam bir katman altındaki düğmeleri görünür bırakıp "hâlâ
+        # kullanılabilir" izlenimi verirdi.
+        self.frame = ctk.CTkFrame(master, fg_color=DARK_BG, corner_radius=0)
+        self.frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        # Kart ortada: başlık, ilerleme, durum satırı, eylem düğmeleri.
+        self.card = ctk.CTkFrame(self.frame, fg_color=CARD_BG, corner_radius=16,
+                                 border_width=1, border_color=BORDER,
+                                 width=560, height=300)
+        self.card.place(relx=0.5, rely=0.5, anchor="center")
+        self.card.pack_propagate(False)
+
+        self.accent = ctk.CTkFrame(self.card, fg_color=ACCENT, height=3,
+                                   corner_radius=0)
+        self.accent.pack(fill="x", padx=0, pady=(0, 0))
+
+        inner = ctk.CTkFrame(self.card, fg_color="transparent")
+        inner.pack(fill="both", expand=True, padx=26, pady=(20, 20))
+
+        self.title_label = ctk.CTkLabel(
+            inner, text=t("update.modal.title"), font=FONT_TITLE,
+            text_color=TEXT_PRI, anchor="w")
+        self.title_label.pack(fill="x")
+
+        self.body_label = ctk.CTkLabel(
+            inner, text=t("update.modal.locked"), font=FONT_UI,
+            text_color=MUTED, anchor="w", justify="left", wraplength=500)
+        self.body_label.pack(fill="x", pady=(6, 16))
+
+        # İlerleme çubuğu: gerçek adım eşiklerine kadar yumuşak ilerler,
+        # adımlar arasında beklerken kıpırdamaz (bkz. _advance_progress).
+        self.progress = progress_bar(inner, colour=ACCENT, height=8)
+        self.progress.pack(fill="x")
+        self.progress.set(self._value_from_percent(0))
+
+        self.status_label = ctk.CTkLabel(
+            inner, text=t("update.step.check"), font=FONT_UI_S,
+            text_color=TEXT_SEC, anchor="w", justify="left", wraplength=500)
+        self.status_label.pack(fill="x", pady=(12, 0))
+
+        # Düğme alanı: duruma göre doldurulur. Boşken de yüksekliğini
+        # korur, böylece kart başarı ekranına geçerken zıplamaz.
+        self.actions = ctk.CTkFrame(inner, fg_color="transparent", height=40)
+        self.actions.pack(fill="x", side="bottom", pady=(16, 0))
+        self.actions.pack_propagate(False)
+
+        self._lock_window_close()
+        self._take_grab()
+        self._bind_escape()
+        # Durum satırı uzun metinde kartı büyütmesin diye sabit ölçü.
+        try:
+            self.frame.update_idletasks()
+        except Exception:
+            pass
+
+    # ── kilit ───────────────────────────────────────────────────
+
+    def _lock_window_close(self) -> None:
+        """Güncelleme sürerken pencereyi kapatmayı engelle.
+
+        Yarıda kesilen bir git reset'i çalışan kopyayı bozuk bırakabilir;
+        bu yüzden kapama isteği yalnızca başarısız durumda serbest kalır.
+        """
+        try:
+            self._prev_close = self._master.protocol("WM_DELETE_WINDOW")
+        except Exception:
+            self._prev_close = None
+        try:
+            self._master.protocol("WM_DELETE_WINDOW",
+                                  self._on_window_close)
+        except Exception:
+            pass
+
+    def _unlock_window_close(self) -> None:
+        """Kilidi kaldır; önceki kapatma davranışını geri koy."""
+        if not self._prev_close:
+            return
+        try:
+            self._master.protocol("WM_DELETE_WINDOW", self._prev_close)
+        except Exception:
+            pass
+
+    def _on_window_close(self) -> None:
+        # Başarıda kapatma da yok: uygulama kendini yeniden başlatmalı.
+        if self.state == self.FAILED and self._on_cancel is not None:
+            self._on_cancel()
+
+    def _take_grab(self) -> None:
+        try:
+            self.frame.grab_set()
+            self._grab_held = True
+        except Exception:
+            self._grab_held = False
+        # Esc her durumda yutulur: başarı ekranı klavyeyle kapanamasın.
+        try:
+            self.frame.focus_set()
+        except Exception:
+            pass
+
+    def _release_grab(self) -> None:
+        if not self._grab_held:
+            return
+        try:
+            self.frame.grab_release()
+        except Exception:
+            pass
+        self._grab_held = False
+
+    def _bind_escape(self) -> None:
+        # Escape yalnızca başarısız durumda "Kapat"ı tetikler; başarıda
+        # hiçbir şey yapmaz (kullanıcı yeniden başlatmadan çıkamaz).
+        # Bağlar katman yıkılırken çözülür: aksi hâlde her güncellemeden
+        # sonra ana pencerede ölü bir "<Escape>" bağı birikir.
+        for target in (self.frame, self._master):
+            try:
+                ident = target.bind("<Escape>", self._on_escape, add="+")
+                self._escape_binds.append((target, ident))
+            except Exception:
+                pass
+
+    def _unbind_escape(self) -> None:
+        for target, ident in self._escape_binds:
+            try:
+                target.unbind("<Escape>", ident)
+            except Exception:
+                pass
+        self._escape_binds = []
+
+    def _on_escape(self, _event=None):
+        if self.state == self.FAILED and self._on_cancel is not None:
+            self._on_cancel()
+        return "break"
+
+    # ── ilerleme ────────────────────────────────────────────────
+
+    @staticmethod
+    def _value_from_percent(percent: int) -> float:
+        return max(0.0, min(1.0, percent / 100.0))
+
+    def set_progress(self, percent: int, status_key: str = "",
+                     next_key: str = "") -> None:
+        """Gerçek bir adım bittiğinde çubuğu ve durum satırını güncelle.
+
+        ``percent`` o adımın tamamlanma eşiğidir. Çubuk doğrudan oraya
+        atlamaz: hedefe kısa adımlarla yaklaşır, böylece uzun bir fetch
+        sırasında çubuk donmuş görünmez. Yine de hiçbir zaman gerçekte
+        tamamlanmamış bir eşiğin üstüne çıkmaz.
+        """
+        if self.state != self.WORKING:
+            return
+        target = self._value_from_percent(percent)
+        if status_key:
+            try:
+                self.status_label.configure(text=t(status_key))
+            except Exception:
+                pass
+        elif next_key:
+            try:
+                self.status_label.configure(text=t(next_key))
+            except Exception:
+                pass
+        self._animate_to(target)
+
+    def _animate_to(self, target: float, step: int = 0) -> None:
+        try:
+            current = float(self.progress.get())
+        except Exception:
+            return
+        if current >= target - 0.001 or step > 60:
+            try:
+                self.progress.set(target)
+            except Exception:
+                pass
+            return
+        nxt = current + (target - current) * 0.28
+        try:
+            self.progress.set(nxt)
+        except Exception:
+            return
+        try:
+            self.frame.after(40, lambda: self._animate_to(target, step + 1))
+        except Exception:
+            pass
+
+    # ── sonuç durumları ─────────────────────────────────────────
+
+    def _clear_actions(self) -> None:
+        for child in list(self.actions.winfo_children()):
+            try:
+                child.destroy()
+            except Exception:
+                pass
+
+    def show_success(self) -> None:
+        """Başarılı güncelleme: kaçışı olmayan uyarı + tek düğme."""
+        self.state = self.SUCCESS
+        try:
+            self.progress.set(1.0)
+        except Exception:
+            pass
+        self._paint(ACCENT)
+        self.title_label.configure(text=t("update.restart.title"),
+                                   text_color=TEXT_PRI)
+        self.body_label.configure(text=t("update.restart.body"),
+                                  text_color=MUTED)
+        self.status_label.configure(text=t("update.step.done"),
+                                    text_color=TEXT_SEC)
+        self._clear_actions()
+        # Tek eylem: yeniden başlat. Sonra / X / Esc yok.
+        restart = make_button(self.actions, f"⟳  {t('update.restart.btn')}",
+                             "primary", command=self._restart, height=38,
+                             width=240)
+        restart.pack(pady=(2, 0))
+        # Başarı ekranında kilit sürer: grab ve pencere kapatma yasağı kalır.
+        self._take_grab()
+
+    def show_failure(self, message: str) -> None:
+        """Başarısız güncelleme: hatayı göster ama kullanıcıyı kilitleme."""
+        self.state = self.FAILED
+        self._paint(DANGER)
+        self.title_label.configure(text=t("update.error.title"),
+                                   text_color=DANGER)
+        self.body_label.configure(text=t("update.error.body"),
+                                  text_color=TEXT_SEC)
+        # Git stderr'i onlarca satır olabilir; kartın dışına taşmasın diye
+        # yalnızca ilk anlamlı satır ve sınırlı uzunluk gösterilir.
+        detail = t("update.failed", msg=self._short_message(message))
+        self.status_label.configure(text=detail, text_color=DANGER)
+        # Çubuk kırmızıya döner ve son gerçek adımda donar: tamamlanmadığı
+        # hâlde %100 göstermek yanlış bilgi olurdu.
+        try:
+            self.progress.configure(progress_color=DANGER)
+        except Exception:
+            pass
+        self._clear_actions()
+        # "Kapat" uygulamayı kapatmaz: hata kullanıcıyı uygulamadan
+        # koparmamalı. Katmanı kaldırır, arayüz çalışmaya devam eder.
+        close_btn = make_button(self.actions, t("update.error.quit"),
+                                "outline-muted", command=self._cancel,
+                                height=36, width=140)
+        close_btn.pack(side="right", padx=(8, 0))
+        retry = make_button(self.actions, t("update.error.retry"),
+                            "primary", command=self._retry, height=36,
+                            width=170)
+        retry.pack(side="right")
+        # Hata durumunda kilit kalkar; pencere kapatma da serbest.
+        self._release_grab()
+        self._unlock_window_close()
+        try:
+            retry.focus_set()
+        except Exception:
+            pass
+
+    @staticmethod
+    def _short_message(message: str, limit: int = 160) -> str:
+        """Hata metnini kartın sığacağı tek satıra indir.
+
+        git stderr'i çok satırlı olabilir (ör. fetch hatasında uzak sunucu
+        yanıtı). Kartın boyu sabit olduğu için ilk anlamlı satır alınır ve
+        uzun metin kısaltılır; tam ayrıntı log panelinde durur.
+        """
+        text = (message or "").strip()
+        if not text:
+            return ""
+        for line in text.splitlines():
+            line = line.strip()
+            if line:
+                text = line
+                break
+        if len(text) > limit:
+            text = text[: limit - 1].rstrip() + "…"
+        return text
+
+    def _paint(self, accent: str) -> None:
+        try:
+            self.accent.configure(fg_color=accent)
+        except Exception:
+            pass
+
+    # ── eylemler ────────────────────────────────────────────────
+
+    def _restart(self) -> None:
+        self._on_restart()
+
+    def _retry(self) -> None:
+        self._on_retry()
+
+    def _cancel(self) -> None:
+        self._on_cancel() if self._on_cancel is not None else self._on_quit()
+
+    def close(self) -> None:
+        """Katmanı kaldır (yalnızca başarısız güncellemede güvenli)."""
+        self._release_grab()
+        self._unbind_escape()
+        self._unlock_window_close()
+        try:
+            self.frame.place_forget()
+            self.frame.destroy()
+        except Exception:
+            pass
+
+
 # ─────────────────────────── Main Window ────────────────────────────
 
 
@@ -369,6 +714,14 @@ class CapWifiApp(ctk.CTk):
         self._apply_window_geometry()
         self.configure(fg_color=DARK_BG)
         self.iconname("CapWifi")
+
+        # ── root kapısı ─────────────────────────────────────────
+        # Rootsuz açılan arayüz tamamen kuruluyor ama hiçbir iş yapamıyordu
+        # (monitör modu/hostapd root ister). Bu yüzden kapı, ana arayüz
+        # kurulmadan ÖNCE: kullanıcı ya root olarak başlar ya da nedenini
+        # söyleyen uyarıyı görüp uygulamadan çıkar. Sessizce yarı çalışan bir
+        # pencere bırakmıyoruz.
+        root_gate.enforce_root(self)
 
         self._ctrl = CapWifiController()
         self._ctrl.on_state_change = self._on_state
@@ -389,6 +742,8 @@ class CapWifiApp(ctk.CTk):
 
         self._state = AttackState.IDLE
         self._target: Optional[TargetCandidate] = None
+        # Güncelleme kilidi: dolu olduğunda arayüz kullanıcıya kapalıdır.
+        self._update_overlay: Optional[UpdateOverlay] = None
         self._env_checks: List[EnvironmentCheck] = []
         self._install_attempted = False
         self._install_visible = False
@@ -398,12 +753,21 @@ class CapWifiApp(ctk.CTk):
         # Gömülü konsol sekmesi durumu
         self._console_job = None
         self._console_busy = False
-        self._console_sel: Optional[str] = None
         self._console_windows: List[tuple] = []
+        # Izgara: pencere indeksi -> {"frame", "body", "title", "text"}.
+        # Paneller tembel kurulur; tmux kaç pencere açarsa o kadar panel olur.
+        self._console_panes: Dict[str, dict] = {}
+        # Son okunan içerik; gereksiz yere metni yeniden yazmayalım (her
+        # yazma kaydırma çubuğunu yeniden çizdiriyor).
+        self._console_texts: Dict[str, str] = {}
         # Saldırı başlarken sekme yalnızca bir kez otomatik değişsin.
         self._console_autoswitched = False
+        # Kullanıcı konsol sekmesinden elle ayrıldıysa bir daha çelmeyelim.
+        self._console_user_left = False
         self._console_misses = 0
-        self._console_last = ""
+        # Saldırı bittikten sonra panelleri canlı tutmak için ayrı sayaç
+        # (misses ile karıştırılmamalı: o "pencere yok" turunu sayar).
+        self._console_tail_ticks = 0
 
         self._build_ui()
         self._update_status(AttackState.IDLE)
@@ -591,6 +955,10 @@ class CapWifiApp(ctk.CTk):
 
         self._tabs = ctk.CTkTabview(
             centre, fg_color=PANEL_BG,
+            # Gerçek fare tıklaması buraya düşer (programatik `set()` düşmez).
+            # Bunu, kullanıcı konsol sekmesinden elle ayrıldığında bir daha
+            # otomatik geçiş yapmamak için kullanıyoruz.
+            command=self._on_tab_clicked,
             segmented_button_fg_color=CARD_BG,
             segmented_button_selected_color=ACCENT_DIM,
             segmented_button_selected_hover_color=mix_colour(ACCENT_DIM,
@@ -753,7 +1121,14 @@ class CapWifiApp(ctk.CTk):
         self._apply_language(code)
 
     def _apply_language(self, code: str) -> None:
-        """Dili değiştirip pencereyi yeniden kurar; saldırı süreci etkilenmez."""
+        """Dili değiştirip pencereyi yeniden kurar; saldırı süreci etkilenmez.
+
+        Güncelleme kilidi açıkken dil değiştirilemez: tüm widget'lar (katman
+        dahil) yıkılıp yeniden kurulurdu ve süren bir git reset'inin altında
+        kilit kaybolurdu.
+        """
+        if getattr(self, "_update_overlay", None) is not None:
+            return
         i18n.set_language(code)
         i18n.save_language(code)
         self._settings.language = "tur" if code == "tr" else "en"
@@ -763,6 +1138,10 @@ class CapWifiApp(ctk.CTk):
         """Pencereyi (dil değişiminde) durumu koruyarak yeniden kurar."""
         candidates = self._net_table.candidates
         selected = self._net_table.selected()
+        # Güvenlik ağı: güncelleme kilidi açıkken arayüz yıkılıp yeniden
+        # kurulursa katman (ve grab) sahipsiz kalırdı. Kilit sürerken
+        # yeniden kurmak zaten yasak; yine de buraya düşülürse önce temizle.
+        self._close_update_overlay()
         # Eski widget'lar yıkılmadan önce callback'lerin onlara dokunmasını kes.
         self._ui_ready = False
         if self._console_job is not None:
@@ -771,7 +1150,10 @@ class CapWifiApp(ctk.CTk):
             except Exception:
                 pass
             self._console_job = None
-        self._console_last = ""
+        # Dil değişiminde ızgara baştan kurulur: panel sözlükleri ve metin
+        # önbelleği eski widget'ları gösteriyor olurdu.
+        self._console_panes = {}
+        self._console_texts = {}
         self._close_details()
 
         for child in list(self.winfo_children()):
@@ -791,7 +1173,7 @@ class CapWifiApp(ctk.CTk):
 
         if self._upd_status is not None and getattr(self._upd_status, "behind", 0) > 0:
             self._update_bar_label.configure(
-                text="⬆  " + t("update.available", count=self._upd_status.behind))
+                text="⬆  " + t("update.available"))
             self._show_update_bar()
         self._set_step(self._step)
         self._update_status(self._state)
@@ -799,7 +1181,13 @@ class CapWifiApp(ctk.CTk):
     # ── Gömülü konsollar ────────────────────────────────────────
 
     def _build_console_tab(self, tab) -> None:
-        """Saldırının tmux pencerelerini ayrı terminallere bakmadan gösterir."""
+        """Saldırının tmux pencerelerini TEK ızgarada, hepsi birden gösterir.
+
+        Eski tasarım bir açılır liste + tek metin kutusuydu: kullanıcı aynı anda
+        yalnızca bir konsolu görüyor, hangi pencerenin açık olduğunu anlamak
+        için liste okumak zorundaydı. Saldırı 3-4 pencere açtığı için hepsi
+        ekrana sığıyor; bu yüzden ızgara kullanıyoruz.
+        """
         head = ctk.CTkFrame(tab, fg_color="transparent")
         head.pack(fill="x", padx=8, pady=(8, 2))
 
@@ -810,117 +1198,331 @@ class CapWifiApp(ctk.CTk):
         # bile "yeni bir konsol bağlandı" bilgisi görünür.
         self._console_spinner = Spinner(head, size=14, bg=PANEL_BG,
                                         colour=ACCENT2, thickness=2)
-        self._console_picker = ctk.CTkOptionMenu(
-            head, values=[t("console.waiting")],
-            command=self._on_console_pick, width=240, height=30,
-            font=FONT_UI_S, corner_radius=8,
-            fg_color=CARD_BG, button_color=mix_colour(CARD_BG, ACCENT2, 0.4),
-            button_hover_color=mix_colour(CARD_BG, ACCENT2, 0.6),
-            dropdown_fg_color=ELEV_BG, dropdown_hover_color=CARD_HOVER,
-            dropdown_text_color=TEXT_PRI,
-            text_color=TEXT_PRI, text_color_disabled=OFF_TEXT,
-        )
-        self._console_picker.pack(side="right")
+        self._console_spinner.pack(side="right", padx=(8, 2))
+        # Durum etiketi açılır listenin yerini aldı: kaç konsol canlı olduğunu
+        # tek satırda söyler, seçim gerektirmez.
+        self._console_status = ctk.CTkLabel(
+            head, text=t("console.status.idle"), font=FONT_UI_S,
+            text_color=MUTED)
+        self._console_status.pack(side="right", padx=(0, 8))
 
         auto_wrap(ctk.CTkLabel(
             tab, text=t("console.hint"), font=FONT_UI_S, text_color=MUTED,
             justify="left", anchor="w",
         )).pack(fill="x", padx=10, pady=(0, 6))
 
-        self._console_text = ctk.CTkTextbox(
-            tab, fg_color=DARK_BG, text_color=CONSOLE_FG, font=FONT_MONO_S,
-            wrap="none", corner_radius=10, border_width=1,
-            border_color=BORDER_SOFT,
+        # Izgaranın kendisi: 2 sütun. 1 panel tek sütun genişliğinde, 2 panel
+        # yan yana, 3-4 panel 2x2. Satır/sütun ağırlığı eşit; paneller
+        # pencere büyüdükçe birlikte büyür.
+        self._console_grid = ctk.CTkFrame(tab, fg_color="transparent")
+        self._console_grid.pack(fill="both", expand=True, padx=6, pady=(0, 6))
+        self._console_grid.columnconfigure(0, weight=1, uniform="console")
+        self._console_grid.columnconfigure(1, weight=1, uniform="console")
+        self._console_grid.rowconfigure(0, weight=1, uniform="console")
+        self._console_grid.rowconfigure(1, weight=1, uniform="console")
+
+        # Yer tutucu: henüz pencere yokken ızgara boş görünmesin, neden boş
+        # olduğunu söylesin. İlk pencere gelince yıkılır.
+        self._console_placeholder = ctk.CTkLabel(
+            self._console_grid, text=t("console.empty"), font=FONT_UI_S,
+            text_color=MUTED, justify="center",
+        )
+        self._console_placeholder.grid(row=0, column=0, columnspan=2,
+                                       sticky="nsew")
+
+        # Pane listesi temiz başlasın; dil değişiminde ızgara baştan kurulur.
+        self._console_panes = {}
+        self._console_texts = {}
+        # Geriye dönük uyumluluk: eski testler `_console_text` adında tek bir
+        # metin kutusu arıyor. İlk panel oluştuğunda buraya bağlanıyor.
+        self._console_text = None
+
+    # ── panel (pane) yönetimi ──────────────────────────────────
+
+    def _console_pane(self, index: str, name: str) -> dict:
+        """Bir tmux penceresi için ızgara paneli; yoksa kurar.
+
+        Paneller tembel kurulur: kaç pencere varsa o kadar panel olur (en
+        fazla 4). Böylece 1 pencereli bir saldırıda ekran boş yere
+        bölünmez, 4 pencerede de hepsi aynı anda görünür.
+        """
+        pane = self._console_panes.get(index)
+        if pane is not None:
+            return pane
+
+        slot = len(self._console_panes)
+        row, col = divmod(slot, 2)
+        frame = ctk.CTkFrame(
+            self._console_grid, fg_color=DARK_BG, corner_radius=10,
+            border_width=1, border_color=BORDER_SOFT)
+        frame.grid(row=row, column=col, sticky="nsew", padx=4, pady=4)
+
+        bar = ctk.CTkFrame(frame, fg_color=CARD_BG, corner_radius=8, height=26)
+        bar.pack(fill="x", padx=4, pady=(4, 0))
+        bar.pack_propagate(False)
+        title = ctk.CTkLabel(
+            bar, text=t("console.pane.title", name=name, index=index),
+            font=FONT_UI_XS, text_color=ACCENT2, anchor="w")
+        title.pack(side="left", padx=8)
+
+        # Küçük punto ama okunur: 3-4 panel ancak 9-10pt ile sığıyor ve
+        # 9pt'nin altı ekranda seçilemez hâle geliyor.
+        body = ctk.CTkTextbox(
+            frame, fg_color=DARK_BG, text_color=CONSOLE_FG,
+            font=(FONT_MONO_S[0], max(9, FONT_MONO_S[1] - 2)),
+            wrap="none", corner_radius=6, border_width=0,
             scrollbar_button_color=ELEV_BG,
             scrollbar_button_hover_color=mix_colour(ELEV_BG, ACCENT2, 0.5),
         )
-        self._console_text.pack(fill="both", expand=True, padx=8, pady=(0, 8))
-        self._render_console("")
-        self._console_text.configure(state="disabled")
+        body.pack(fill="both", expand=True, padx=4, pady=(2, 4))
+        body.insert("1.0", t("console.pane.empty"))
+        body.configure(state="disabled")
 
-    def _on_console_pick(self, label: str) -> None:
-        for index, name in self._console_windows:
-            if label == f"{name}  (#{index})":
-                self._console_sel = index
-                self._console_last = ""
-                self._start_console_poll()
-                return
+        pane = {"frame": frame, "bar": bar, "title": title,
+                "body": body, "name": name, "index": index}
+        self._console_panes[index] = pane
+        if self._console_text is None:
+            # Eski sözleşme: ilk panel tek konsol gibi okunabilsin.
+            self._console_text = body
+        if self._console_placeholder is not None:
+            try:
+                self._console_placeholder.grid_remove()
+            except Exception:
+                pass
+        # Tek panelken tüm alanı kaplasın, iki panel yan yana dursun.
+        self._console_relayout()
+        return pane
+
+    def _console_pane_text(self, index: str, text: str, missing: bool) -> None:
+        """Panelin metnini yalnızca değiştiyse yaz (yeniden çizim maliyeti)."""
+        pane = self._console_panes.get(index)
+        if pane is None:
+            return
+        if missing:
+            body_text = t("console.pane.lost")
+        elif text:
+            body_text = text
+        else:
+            body_text = t("console.pane.empty")
+        if self._console_texts.get(index) == body_text:
+            return
+        self._console_texts[index] = body_text
+        widget = pane["body"]
+        try:
+            widget.configure(state="normal")
+            widget.delete("1.0", "end")
+            widget.insert("1.0", body_text)
+            widget.see("end")
+            widget.configure(state="disabled")
+        except Exception:
+            # Dil değişiminde widget yıkılmış olabilir; sessizce yut.
+            pass
+
+    def _console_trim_panes(self, alive: List[str]) -> None:
+        """Artık var olmayan pencerelerin panellerini kaldırıp yerleşimi tazele."""
+        changed = False
+        for index in list(self._console_panes):
+            if index in alive:
+                continue
+            pane = self._console_panes.pop(index, None)
+            self._console_texts.pop(index, None)
+            changed = True
+            if pane is None:
+                continue
+            try:
+                pane["frame"].destroy()
+            except Exception:
+                pass
+        if not self._console_panes:
+            self._console_text = None
+            if self._console_placeholder is not None:
+                try:
+                    self._console_placeholder.grid(row=0, column=0,
+                                                   columnspan=2, sticky="nsew")
+                except Exception:
+                    pass
+        elif changed:
+            # Panel sayısı değişti: 2x2'de kalan boşluk kalmasın diye
+            # panelleri yeniden akıt (ör. 4 panelden 2'ye düşünce tek satır).
+            self._console_relayout()
+
+    def _console_relayout(self) -> None:
+        """Panelleri mevcut sayıya göre yeniden yerleştir.
+
+        1 panel tüm alanı kaplar, 2 panel yan yana, 3-4 panel 2x2. Böylece
+        kapanan pencerelerin bıraktığı boş kare ekranda durmaz.
+        """
+        count = len(self._console_panes)
+        if count <= 1:
+            columns = 1
+        else:
+            columns = 2
+        for slot, index in enumerate(self._console_panes):
+            pane = self._console_panes[index]
+            row, col = divmod(slot, columns)
+            try:
+                pane["frame"].grid(row=row, column=col, sticky="nsew",
+                                   padx=4, pady=4)
+            except Exception:
+                pass
+        # Tek panelde ikinci sütun/satır ağırlığı boş yer bırakmasın.
+        try:
+            for column in (0, 1):
+                self._console_grid.columnconfigure(
+                    column, weight=1 if column < columns else 0,
+                    uniform="console" if column < columns else "")
+            rows = max(1, (count + columns - 1) // columns)
+            for row in (0, 1):
+                self._console_grid.rowconfigure(
+                    row, weight=1 if row < rows else 0,
+                    uniform="console" if row < rows else "")
+        except Exception:
+            pass
 
     def _start_console_poll(self) -> None:
         if self._console_job is None and getattr(self, "_ui_ready", False):
-            self._console_job = self.after(300, self._console_tick)
+            self._console_job = self.after(250, self._console_tick)
 
     def _console_tick(self) -> None:
         self._console_job = None
-        if not self._ui_ready or not hasattr(self, "_console_text"):
+        if not self._ui_ready or not hasattr(self, "_console_grid"):
             return
         # Yavaş bir sudo çağrısı arayüzü dondurmasın: ayrı iş parçacığında oku.
         if not self._console_busy:
             self._console_busy = True
             threading.Thread(target=self._fetch_consoles, daemon=True).start()
-        if self._ctrl.is_busy:
-            self._console_job = self.after(1800, self._console_tick)
+        # Saldırı bitse de kısa bir süre daha yokla: son ekran görüntüleri
+        # yerinde kalsın, kapanan pencereler "kapandı" olarak işaretlensin.
+        # "Saldırı sürüyor mu" sorusunu KONTROLCÜYE değil, arayüzün kendi
+        # durumuna soruyoruz: testler ve yeniden kurulum sırasında ikisi
+        # ayrışabiliyor ve o zaman yoklama erken duruyordu.
+        if self._state_busy() or self._ctrl.is_busy:
+            self._console_job = self.after(1200, self._console_tick)
+        elif self._console_windows:
+            # Saldırı yeni bitti ama paneller doluydu: birkaç tur daha oku,
+            # sonra dur. Sayaç yalnızca burada, sınırlı biçimde kullanılıyor.
+            self._console_tail_ticks += 1
+            if self._console_tail_ticks <= 3:
+                self._console_job = self.after(1200, self._console_tick)
 
     def _fetch_consoles(self) -> None:
+        """Arka planda TÜM panelleri oku; sonucu tek seferde arayüze ver."""
         try:
-            windows = self._ctrl.console_windows()
-            index = self._console_sel
-            if not index and windows:
-                index = windows[0][0]
-            text = self._ctrl.capture_console(index) if index else ""
+            windows = list(self._ctrl.console_windows() or [])[:4]
+            texts: Dict[str, str] = {}
+            for index, _name in windows:
+                try:
+                    texts[index] = self._ctrl.capture_console(index)
+                except Exception:
+                    texts[index] = ""
         except Exception:
-            windows, index, text = [], None, ""
+            windows, texts = [], {}
         finally:
             self._console_busy = False
         try:
-            self.after(0, lambda: self._apply_consoles(windows, index, text))
+            self.after(0, lambda: self._apply_consoles(windows, texts))
         except Exception:
+            # Pencere bu arada yeniden kurulmuş olabilir (dil değişimi).
             pass
 
-    def _apply_consoles(self, windows, index, text) -> None:
-        if not getattr(self, "_ui_ready", False) or not hasattr(self, "_console_text"):
+    def _apply_consoles(self, windows, texts) -> None:
+        if not getattr(self, "_ui_ready", False) or not hasattr(self, "_console_grid"):
             return
+
         if windows:
             self._console_misses = 0
+            self._console_tail_ticks = 0
             self._console_windows = list(windows)
-            labels = [f"{name}  (#{i})" for i, name in windows]
-            if index:
-                self._console_sel = index
-            current = next((label for label, (i, _n) in zip(labels, windows)
-                            if i == self._console_sel), None)
+            alive = [str(i) for i, _n in windows]
+            self._console_trim_panes(alive)
+            for index, name in windows:
+                self._console_pane(str(index), name)
+            for index in alive:
+                self._console_pane_text(index, texts.get(index, ""), False)
             try:
-                self._console_picker.configure(values=labels)
-                if current:
-                    self._console_picker.set(current)
+                self._console_status.configure(
+                    text=t("console.status.ready", count=len(windows)))
             except Exception:
                 pass
-        if not windows and not text:
-            # Saldırı sürerken pencere yoksa kullanıcı boş ekranla kalmasın.
-            self._console_misses += 1
-        if text != self._console_last:
-            self._console_last = text
-            self._render_console(text)
-        elif not text:
-            if self._console_misses >= 3:
-                self._render_console(t("console.not_found"))
-            else:
-                self._render_console(t("console.waiting"))
+            # Sekmeyi kullanıcının elinden çekme: yalnızca saldırı sürerken,
+            # yalnızca bir kez ve yalnızca kullanıcı konsoldan elle çıkmadıysa.
+            if self._state_busy() or self._ctrl.is_busy:
+                self._maybe_autoswitch_consoles()
+            return
+
+        # Pencere yok: durumu dürüstçe söyle. İlk yoklamalarda "bekleniyor",
+        # üst üste birkaç kez boş gelirse "bulunamadı". Sayaç yalnızca BURADA
+        # artıyor (tick'te ayrıca artırmak sayıyı ikiye katlıyordu).
+        self._console_windows = []
+        self._console_misses += 1
+        # Ölü panelleri kaldır: burada temizlenmezse saldırı bittiğinde son
+        # paneller ekranda kalıyor ve yer tutucu hiç geri gelmiyordu.
+        self._console_trim_panes([])
+        try:
+            self._console_status.configure(text=t("console.status.idle"))
+        except Exception:
+            pass
+        if not self._console_panes:
+            message = (t("console.not_found") if self._console_misses >= 3
+                       else t("console.waiting"))
+            if self._console_placeholder is not None:
+                try:
+                    self._console_placeholder.configure(text=message)
+                    self._console_placeholder.grid(row=0, column=0,
+                                                   columnspan=2, sticky="nsew")
+                except Exception:
+                    pass
+
+    def _maybe_autoswitch_consoles(self) -> None:
+        """Konsol pencereleri ilk göründüğünde sekmeyi bir kez aç.
+
+        Saldırı başlar başlamaz RUNNING'e geçmek zorunda değil: motor
+        pencereleri STARTING sırasında açıyor. Bu yüzden tetikleyici durum
+        değil, gerçekten pencere görmek.
+        """
+        if self._console_autoswitched or self._console_user_left:
+            return
+        if self._active_tab == "consoles":
+            self._console_autoswitched = True
+            return
+        self._console_autoswitched = True
+        self._show_tab("consoles")
 
     def _render_console(self, text: str) -> None:
-        if not hasattr(self, "_console_text"):
+        """Geriye dönük uyumluluk: tek paneli günceller (eski API)."""
+        if not self._console_panes:
             return
-        body = text or t("console.empty")
-        self._console_text.configure(state="normal")
-        self._console_text.delete("1.0", "end")
-        self._console_text.insert("1.0", body)
-        self._console_text.see("end")
-        self._console_text.configure(state="disabled")
+        first = next(iter(self._console_panes))
+        self._console_pane_text(first, text or "", False)
 
     def _set_step(self, index: int) -> None:
         self._step = index
         self._guide.set_active(index)
 
+    def _on_tab_clicked(self, name: str) -> None:
+        """Kullanıcı sekmeye GERÇEKTEN tıkladı (CTkTabview command'ı).
+
+        Otomatik geçiş kullanıcıyı bir kez konsol sekmesine taşır; ardından
+        başka bir sekmeye tıklarsa bu onun kararıdır ve bir daha çelmeyiz.
+        """
+        key = next((k for k, label in self._tab_names.items() if label == name),
+                   None)
+        if key is None:
+            return
+        self._active_tab = key
+        if key != "consoles":
+            self._console_user_left = True
+            return
+        # Konsola dönmek yeni bir otomatik geçiş hakkı vermez ama elle
+        # ayrılma niyetini de silmez.
+        self._start_console_poll()
+
     def _show_tab(self, key: str) -> None:
+        # Kullanıcı konsol sekmesindeyken başka bir sekmeye geçtiyse bir daha
+        # onu oraya çekmeyelim. Otomatik geçişin kendisi bu bayrağı koymaz.
+        if (getattr(self, "_active_tab", None) == "consoles"
+                and key != "consoles"):
+            self._console_user_left = True
         self._active_tab = key
         if key == "consoles":
             # Sekme açıldığı anda akış başlasın; saldırı bitmişse son kare kalır.
@@ -1231,9 +1833,11 @@ class CapWifiApp(ctk.CTk):
 
         config = self._settings.build_config()
         self._set_step(3)
+        # Her saldırı yeni bir otomatik geçiş hakkı: bayraklar burada sıfırlanır
+        # ki ikinci saldırıda da sekme kendiliğinden açılsın.
         self._console_autoswitched = False
+        self._console_user_left = False
         self._console_misses = 0
-        self._console_last = ""
         if self._settings.is_portal:
             self._log_panel.append(
                 t("log.portal_info", title=self._settings.portal_title(),
@@ -1394,38 +1998,191 @@ class CapWifiApp(ctk.CTk):
         if status.behind > 0:
             if bar_ok:
                 self._update_bar_label.configure(
-                    text="⬆  " + t("update.available", count=status.behind))
+                    text="⬆  " + t("update.available"))
             self._show_update_bar()
-            self._log_panel.append(t("update.available", count=status.behind), "info")
+            self._log_panel.append(t("update.available"), "info")
         else:
             self._hide_update_bar()
             if manual:
                 self._log_panel.append(t("update.uptodate"), "success")
 
     def _do_update(self) -> None:
+        """Onayla ve güncellemeyi modal katman altında çalıştır.
+
+        Onay kutusu tek serbest nokta: kullanıcı bilerek başlatır. Onaydan
+        sonra uygulama kilitlenir, çünkü git reset çalışan kopyayı değiştirir
+        ve yarıda bırakılan bir güncelleme dosyaları tutarsız bırakabilir.
+        """
         if self._ctrl.is_busy:
+            return
+        if getattr(self, "_update_overlay", None) is not None:
             return
         if not messagebox.askyesno(t("update.confirm.title"),
                                    t("update.confirm.body")):
             return
         self._hide_update_bar()
         self._log_panel.append(t("update.doing"), "info")
+        self._open_update_overlay()
+        self._start_update_worker()
+
+    # ── güncelleme katmanı ──────────────────────────────────────
+
+    def _open_update_overlay(self) -> None:
+        """Kilidi kur ve ilerleme kartını ortaya yerleştir."""
+        self._close_update_overlay()
+        self._update_overlay = UpdateOverlay(
+            self,
+            on_retry=self._retry_update,
+            on_quit=self._quit_after_failed_update,
+            on_restart=self._restart_app,
+            on_cancel=self._dismiss_failed_update,
+        )
+        try:
+            self._update_overlay.frame.lift()
+        except Exception:
+            pass
+
+    def _close_update_overlay(self) -> None:
+        overlay = getattr(self, "_update_overlay", None)
+        self._update_overlay = None
+        if overlay is not None:
+            overlay.close()
+
+    def _start_update_worker(self) -> None:
+        """apply_update() bloklayan git çağrısıdır; thread'de koşar.
+
+        İlerleme geri bildirimi ``after(0, ...)`` ile ana iş parçacığına
+        taşınır: Tk widget'larına yalnızca ana iş parçacığı dokunabilir.
+        """
+        def _progress(percent: int, key: str) -> None:
+            self.after(0, self._on_update_progress, percent, key)
 
         def _work():
-            result = updater.apply_update()
+            try:
+                result = updater.apply_update(on_progress=_progress)
+            except TypeError:
+                # Eski/test double'ı on_progress parametresini tanımıyorsa
+                # güncelleme yine de çalışsın (yalnızca adım bilgisi düşer).
+                result = updater.apply_update()
+            except Exception as exc:  # ağ/süreç hatası: katman kapanmasın
+                result = updater.UpdateStatus(is_repo=True, ok=False,
+                                              message=str(exc))
             self.after(0, self._after_update, result)
 
         threading.Thread(target=_work, daemon=True).start()
 
-    def _after_update(self, result) -> None:
-        if result.ok:
-            self._log_panel.append(t("update.done"), "success")
+    def _on_update_progress(self, percent: int, key: str) -> None:
+        overlay = getattr(self, "_update_overlay", None)
+        if overlay is None:
+            return
+        overlay.set_progress(percent, status_key=key)
+
+    def _retry_update(self) -> None:
+        """Başarısız güncellemeyi aynı kilit altında yeniden dene."""
+        self._open_update_overlay()
+        self._start_update_worker()
+
+    def _dismiss_failed_update(self) -> None:
+        """Başarısız güncellemeden çık: uygulama eski sürümle çalışır.
+
+        Başarısız güncelleme kullanıcıyı uygulamadan koparmamalı: katman
+        kalkar, arayüz olduğu gibi kullanılabilir kalır.
+        """
+        self._close_update_overlay()
+        self._refresh_hint()
+
+    def _quit_after_failed_update(self) -> None:
+        """Başarısız güncellemede "Kapat" seçildi: normal kapanış yolu.
+
+        Katmanın ``on_quit`` kancası buraya düşer; çalışan bir saldırı varsa
+        ``_ctrl.stop()`` ile kapatılır, sonra pencere yok edilir.
+        """
+        self._dismiss_failed_update()
+        self._shutdown_children()
+        try:
+            self.destroy()
+        except Exception:
+            pass
+
+    def _restart_app(self) -> None:
+        """Uygulamayı gerçekten yeniden başlat.
+
+        Neden execv: güncelleme Python dosyalarını diskte değiştirdi ama
+        çalışan süreç eski modülleri bellekte tutuyor. Süreci yerinde
+        değiştirmek, alt süreçleri ve zamanlayıcıları da birlikte sıfırlar.
+        ``run_gui.sh`` root olarak çalıştığı için ayrıcalıklar korunur.
+        """
+        # Alt süreçleri kapatmak birkaç saniye sürebilir (SIGINT + bekle).
+        # Bu arada butonu kilitle ki kullanıcı iki kez basıp iki süreç
+        # başlatmasın; ekranda da "yeniden başlatılıyor" bilgisi kalsın.
+        overlay = getattr(self, "_update_overlay", None)
+        if overlay is not None:
             try:
-                messagebox.showinfo(t("update.confirm.title"), t("update.done"))
+                overlay.progress.set(1.0)
+                overlay.status_label.configure(text=t("update.restart.btn") + "…",
+                                               text_color=MUTED)
+                for child in overlay.actions.winfo_children():
+                    child.configure(state="disabled")
+                self.update_idletasks()
             except Exception:
                 pass
+        self._shutdown_children()
+        argv = [sys.executable] + list(sys.argv)
+        try:
+            os.execv(sys.executable, argv)
+        except Exception:
+            # execv dönmez; buraya düşmek "yeniden başlatma olmadı" demek.
+            self._report_restart_failure()
+
+    def _shutdown_children(self) -> None:
+        """Yeniden başlatmadan önce motorun alt süreçlerini kapat."""
+        try:
+            self._ctrl.stop()
+        except Exception:
+            pass
+        try:
+            self._close_details()
+        except Exception:
+            pass
+        try:
+            job = getattr(self, "_console_job", None)
+            if job is not None:
+                self.after_cancel(job)
+                self._console_job = None
+        except Exception:
+            pass
+
+    def _report_restart_failure(self) -> None:
+        overlay = getattr(self, "_update_overlay", None)
+        message = t("update.restart.failed")
+        if overlay is not None:
+            try:
+                overlay.status_label.configure(text=message, text_color=DANGER)
+                return
+            except Exception:
+                pass
+        try:
+            messagebox.showerror(t("update.restart.title"), message)
+        except Exception:
+            pass
+
+    def _after_update(self, result) -> None:
+        """Güncelleme bitti: başarıda kilit sürer, hatada kullanıcı serbest."""
+        overlay = getattr(self, "_update_overlay", None)
+        if result.ok:
+            self._log_panel.append(t("update.done"), "success")
+            if overlay is None:
+                # Katman yoksa (ör. dil değişimi) kullanıcıyı yine de
+                # yeniden başlatmaya yönlendir; sessizce devam etmesin.
+                self._open_update_overlay()
+                overlay = getattr(self, "_update_overlay", None)
+            if overlay is not None:
+                overlay.show_success()
+            return
+        self._log_panel.append(t("update.failed", msg=result.message), "error")
+        if overlay is not None:
+            overlay.show_failure(result.message)
         else:
-            self._log_panel.append(t("update.failed", msg=result.message), "error")
             try:
                 messagebox.showerror(t("update.confirm.title"),
                                      t("update.failed", msg=result.message))
@@ -1494,12 +2251,14 @@ class CapWifiApp(ctk.CTk):
             self._set_step(4)
         if state in (AttackState.INSTALLING, AttackState.SCANNING,
                      AttackState.STARTING, AttackState.RUNNING):
+            # Yoklama durum değişiminde başlar, ama sekmeyi DEĞİŞTİRMEZ:
+            # motor pencereleri henüz açmamış olabilir. Sekme, pencereler
+            # gerçekten göründüğünde (_apply_consoles) açılıyor.
             self._start_console_poll()
-        if state is AttackState.RUNNING and not self._console_autoswitched:
-            self._console_autoswitched = True
-            # Kullanıcı konsolları ayrı pencerelerde aramak zorunda kalmasın:
-            # saldırı başlar başlamaz gömülü konsol sekmesi açılır.
-            self._show_tab("consoles")
+        if state in (AttackState.STOPPED, AttackState.ERROR):
+            # Yeni bir saldırı yeni bir otomatik geçiş hakkıdır.
+            self._console_autoswitched = False
+            self._console_user_left = False
         self._refresh_hint()
 
     def _refresh_hint(self) -> None:

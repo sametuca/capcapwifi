@@ -201,4 +201,4 @@ capcap_window_cleanup() {
 	fi
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

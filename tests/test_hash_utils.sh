@@ -132,4 +132,4 @@ assert_contains "$HASHCheckHandshake" "invalid" "Incomplete handshake is marked 
 
 finish_tests
 
-# FLUXSCRIPT END
+# CAPWIFI END

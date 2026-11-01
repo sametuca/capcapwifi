@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 capcap_help(){
-  echo " CAPWIFI(1)                       User Manuals                       CAPWIFI(1)
+  echo " CAPWIFI(1)                          User Manuals                          CAPWIFI(1)
 
 
 
@@ -14,8 +14,7 @@ capcap_help(){
 
   DESCRIPTION
          capwifi is a security auditing and  social-engineering  research  tool.
-         It  is  a remake of linset by vk496 with (hopefully) less bugs and more
-         functionality. The script attempts to retrieve the WPA/WPA2 key from  a
+         The script attempts to retrieve the WPA/WPA2 key from  a
          target  access point by means of a social engineering (phising) attack.
          It's compatible with the latest release of  Kali  (rolling).  CapWifi's
          attacks'  setup  is  mostly  manual, but experimental auto-mode handles
@@ -210,14 +209,14 @@ capcap_help(){
          Please  report  any  bugs  at:  https://github.com/sametuca/capwifi/issues
 
   AUTHOR
-         Cyberfee, l3op, dlinkproto, vk496, MPX4132
+         sametuca
 
   SEE ALSO
          aircrack-ng(8),
 
 
-  Linux                             MARCH 2018                        CAPWIFI(1)"
+  Linux                             MARCH 2018                           CAPWIFI(1)"
 
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

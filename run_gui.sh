@@ -21,7 +21,7 @@ fail()  { echo -e "${RED}[x]${NC} $*" >&2; }
 step()  { echo -e "${CYAN}[*]${NC} $*"; }
 
 echo -e "${GREEN}╔══════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   CapWifi GUI  Başlatıcı       ║${NC}"
+echo -e "${GREEN}║    CapWifi GUI  Başlatıcı        ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════╝${NC}"
 
 # ── 1. Python ───────────────────────────────────────────────────────
@@ -108,6 +108,16 @@ if [ "$(id -u)" -ne 0 ]; then
   warn "Monitör modu ve hostapd root ister; GUI root olarak başlatılıyor."
   exec sudo --preserve-env=DISPLAY,XAUTHORITY,WAYLAND_DISPLAY,XDG_RUNTIME_DIR \
     "$0" "$@"
+fi
+
+# Buraya yalnızca root gelmeli. Yine de doğruluyoruz: `sudo` PATH'te bir
+# kabuk betiğiyle gölgelenmişse ya da sudoers "runas_default" root olmayan bir
+# kullanıcıya ayarlıysa yukarıdaki `exec sudo` root OLMAYAN bir kabuğa düşer ve
+# GUI sessizce yetkisiz açılırdı – tam da engellemek istediğimiz durum. Kontrol
+# bir satırlık; yanlış başlatmayı imkânsız kılıyor.
+if [ "$(id -u)" -ne 0 ]; then
+  fail "GUI root olmadan başlatılamaz. Şu komutla çalıştırın:  sudo ./run_gui.sh"
+  exit 1
 fi
 
 echo

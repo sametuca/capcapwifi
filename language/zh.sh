@@ -103,4 +103,4 @@ CAPCAPCleanupSuccessNotice="所有进程清理完成!"
 CAPCAPThanksSupportersNotice="再次感谢使用CapCap!"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END

@@ -32,6 +32,11 @@ if sys.platform.startswith("linux") and not os.environ.get("DISPLAY") \
     print("  [SKIP] Görüntü sunucusu yok (DISPLAY boş)")
     sys.exit(0)
 
+# Uygulama artık root olmadan açılmıyor (gui/root_gate.py). Bu duman testi
+# root gerektirmeyen arayüz davranışını sınadığı için kaçış kapısını açıyoruz;
+# gerçek kullanıcı akışında bu değişken yoktur.
+os.environ.setdefault("CAPCAP_ALLOW_NONROOT", "1")
+
 failures = []
 
 
@@ -84,11 +89,15 @@ def step_geometry():
           "adım çubuğu oluştu")
     check(getattr(window, "_settings", None) is not None,
           "motor ayarları okundu")
-    check(getattr(window, "_console_text", None) is not None,
+    check(getattr(window, "_console_panes", None) is not None,
           "gömülü konsol sekmesi oluştu")
-    placeholder = window._console_text.get("1.0", "end")
-    check("console.empty" not in placeholder and placeholder.strip() != "",
-          "konsol sekmesi başlangıç metnini gösteriyor")
+    # Konsollar artık çok panelli bir ızgara: paneller ilgili tmux penceresi
+    # belirdiğinde tembel kuruluyor. Boşken sekme bir yer tutucu gösterir.
+    check(window._console_placeholder is not None,
+          "konsol sekmesi boş durum yer tutucusu kuruldu")
+    placeholder = window._console_placeholder.cget("text")
+    check(bool(str(placeholder).strip()),
+          "konsol sekmesi boş durumda yönlendirme gösteriyor")
     window.after(150, step_mode)
 
 
@@ -145,8 +154,8 @@ def step_language_tr():
           "düğme metni Türkçeleşti")
     check("Konsollar" in window._tab_names.get("consoles", ""),
           "konsol sekmesi etiketi Türkçeleşti")
-    check(window._console_text.get("1.0", "end").strip() != "",
-          "dil değişiminden sonra konsol sekmesi hâlâ dolu")
+    check(window._console_placeholder.cget("text").strip() != "",
+          "dil değişiminden sonra konsol sekmesi hâlâ yönlendirme gösteriyor")
     window.after(150, step_language_en)
 
 

@@ -5,4 +5,4 @@ export CAPCAPDebug=1
 export CAPCAPWIKillProcesses=1 
 export CAPCAPWIReloadDriver=1
 
-# FLUXSCRIPT END
+# CAPWIFI END

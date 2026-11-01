@@ -9,6 +9,7 @@ tests=(
   "$SCRIPT_DIR/test_library_sourcing.sh"
   "$SCRIPT_DIR/test_hash_utils.sh"
   "$SCRIPT_DIR/test_process_cleanup.sh"
+  "$SCRIPT_DIR/test_cleanup_script.sh"
   "$SCRIPT_DIR/test_target_completeness.sh"
   "$SCRIPT_DIR/test_mac_brand_lookup.sh"
   "$SCRIPT_DIR/test_ap_channel.sh"
@@ -23,6 +24,9 @@ tests=(
   "$SCRIPT_DIR/test_gui_single_view.sh"
   "$SCRIPT_DIR/test_gui_scan_flow.sh"
   "$SCRIPT_DIR/test_gui_buttons.sh"
+  "$SCRIPT_DIR/test_gui_update_modal.sh"
+  "$SCRIPT_DIR/test_gui_root_gate.sh"
+  "$SCRIPT_DIR/test_gui_consoles.sh"
   "$SCRIPT_DIR/test_target_pmf.sh"
 )
 
@@ -43,4 +47,4 @@ fi
 
 echo "All safe test scripts passed."
 
-# FLUXSCRIPT END
+# CAPWIFI END

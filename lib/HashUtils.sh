@@ -99,4 +99,4 @@ function hash_check_handshake() {
   fi
 }
 
-# FLUXSCRIPT END
+# CAPWIFI END

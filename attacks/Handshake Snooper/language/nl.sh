@@ -28,4 +28,4 @@ HandshakeSnooperArbiterSuccededNotice="${CGrn}Gelukt${CClr}: Een geldige hash is
 HandshakeSnooperArbiterCompletedTip="${CBCyn}Handshake Snooper$CBYel aanval afgerond, Sluit dit scherm en start een andere aanval.$CClr"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# FLUXSCRIPT END
+# CAPWIFI END
