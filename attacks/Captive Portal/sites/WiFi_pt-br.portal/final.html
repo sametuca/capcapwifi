@@ -3,86 +3,262 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#eef4fb">
+<meta name="theme-color" content="#050b18">
 <meta name="robots" content="noindex">
 <title>Rede Wi-Fi</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   :root {
-    --ink: #13233b;
-    --muted: #6c7d92;
-    --green: #12805c;
-    --blue: #1268d6;
-    --blue-dark: #0c54b3;
+    --ink: #eef6ff;
+    --muted: #8ea4c2;
+    --soft: #6f85a3;
+    --line: rgba(148, 190, 255, .16);
+    --green: #34d399;
+    --blue: #3b82f6;
+    --cyan: #22d3ee;
+    --card: rgba(10, 22, 43, .78);
   }
-  html, body { height: 100%; background: #eef4fb; }
+  html, body { height: 100%; background: #050b18; }
   body {
     margin: 0;
     min-height: 100vh;
-    background:
-      radial-gradient(circle at 15% 8%, rgba(255,255,255,.96) 0 20%, transparent 56%),
-      linear-gradient(155deg, #eef4fb 0%, #f8fbff 48%, #e8f0f9 100%);
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: 26px 18px calc(22px + env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    background: #050b18;
     color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 20px calc(26px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
   }
+  .scene { position: fixed; inset: 0; z-index: -2; overflow: hidden; background:
+    radial-gradient(ellipse 80% 70% at 50% -10%, #0b2247 0%, #07152d 38%, #050b18 68%, #03070f 100%); }
+  .scene::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(148, 190, 255, .045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 190, 255, .045) 1px, transparent 1px);
+    background-size: 54px 54px;
+    -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 72%);
+    mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 72%);
+    opacity: .75;
+  }
+  .orb { position: absolute; border-radius: 50%; filter: blur(78px); opacity: .48; animation: drift 20s ease-in-out infinite alternate; }
+  .orb-a { width: 430px; height: 430px; top: -190px; left: -150px; background: #1d4ed8; }
+  .orb-b { width: 380px; height: 380px; right: -170px; bottom: -140px; background: #0891b2; animation-delay: -7s; }
+  .orb-c { width: 260px; height: 260px; top: 44%; left: 58%; background: #6d28d9; opacity: .28; animation-delay: -13s; }
+
+  .shell { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; }
   .card {
+    position: relative;
     width: 100%;
-    max-width: 400px;
-    padding: 36px 30px 32px;
-    background: #fff;
-    border: 1px solid rgba(255,255,255,.9);
-    border-radius: 22px;
-    box-shadow: 0 22px 60px rgba(28,58,96,.16), 0 2px 8px rgba(28,58,96,.06);
+    padding: 30px 25px 27px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(17, 34, 62, .84) 0%, var(--card) 58%, rgba(6, 14, 29, .9) 100%);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, .58), 0 2px 0 rgba(255, 255, 255, .04) inset;
     text-align: center;
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+    backdrop-filter: blur(24px) saturate(135%);
   }
-  .check {
-    width: 68px;
-    height: 68px;
-    margin: 0 auto 24px;
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(125, 211, 252, .85), transparent);
+  }
+  .brand { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    border-radius: 11px;
+    background: linear-gradient(145deg, #3b82f6, #0891b2);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, .3), 0 1px 0 rgba(255, 255, 255, .28) inset;
+  }
+  .brand-mark svg { width: 19px; height: 19px; display: block; }
+  .brand-name { font-size: 14.5px; font-weight: 750; letter-spacing: .1px; }
+
+  .success { position: relative; width: 96px; height: 96px; margin: 24px auto 20px; display: grid; place-items: center; }
+  .success .halo {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(52, 211, 153, .22), transparent 68%);
+    animation: glow 3.2s ease-in-out infinite;
+  }
+  .success .ring {
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    border: 1px solid rgba(52, 211, 153, .3);
+    animation: pulse 3.2s ease-out infinite;
+  }
+  .success .badge {
+    position: relative;
+    z-index: 1;
+    width: 62px;
+    height: 62px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #34d399, #059669);
+    box-shadow: 0 12px 28px rgba(16, 185, 129, .34), 0 1px 0 rgba(255, 255, 255, .45) inset;
+    color: #04150e;
+  }
+  .success .badge svg { width: 30px; height: 30px; display: block; }
+
+  h1 { margin: 0 0 9px; color: #fff; font-size: 24px; font-weight: 750; line-height: 1.2; letter-spacing: -.65px; }
+  p { margin: 0 0 24px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .ssid { color: #e6f4ff; font-weight: 700; }
+
+  .details {
+    display: grid;
+    gap: 1px;
+    margin-bottom: 22px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: var(--line);
+    text-align: left;
+  }
+  .detail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 11px 14px;
+    background: rgba(6, 15, 31, .82);
+    font-size: 11.5px;
+  }
+  .detail dt { display: flex; align-items: center; gap: 7px; color: var(--muted); font-weight: 600; }
+  .detail dt svg { width: 13px; height: 13px; display: block; color: #67e8f9; }
+  .detail dd { margin: 0; color: #e6f4ff; font-weight: 700; }
+  .detail dd.ok { display: inline-flex; align-items: center; gap: 5px; color: #a7f3d0; }
+  .detail dd.ok i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(52, 211, 153, .8); }
+
+  .btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: #e9f8f1;
-    color: var(--green);
-    box-shadow: 0 0 0 8px #f4fcf8;
-  }
-  .check svg { width: 32px; height: 32px; display: block; }
-  h1 { margin: 0 0 10px; font-size: 24px; line-height: 30px; font-weight: 700; letter-spacing: -.4px; }
-  p { margin: 0 0 28px; color: var(--muted); font-size: 14px; line-height: 21px; }
-  .ssid { color: var(--ink); font-weight: 650; }
-  .btn {
-    display: block;
-    height: 50px;
-    border-radius: 13px;
-    background: var(--blue);
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 50px;
+    gap: 8px;
+    width: 100%;
+    height: 52px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+    color: #03101f;
+    font-size: 15px;
+    font-weight: 800;
     text-decoration: none;
-    box-shadow: 0 8px 18px rgba(18,104,214,.22);
+    box-shadow: 0 15px 32px rgba(37, 99, 235, .3), 0 1px 0 rgba(255, 255, 255, .45) inset;
+    transition: transform .16s ease, box-shadow .16s ease;
   }
-  .btn:hover { background: var(--blue-dark); }
-  footer { margin-top: 26px; color: #8797aa; font-size: 12px; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 19px 38px rgba(37, 99, 235, .4), 0 1px 0 rgba(255, 255, 255, .5) inset; }
+  .btn:active { transform: translateY(0); }
+  .btn svg { width: 17px; height: 17px; display: block; transition: transform .16s ease; }
+  .btn:hover svg { transform: translateX(3px); }
+  .foot { margin: 17px 4px 0; color: #526887; font-size: 10.5px; line-height: 1.5; text-align: center; }
+
+  @keyframes drift {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    100% { transform: translate3d(26px, 18px, 0) scale(1.12); }
+  }
+  @keyframes pulse {
+    0% { transform: scale(.9); opacity: .8; }
+    70%, 100% { transform: scale(1.22); opacity: 0; }
+  }
+  @keyframes glow {
+    0%, 100% { opacity: .75; transform: scale(.94); }
+    50% { opacity: 1; transform: scale(1.04); }
+  }
+  @media (max-width: 380px) {
+    body { padding-left: 13px; padding-right: 13px; }
+    .card { padding: 25px 19px 22px; border-radius: 24px; }
+    h1 { font-size: 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  }
 </style>
 </head>
 <body>
-  <main class="card">
-    <div class="check" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M4.8 12.5 9.6 17.3 19.2 7.3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <h1>Você está conectado</h1>
-    <p>Este dispositivo agora tem acesso a <span class="ssid">$APTargetSSID</span>.</p>
-    <a class="btn" href="#">Continuar</a>
-    <footer>Conexão segura</footer>
+  <div class="scene" aria-hidden="true">
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+  </div>
+
+  <main class="shell">
+    <section class="card">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3.4 8.9a13.4 13.4 0 0 1 17.2 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6.5 12.4a8.6 8.6 0 0 1 11 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M9.6 15.9a3.8 3.8 0 0 1 4.8 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="19.2" r="1.35" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="brand-name">Wi-Fi</span>
+      </div>
+
+      <div class="success" aria-hidden="true">
+        <span class="halo"></span>
+        <span class="ring"></span>
+        <span class="badge">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4.8 12.5 9.6 17.3 19.2 7.3" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+
+      <h1>Conexão estabelecida</h1>
+      <p>Este dispositivo agora tem acesso a <span class="ssid">$APTargetSSID</span>.</p>
+
+      <dl class="details">
+        <div class="detail">
+          <dt>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3.4 8.9a13.4 13.4 0 0 1 17.2 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6.5 12.4a8.6 8.6 0 0 1 11 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9.6 15.9a3.8 3.8 0 0 1 4.8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="19.2" r="1.3" fill="currentColor"/>
+            </svg>
+            Rede para entrar
+          </dt>
+          <dd>$APTargetSSID</dd>
+        </div>
+        <div class="detail">
+          <dt>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="5" y="10.3" width="14" height="9.6" rx="2.4" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M8.4 10.3V7.9a3.6 3.6 0 0 1 7.2 0v2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            WPA2 / WPA3
+          </dt>
+          <dd class="ok"><i></i>Segura</dd>
+        </div>
+      </dl>
+
+      <a class="btn" href="#">
+        Continuar
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12h13M13 6.5 18.5 12 13 17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </section>
+
+    <p class="foot">Conexão segura · WPA2/WPA3</p>
   </main>
 </body>
 </html>

