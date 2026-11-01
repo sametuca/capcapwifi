@@ -422,6 +422,11 @@ class CapWifiController:
                     has_submit=(portal_path / "submit.php").exists(),
                 )
             )
+        # Portals that record submissions themselves need no handshake, so
+        # surface them first. This also keeps the Instagram and WiFi password
+        # pages side by side at the top of the picker instead of burying the
+        # WiFi family at the end of the brand templates.
+        portals.sort(key=lambda portal: (not portal.has_submit, portal.site_id.lower()))
         return portals
 
     def list_handshakes(self) -> List[HandshakeFile]:

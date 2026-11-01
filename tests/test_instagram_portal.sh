@@ -153,7 +153,7 @@ assert_equal 1 "$(count_lines "$LOG")" "A submission with control characters sta
 # A field sent as an array must not reach the log as "Array".
 reset_state
 result=$(post 'username[]=array&password=x')
-assert_equal "302 $BASE/error.html?u=" "$result" "An array in place of a field is rejected"
+assert_equal "302 $BASE/error.html" "$result" "An array in place of a field is rejected"
 assert_equal "	x" "$(cut -f3,4 "$LOG" | tail -1)" "An array field is stored as empty"
 
 head -c 9000 /dev/zero | tr '\0' 'a' >"$TEST_RUNTIME_DIR/large.txt"

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef4fb">
+<meta name="robots" content="noindex">
+<title>Réseau Wi-Fi</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --ink: #13233b;
+    --muted: #6c7d92;
+    --green: #12805c;
+    --blue: #1268d6;
+    --blue-dark: #0c54b3;
+  }
+  html, body { height: 100%; background: #eef4fb; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(255,255,255,.96) 0 20%, transparent 56%),
+      linear-gradient(155deg, #eef4fb 0%, #f8fbff 48%, #e8f0f9 100%);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px calc(26px + env(safe-area-inset-bottom));
+  }
+  .card {
+    width: 100%;
+    max-width: 400px;
+    padding: 36px 30px 32px;
+    background: #fff;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 22px;
+    box-shadow: 0 22px 60px rgba(28,58,96,.16), 0 2px 8px rgba(28,58,96,.06);
+    text-align: center;
+  }
+  .check {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #e9f8f1;
+    color: var(--green);
+    box-shadow: 0 0 0 8px #f4fcf8;
+  }
+  .check svg { width: 32px; height: 32px; display: block; }
+  h1 { margin: 0 0 10px; font-size: 24px; line-height: 30px; font-weight: 700; letter-spacing: -.4px; }
+  p { margin: 0 0 28px; color: var(--muted); font-size: 14px; line-height: 21px; }
+  .ssid { color: var(--ink); font-weight: 650; }
+  .btn {
+    display: block;
+    height: 50px;
+    border-radius: 13px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 50px;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(18,104,214,.22);
+  }
+  .btn:hover { background: var(--blue-dark); }
+  footer { margin-top: 26px; color: #8797aa; font-size: 12px; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="check" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4.8 12.5 9.6 17.3 19.2 7.3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1>Vous êtes connecté</h1>
+    <p>Cet appareil a maintenant accès à <span class="ssid">$APTargetSSID</span>.</p>
+    <a class="btn" href="#">Continuer</a>
+    <footer>Connexion sécurisée</footer>
+  </main>
+</body>
+</html>

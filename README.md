@@ -41,7 +41,7 @@ live log — no terminal windows to hunt down.</sub>
 | Attack | What it does | What you get |
 | --- | --- | --- |
 | **Handshake Snooper** | Drops clients from the target AP so they reconnect, then captures the WPA/WPA2 four-way handshake | A `.cap` file to crack offline |
-| **Captive Portal** | Clones the target AP and serves a login page from one of 61 bundled templates, recording what visitors submit | Credentials in the workspace log |
+| **Captive Portal** | Clones the target AP and serves a login page from one of 68 bundled templates, recording what visitors submit | Credentials in the workspace log |
 
 Either attack runs on one adapter. Two adapters — one for the rogue AP, one for
 deauthentication — is the more reliable setup.
@@ -49,12 +49,13 @@ deauthentication — is the more reliable setup.
 <details>
 <summary><b>Bundled portal templates</b></summary>
 
-Seven Instagram variants (English, Turkish, German, Spanish, French, Italian,
-Brazilian Portuguese) plus consumer router brands such as ARRIS, TP-Link, HUAWEI and
-Netgear.
+Seven Instagram variants and seven generic Wi-Fi password variants (English, Turkish,
+German, Spanish, French, Italian, Brazilian Portuguese) plus consumer router brands
+such as ARRIS, TP-Link, HUAWEI and Netgear.
 
 Templates that ship their own `submit.php` record submissions directly, so they do not
-need a captured handshake to verify a password.
+need a captured handshake to verify a password. The Instagram and Wi-Fi password
+families are both self-capturing and appear first in the portal picker.
 
 </details>
 
@@ -181,7 +182,7 @@ sudo ./capwifi.sh --help      # full manual page
 | `--ap-channel <ch>` | Run the rogue AP on a different channel |
 | `--ap-service hostapd\|airbase-ng` | Rogue AP backend |
 | `--deauth-method aireplay-ng\|mdk4` | Deauthentication method (default `aireplay-ng`) |
-| `--site <template>` | Portal template, e.g. `Instagram_tur` or `ARRIS_en` |
+| `--site <template>` | Portal template, e.g. `Instagram_tur`, `WiFi_tur` or `ARRIS_en` |
 | `--timeout <min>` | Stop the attack after N minutes |
 | `--reg-domain <CC>` | Regulatory domain for 5 GHz |
 | `--kill-exclude <name,…>` | Processes to spare when killing interference |
@@ -249,7 +250,7 @@ it with `CAPCAPWorkspacePath`.
 | Path | Contents |
 | --- | --- |
 | `capcap.status` | Timestamped event log (auto mode only) |
-| `instagram_credentials.log` | Tab-separated submissions — time, client IP, username, password, user agent; rotates at 512 KiB keeping `.1`–`.3` |
+| `instagram_credentials.log` | Tab-separated portal submissions — time, client IP, username, password, user agent; rotates at 512 KiB keeping `.1`–`.3`. The historical filename is shared by the Instagram and Wi-Fi portals. |
 | `attacks/Handshake Snooper/handshakes/` | Captured `.cap` files |
 
 ---
@@ -315,7 +316,7 @@ capwifi/
 │   ├── root_gate.py         # refuses to start without root
 │   └── models.py            # plain data classes
 ├── attacks/
-│   ├── Captive Portal/      # evil twin attack and 61 portal templates
+│   ├── Captive Portal/      # evil twin attack and 68 portal templates
 │   └── Handshake Snooper/   # handshake capture
 ├── lib/                     # shared shell libraries, installer, window manager
 ├── language/                # CLI locale strings (en, tur, …)
@@ -334,15 +335,16 @@ python3 tests/test_gui_imports.py   # GUI imports and syntax
 ```
 
 The safe suite covers locale loading, CLI parsing, hash handling, target selection,
-channel selection, sandbox utilities, the Instagram portal server, the `--install-deps`
-surface, and the desktop app: theme contrast, single-view behaviour, the scan flow,
-real pointer clicks, the console grid, the root gate and the update modal.
+channel selection, sandbox utilities, the Instagram and Wi-Fi portal servers, the
+`--install-deps` surface, and the desktop app: theme contrast, single-view behaviour,
+the scan flow, real pointer clicks, the console grid, the root gate and the update modal.
 
 Tests that need `aircrack-ng` or real adapters live outside the suite and are expected
 to fail on non-Linux hosts.
 
-Portal templates are generated from `scripts/instagram_portal/`. Edit the source, run
-`python3 scripts/build_instagram_portals.py`, and `--check` in CI catches drift.
+Portal templates are generated from `scripts/instagram_portal/` and
+`scripts/wifi_portal/`. Edit the source, run `python3 scripts/build_instagram_portals.py`
+and `python3 scripts/build_wifi_portals.py`, and `--check` in CI catches drift.
 
 ---
 

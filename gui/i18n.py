@@ -174,8 +174,8 @@ EN: Dict[str, str] = {
         "yields neither a handshake nor a portal visitor."
     ),
     "portal.desc.self_capturing": (
-        "Uses its own submission page: the username and password the visitor types "
-        "are recorded directly; no handshake needed."
+        "Uses its own submission page: what the visitor types is recorded directly; "
+        "no handshake needed."
     ),
     "portal.desc.stock": (
         "Stock portal: verifies the submitted password against a captured handshake, "
@@ -205,7 +205,7 @@ EN: Dict[str, str] = {
    Captive Portal: opens an exact copy of the target network, shows
    the selected portal page to the device that connects and records
    what is typed into the form. If the portal records submissions
-   itself (Instagram templates), the extra password verification
+   itself (Instagram/WiFi templates), the extra password verification
    step is skipped.
    Handshake Snooper: drops the clients so they reconnect and
    captures the WPA/WPA2 handshake; the result is a .cap file.
@@ -644,8 +644,8 @@ TR: Dict[str, str] = {
         "portal ziyaretçisi gelmez."
     ),
     "portal.desc.self_capturing": (
-        "Kendi kayıt sayfasını kullanır: ziyaretçinin yazdığı kullanıcı adı ve şifre "
-        "doğrudan kaydedilir, handshake gerekmez."
+        "Kendi kayıt sayfasını kullanır: ziyaretçinin yazdığı bilgiler doğrudan "
+        "kaydedilir, handshake gerekmez."
     ),
     "portal.desc.stock": (
         "Stok portal: gönderilen şifreyi yakalanmış handshake ile doğrular, bu yüzden "
@@ -673,7 +673,7 @@ TR: Dict[str, str] = {
 4) SALDIR
    Captive Portal: hedef ağın birebir kopyasını açar, bağlanan
    cihaza seçtiğin portal sayfasını gösterir ve forma yazılanları
-   kaydeder. Portalın kendisi kayıt yapıyorsa (Instagram şablonları)
+   kaydeder. Portalın kendisi kayıt yapıyorsa (Instagram/WiFi şablonları)
    ayrıca şifre doğrulama adımı atlanır.
    Handshake Snooper: cihazları düşürüp yeniden bağlanmaya zorlar
    ve WPA/WPA2 handshake'ini yakalar; sonuç .cap dosyasıdır.

